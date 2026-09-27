@@ -56,7 +56,7 @@ Build both images from the repository root:
 ```sh
 docker build --platform linux/amd64 -f apps/cms/Dockerfile -t rasad-cms:local .
 docker build --platform linux/amd64 -f apps/panel/Dockerfile -t rasad-panel:local .
-docker compose -f docker-compose.production.yml config
+docker compose --env-file .env.example -f docker-compose.production.yml config --quiet
 ```
 
-With a disposable migrated PostgreSQL database and production-style environment values, run Compose using local image names and a common `IMAGE_TAG=local`. Verify CMS `/admin/login`, Panel `/login` and `/invite` fallback, `/api/users/me` through Nginx, and forwarded HTTPS origin headers. Do not use the development or production database for destructive tests. After the first GitHub workflow run, verify that both GHCR packages have the same `sha-<full commit SHA>` tag and pull successfully with the deployment host's package credentials.
+For container smoke tests, create a temporary `dokploy-network`, choose a distinct `POSTGRES_VOLUME_NAME`, and run Compose with local image names and `IMAGE_TAG=local`. Verify PostgreSQL readiness and volume persistence after restart, CMS `/admin/login`, Panel `/login` and `/invite` fallback, `/api/users/me` through Nginx, and forwarded HTTPS origin headers. Do not point destructive tests at a development or production database. After the GitHub workflow runs, verify that both GHCR packages have the same `sha-<full commit SHA>` tag and pull successfully with Dokploy's registry credentials.

@@ -41,24 +41,29 @@ Integration tests **erase fixtures** in the explicitly selected local database e
 
 `docker-compose.yml` supplies local CMS, panel and PostgreSQL. Export `PAYLOAD_SECRET` before starting it. For direct panel development, `apps/panel/.env.example` documents the optional `CMS_PROXY_TARGET` Vite proxy setting.
 
-Production images are built from `apps/cms/Dockerfile` and `apps/panel/Dockerfile` with the repository root as build context. Pushes to `main` and `v*` tags publish both images to `ghcr.io/<owner>/<repo>/cms` and `ghcr.io/<owner>/<repo>/panel`. Both receive `sha-<full commit SHA>`; `main` or the Git tag is an additional alias. Use the **same immutable SHA tag** for both services. The workflow must pass typecheck, lint and tests before publishing.
+Production images are built from `apps/cms/Dockerfile` and `apps/panel/Dockerfile` with the repository root as build context. Pushes to `main` and `v*` tags publish both images to `ghcr.io/gecut/rasad-srm/cms` and `ghcr.io/gecut/rasad-srm/panel`. Both receive `sha-<full commit SHA>`; `main` or the Git tag is an additional alias. Use the **same SHA tag** for both services. The workflow must pass typecheck, lint and tests before publishing.
 
-For a private package, authenticate the deployment host with a GitHub token that has `read:packages` and access to both packages:
+For private packages, configure a GHCR registry in Dokploy with a token that has `read:packages` and access to both packages. For direct CLI deployment, authenticate the host with the same scope:
 
 ```sh
 printf '%s' "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 ```
 
-Copy the root `.env.example` to `.env`, replace the image paths and required runtime values, and set `IMAGE_TAG` to the published SHA tag. `docker-compose.production.yml` pulls those images; it does not build them. Keep PostgreSQL external and persistent. Before a v1 upgrade, stop old writers, verify a full backup, and rehearse migration on a restored copy as described in `docs/MIGRATION_NOTES.md`. Then bring up **one CMS replica** so its bundled production migrations complete before starting the panel or scaling CMS:
+Create a Dokploy **Docker Compose** service using `docker-compose.production.yml`, then copy the root `.env.example` values into its Environment tab. Set `IMAGE_TAG` to the published SHA tag, `PUBLIC_ORIGIN` to the exact public HTTPS origin, and strong runtime secrets. `POSTGRES_PASSWORD` must be URL-safe because Compose uses it in CMS's PostgreSQL connection URL; `openssl rand -hex 32` is one way to generate one. Dokploy writes these values to its `.env` file; Compose passes only the required values to each container.
+
+The Compose stack runs PostgreSQL 17 on the named `postgres_data` volume, CMS and Panel. Keep `POSTGRES_VOLUME_NAME` stable across redeploys; use a distinct name for staging. PostgreSQL and CMS have no host ports. Panel joins `dokploy-network`; in Dokploy's **Domains** tab route the public domain to service `panel`, port `80`, with HTTPS. Redeploy after changing a Compose domain. Dokploy manages the Traefik labels. Panel proxies `/admin`, `/api` and `/_next` to CMS over the private Compose network.
+
+Before first deployment, decide where the authoritative production database is. If it already exists outside this stack, back it up and restore/import it into `postgres_data` **before** starting CMS; deploying this stack as-is otherwise creates a new empty database. For a v1 upgrade, stop old writers, verify a full backup, and rehearse migration on a restored copy as described in `docs/MIGRATION_NOTES.md`. Start **one CMS replica** so its bundled production migrations complete before Panel startup or any scaling. Compose healthchecks gate PostgreSQL → CMS → Panel. For a direct CLI run after the data is ready:
 
 ```sh
 docker compose -f docker-compose.production.yml pull
-docker compose -f docker-compose.production.yml up -d --no-deps cms
+docker compose -f docker-compose.production.yml up -d postgres
+docker compose -f docker-compose.production.yml up -d cms
 docker compose -f docker-compose.production.yml ps cms
 docker compose -f docker-compose.production.yml up -d panel
 ```
 
-The panel serves the SPA on port 8080 and proxies `/admin`, `/api` and `/_next` to CMS. Terminate HTTPS at a trusted upstream reverse proxy that forwards the original `Host` and overwrites `X-Forwarded-Proto`; set `PUBLIC_ORIGIN` to that exact public HTTPS origin. Enable `RUN_JOBS=true` on only one CMS replica. Do not enable schema push on persisted data. No production deployment is performed by this repository task.
+Schedule PostgreSQL logical backups and verify restores. Dokploy Volume Backups can back up the named volume, but a live filesystem copy is not a substitute for a consistent PostgreSQL backup; stop the database for volume snapshots or use `pg_dump`. Changing `POSTGRES_PASSWORD` in Dokploy after initialization does not rotate the existing database password. Enable `RUN_JOBS=true` on only one CMS replica. Do not enable schema push on persisted data. No production deployment is performed by this repository task.
 
 Read `docs/MIGRATION_NOTES.md` before upgrading existing v1 data. Automatic schema push is off; migrations are bundled for production startup. Always back up and rehearse on a copy. `SCHEMA_PUSH=true` is only for disposable development/test databases.
 

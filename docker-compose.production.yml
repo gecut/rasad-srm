@@ -1,15 +1,43 @@
 services:
+  postgres:
+    image: postgres:17.11-alpine3.24
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rasad}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-rasad_srm}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    shm_size: 256mb
+    stop_grace_period: 60s
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 10
+
   cms:
     image: ${CMS_IMAGE:?Set CMS_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
     restart: unless-stopped
+    init: true
     environment:
-      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rasad}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-rasad_srm}
       PAYLOAD_SECRET: ${PAYLOAD_SECRET:?Set PAYLOAD_SECRET}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Set HTTPS public origin}
       SCHEMA_PUSH: 'false'
       RUN_JOBS: ${RUN_JOBS:-false}
       SMS_PROVIDER: ${SMS_PROVIDER:-unconfigured}
-      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Set HTTPS public origin}
-    expose: ['3000']
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+    expose:
+      - '3000'
     healthcheck:
       test:
         - CMD
@@ -18,11 +46,34 @@ services:
         - "fetch('http://127.0.0.1:3000/admin/login').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
       interval: 15s
       timeout: 5s
-      start_period: 180s
-      retries: 6
+      start_period: 10m
+      retries: 8
+
   panel:
     image: ${PANEL_IMAGE:?Set PANEL_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
     restart: unless-stopped
     depends_on:
-      cms: { condition: service_healthy }
-    ports: ['8080:80']
+      cms:
+        condition: service_healthy
+    networks:
+      - backend
+      - dokploy-network
+    labels:
+      traefik.docker.network: dokploy-network
+    expose:
+      - '80'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1/login']
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: ${POSTGRES_VOLUME_NAME:-rasad_srm_prod_postgres_data}
+
+networks:
+  backend:
+  dokploy-network:
+    external: true
