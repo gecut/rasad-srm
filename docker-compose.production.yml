@@ -43,6 +43,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-rasad}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-rasad_srm}
       PAYLOAD_SECRET: ${PAYLOAD_SECRET:?Set PAYLOAD_SECRET}
       PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Set HTTPS public origin}
+      PANEL_ORIGIN: ${PANEL_ORIGIN:-}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
       SCHEMA_PUSH: 'false'
       RUN_JOBS: ${RUN_JOBS:-false}
       SMS_PROVIDER: ${SMS_PROVIDER:-unconfigured}
@@ -51,6 +53,9 @@ services:
         condition: service_completed_successfully
     networks:
       - backend
+      - dokploy-network
+    labels:
+      traefik.docker.network: dokploy-network
     expose:
       - '3000'
     healthcheck:
@@ -67,22 +72,12 @@ services:
   panel:
     image: ${PANEL_IMAGE:?Set PANEL_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
     restart: unless-stopped
-    depends_on:
-      cms:
-        condition: service_healthy
     networks:
-      - backend
       - dokploy-network
     labels:
       traefik.docker.network: dokploy-network
     expose:
       - '80'
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1/login']
-      interval: 15s
-      timeout: 5s
-      start_period: 15s
-      retries: 5
 
 volumes:
   postgres_data:

@@ -75,6 +75,8 @@ jobs:
           file: apps/${{ matrix.app == 'panel' && 'panel' || 'cms' }}/Dockerfile
           target: ${{ matrix.app == 'migration' && 'migration' || 'runtime' }}
           platforms: linux/amd64
+          build-args: |
+            VITE_CMS_URL=${{ vars.VITE_CMS_URL || '' }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

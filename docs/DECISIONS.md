@@ -129,3 +129,7 @@ Build CMS and Panel independently from the monorepo root context and publish `li
 ## D032 — Dokploy Compose production topology
 
 Run PostgreSQL 17, a one-off migration service, CMS and Panel in one Dokploy Docker Compose stack. Persist PostgreSQL on a stable named volume; no current CMS collection needs a media volume. Only Panel joins `dokploy-network` for Dokploy Domains routing on internal port 80. PostgreSQL, migration and CMS remain on the private stack network without host ports. CMS starts only after migration succeeds. Keep one CMS replica for the optional job runner; restore existing production data into the volume before switching from an external database.
+
+## D033 — Direct Panel API connection, NGINX-SPA serving, and operational role boundary
+
+Deploy `apps/panel` on `ghcr.io/gecut/nginx/spa:1.0.0` as a pure static SPA without internal reverse proxying for CMS endpoints. Browser clients communicate directly with CMS API (`VITE_CMS_URL`), authenticated via cross-subdomain HttpOnly cookies (`COOKIE_DOMAIN`) with `sameSite: 'Lax'` and `secure: true`. CMS configures explicit `cors` and `csrf` allowlists for the panel origin. Both CMS (port 3000) and Panel (port 80) join `dokploy-network` for separate edge domain routing. Administrative accounts (`admin`, `employee`, `follow_up_specialist`) are strictly disallowed from authenticating into or navigating through operational panels; attempts immediately invalidate sessions and display dedicated guidance to use Payload Admin.

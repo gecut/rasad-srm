@@ -15,7 +15,11 @@ export const Users: CollectionConfig = {
     loginWithUsername: { allowEmailLogin: true, requireEmail: false, requireUsername: false },
     maxLoginAttempts: 5,
     lockTime: 600000,
-    cookies: { sameSite: 'Lax', secure: process.env.NODE_ENV === 'production' },
+    cookies: {
+      sameSite: 'Lax',
+      secure: process.env.NODE_ENV === 'production',
+      ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
+    },
   },
   access: {
     admin: ({ req }) =>

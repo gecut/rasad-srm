@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
-import { APIError, normalizePhone, request } from '../src/lib/api.ts'
-import { home, session } from '../src/lib/auth.ts'
+import { APIError, getAdminUrl, normalizePhone, request } from '../src/lib/api.ts'
+import { canAccessPanel, home, isOperationalRole, session } from '../src/lib/auth.ts'
 import { formatDate } from '../src/lib/date.ts'
 
 const originalFetch = globalThis.fetch
@@ -113,4 +113,20 @@ test('date presentation uses Persian calendar and Tehran time', () => {
   const date = formatDate('2026-03-21T09:00:00.000Z')
   assert.match(date, /۱۴۰۵/)
   assert.match(date, /۱۲:۳۰/)
+})
+
+test('only operational roles can access custom panel while admin roles are restricted', () => {
+  for (const role of ['teacher', 'inviter', 'receptionist']) {
+    assert.equal(isOperationalRole(role), true)
+    assert.equal(canAccessPanel({ role } as any), true)
+  }
+  for (const role of ['admin', 'employee', 'follow_up_specialist', 'other']) {
+    assert.equal(isOperationalRole(role), false)
+    assert.equal(canAccessPanel({ role } as any), false)
+  }
+  assert.equal(canAccessPanel(null), false)
+})
+
+test('admin URL defaults to /admin when VITE_CMS_URL is unset', () => {
+  assert.equal(getAdminUrl(), '/admin')
 })

@@ -38,16 +38,17 @@ function endpoint(
         if (!req.user) throw new DomainError('لطفاً وارد شوید.', 401)
         if (method === 'post') {
           const origin = req.headers.get('origin')
-          const expected =
-            process.env.PUBLIC_ORIGIN ||
-            (process.env.NODE_ENV === 'development'
-              ? 'http://localhost:5173'
-              : req.url
-                ? new URL(req.url).origin
-                : null)
-          const adminOrigin =
-            process.env.NODE_ENV === 'development' && req.url ? new URL(req.url).origin : null
-          if (origin && origin !== expected && origin !== adminOrigin)
+          const allowedOrigins = [
+            process.env.PUBLIC_ORIGIN,
+            process.env.PANEL_ORIGIN,
+            req.url ? new URL(req.url).origin : null,
+            process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : null,
+            process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null,
+            process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:5173' : null,
+            process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:3000' : null,
+          ].filter(Boolean) as string[]
+
+          if (origin && !allowedOrigins.includes(origin))
             throw new DomainError('مبدأ درخواست معتبر نیست.', 403)
           if (!req.headers.get('content-type')?.includes('application/json'))
             throw new DomainError('قالب درخواست معتبر نیست.', 422)

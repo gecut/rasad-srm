@@ -11,9 +11,10 @@ RUN pnpm install --frozen-lockfile
 
 COPY apps/panel apps/panel
 COPY packages/contracts packages/contracts
+ARG VITE_CMS_URL
+ENV VITE_CMS_URL=$VITE_CMS_URL
 RUN pnpm --filter @rasad/panel build
 
-FROM nginx:1.28-alpine AS runtime
-COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/apps/panel/dist /usr/share/nginx/html
+FROM ghcr.io/gecut/nginx/spa:1.0.0 AS runtime
+COPY --from=build --chown=nginx:nginx /app/apps/panel/dist/ /data/
 EXPOSE 80

@@ -25,8 +25,23 @@ const dirname = path.dirname(filename)
 // Custom CLI seeds must not run background jobs or modify the schema.
 const isDevelopmentSeed = process.argv[2]?.toLowerCase() === 'seed'
 
+const allowedOrigins = Array.from(
+  new Set(
+    [
+      process.env.PUBLIC_ORIGIN,
+      process.env.PANEL_ORIGIN,
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3000',
+    ].filter(Boolean) as string[],
+  ),
+)
+
 export default buildConfig({
   bin: [{ key: 'seed', scriptPath: path.resolve(dirname, '../scripts/seed-dev.ts') }],
+  cors: allowedOrigins,
+  csrf: allowedOrigins,
   admin: {
     user: Users.slug,
     meta: {

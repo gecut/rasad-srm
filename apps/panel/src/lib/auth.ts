@@ -14,12 +14,17 @@ export const session = {
     current = undefined
   },
 }
+export const OPERATIONAL_ROLES = ['teacher', 'inviter', 'receptionist'] as const
+export type OperationalRole = (typeof OPERATIONAL_ROLES)[number]
+export const isOperationalRole = (role: string): role is OperationalRole =>
+  OPERATIONAL_ROLES.includes(role as OperationalRole)
+export const canAccessPanel = (user: User | null | undefined): boolean =>
+  Boolean(user && isOperationalRole(user.role))
+
+export function operationalHome(role: OperationalRole): '/invite' | '/teacher' | '/reception' {
+  return role === 'teacher' ? '/teacher' : role === 'receptionist' ? '/reception' : '/invite'
+}
+
 export function home(user: User): '/invite' | '/teacher' | '/reception' | '/admin' {
-  return user.role === 'teacher'
-    ? '/teacher'
-    : user.role === 'receptionist'
-      ? '/reception'
-      : user.role === 'inviter'
-        ? '/invite'
-        : '/admin'
+  return isOperationalRole(user.role) ? operationalHome(user.role) : '/admin'
 }

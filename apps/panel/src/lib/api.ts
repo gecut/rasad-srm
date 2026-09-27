@@ -1,8 +1,16 @@
 import { PayloadSDK, PayloadSDKError } from '@payloadcms/sdk'
 import type { Config } from '@rasad/contracts'
 const errorBodies = new WeakMap<Response, Promise<unknown>>()
+const cmsBase = (
+  typeof import.meta !== 'undefined' && import.meta.env?.VITE_CMS_URL
+    ? String(import.meta.env.VITE_CMS_URL)
+    : ''
+).replace(/\/+$/, '')
+
+export const getAdminUrl = () => `${cmsBase}/admin`
+
 export const sdk = new PayloadSDK<Config>({
-  baseURL: '/api',
+  baseURL: cmsBase ? `${cmsBase}/api` : '/api',
   baseInit: { credentials: 'include' },
   fetch: async (input, init) => {
     const response = await fetch(input, init)

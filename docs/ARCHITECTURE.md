@@ -16,9 +16,11 @@ packages/contracts Generated Payload types and public workflow DTOs (no server l
 - CMS retains the existing PostgreSQL adapter and working backend.
 - Panel uses TanStack Router file-based routing and automatic route splitting.
 - HeroUI v3, Tailwind CSS v4, Persian-first RTL.
-- Centralized `@payloadcms/sdk` client with cookie credentials and relative `/api`.
-- Same-origin production reverse proxy routes `/admin`, `/api`, and Next assets to CMS; SPA routes to Panel.
-- Vite development proxy forwards `/api` to CMS.
+- Centralized `@payloadcms/sdk` client with cross-origin credentials and direct API connection (`VITE_CMS_URL`).
+- Panel is deployed as a static SPA on `ghcr.io/gecut/nginx/spa:1.0.0` without an internal API proxy.
+- Direct browser-to-CMS API communication with CORS, CSRF, and shared cookie domain across subdomains (`COOKIE_DOMAIN`).
+- Administrative accounts (`admin`, `employee`, `follow_up_specialist`) are restricted from operational panels and directed exclusively to Payload Admin.
+- Vite development proxy or direct connection forwards `/api` to CMS.
 - Generated Config types flow from contracts to both applications; contracts never depend on either app.
 - Server authorization and business invariants remain in CMS.
 
