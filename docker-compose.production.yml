@@ -1,58 +1,33 @@
 services:
-  postgres:
-    image: postgres:17.11-alpine3.24
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-rasad}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-rasad_srm}
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - backend
-    shm_size: 256mb
-    stop_grace_period: 60s
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
-      interval: 10s
-      timeout: 5s
-      start_period: 30s
-      retries: 10
-
   migrate:
-    image: ${MIGRATION_IMAGE:?Set MIGRATION_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
+    image: ${MIGRATION_IMAGE:-ghcr.io/gecut/rasad-srm/migration}:${IMAGE_TAG:-latest}
     restart: 'no'
     init: true
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-rasad}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-rasad_srm}
-      PAYLOAD_SECRET: ${PAYLOAD_SECRET:?Set PAYLOAD_SECRET}
-      SCHEMA_PUSH: 'false'
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-rasad_srm}}
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:-rasad-srm-production-payload-secret-key-32chars}
+      SCHEMA_PUSH: ${SCHEMA_PUSH:-false}
       RUN_JOBS: 'false'
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
-      - backend
+      - dokploy-network
 
   cms:
-    image: ${CMS_IMAGE:?Set CMS_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
+    image: ${CMS_IMAGE:-ghcr.io/gecut/rasad-srm/cms}:${IMAGE_TAG:-latest}
     restart: unless-stopped
     init: true
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-rasad}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-rasad_srm}
-      PAYLOAD_SECRET: ${PAYLOAD_SECRET:?Set PAYLOAD_SECRET}
-      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Set HTTPS public origin}
-      PANEL_ORIGIN: ${PANEL_ORIGIN:-}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-rasad_srm}}
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:-rasad-srm-production-payload-secret-key-32chars}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:3000}
+      PANEL_ORIGIN: ${PANEL_ORIGIN:-http://localhost:80}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
-      SCHEMA_PUSH: 'false'
+      SCHEMA_PUSH: ${SCHEMA_PUSH:-false}
       RUN_JOBS: ${RUN_JOBS:-false}
       SMS_PROVIDER: ${SMS_PROVIDER:-unconfigured}
     depends_on:
       migrate:
         condition: service_completed_successfully
     networks:
-      - backend
       - dokploy-network
     labels:
       traefik.docker.network: dokploy-network
@@ -66,11 +41,11 @@ services:
         - "fetch('http://127.0.0.1:3000/admin/login').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
       interval: 15s
       timeout: 5s
-      start_period: 10m
+      start_period: 120s
       retries: 8
 
   panel:
-    image: ${PANEL_IMAGE:?Set PANEL_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
+    image: ${PANEL_IMAGE:-ghcr.io/gecut/rasad-srm/panel}:${IMAGE_TAG:-latest}
     restart: unless-stopped
     networks:
       - dokploy-network
@@ -79,11 +54,6 @@ services:
     expose:
       - '80'
 
-volumes:
-  postgres_data:
-    name: ${POSTGRES_VOLUME_NAME:-rasad_srm_prod_postgres_data}
-
 networks:
-  backend:
   dokploy-network:
     external: true

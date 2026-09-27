@@ -4,36 +4,39 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   checks:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: rasad_srm_ci_test
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U postgres -d rasad_srm_ci_test"
-          --health-interval 10s --health-timeout 5s --health-retries 10
-    env:
-      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/rasad_srm_ci_test
-      PAYLOAD_SECRET: ci-only-secret-at-least-32-characters-long
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 24.21.0
-      - run: corepack enable && corepack prepare pnpm@11.25.0 --activate
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm lint
-      # - run: pnpm test
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
 
   publish:
     needs: checks
@@ -42,43 +45,65 @@ jobs:
       contents: read
       packages: write
     strategy:
+      fail-fast: false
       matrix:
-        app: [cms, migration, panel]
+        include:
+          - app: cms
+            file: apps/cms/Dockerfile
+            target: runtime
+            build-args: ''
+          - app: migration
+            file: apps/cms/Dockerfile
+            target: migration
+            build-args: ''
+          - app: panel
+            file: apps/panel/Dockerfile
+            target: runtime
+            build-args: |
+              VITE_CMS_URL=${{ vars.VITE_CMS_URL || '' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - name: Lowercase image name
-        id: image
-        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.app }}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Image metadata
+
+      - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ steps.image.outputs.name }}
-          flavor: latest=false
+          images: ghcr.io/${{ github.repository }}/${{ matrix.app }}
+          flavor: |
+            latest=auto
           tags: |
-            type=sha,format=long
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,format=long,prefix=sha-
             type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.title=rasad-${{ matrix.app }}
+            org.opencontainers.image.description=Rasad SRM ${{ matrix.app }} container
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/${{ matrix.app == 'panel' && 'panel' || 'cms' }}/Dockerfile
-          target: ${{ matrix.app == 'migration' && 'migration' || 'runtime' }}
+          file: ${{ matrix.file }}
+          target: ${{ matrix.target }}
           platforms: linux/amd64
-          build-args: |
-            VITE_CMS_URL=${{ vars.VITE_CMS_URL || '' }}
+          build-args: ${{ matrix.build-args }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}

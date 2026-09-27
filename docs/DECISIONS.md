@@ -133,3 +133,14 @@ Run PostgreSQL 17, a one-off migration service, CMS and Panel in one Dokploy Doc
 ## D033 — Direct Panel API connection, NGINX-SPA serving, and operational role boundary
 
 Deploy `apps/panel` on `ghcr.io/gecut/nginx/spa:1.0.0` as a pure static SPA without internal reverse proxying for CMS endpoints. Browser clients communicate directly with CMS API (`VITE_CMS_URL`), authenticated via cross-subdomain HttpOnly cookies (`COOKIE_DOMAIN`) with `sameSite: 'Lax'` and `secure: true`. CMS configures explicit `cors` and `csrf` allowlists for the panel origin. Both CMS (port 3000) and Panel (port 80) join `dokploy-network` for separate edge domain routing. Administrative accounts (`admin`, `employee`, `follow_up_specialist`) are strictly disallowed from authenticating into or navigating through operational panels; attempts immediately invalidate sessions and display dedicated guidance to use Payload Admin.
+
+## D034 — Dokploy Compose decoupling, default variables, and streamlined CI image pipeline
+
+1. Decouple PostgreSQL service and its volume from `docker-compose.production.yml`. In Dokploy, PostgreSQL is managed via Dokploy's managed database service or an external database instance.
+2. Provide default fallback values for all Docker Compose variables (`MIGRATION_IMAGE`, `CMS_IMAGE`, `PANEL_IMAGE`, `IMAGE_TAG`, `DATABASE_URL`, `PAYLOAD_SECRET`, `PUBLIC_ORIGIN`, `PANEL_ORIGIN`, `SCHEMA_PUSH`, `RUN_JOBS`, `SMS_PROVIDER`) so that Dokploy compose services deploy cleanly without configuration errors.
+3. Rewrite the GitHub Actions publish workflow (`publish-images.yml`) to optimize for speed and best practices:
+   - Add concurrency control and workflow_dispatch triggers.
+   - Cache pnpm store in `checks` step and eliminate unused PostgreSQL service container spin-up.
+   - Use explicit matrix definitions with individual build-args and `fail-fast: false`.
+   - Set `provenance: false` to produce clean single-platform AMD64 manifests for Dokploy without attestation bloat.
+   - Publish `latest`, `main`, and semantic version tags in addition to full SHA tags.
