@@ -1,5 +1,20 @@
+packages:
+  - apps/*
+  - packages/*
+
 allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
   workerd: true
+
+minimumReleaseAgeExclude:
+  - '@payloadcms/sdk@3.90.2'
+  - '@payloadcms/translations@3.90.2'
+  - '@tanstack/react-router@1.170.39'
+  - payload@3.90.2
+
+packageExtensions:
+  eslint-config-next@16.3.3:
+    dependencies:
+      next: 16.3.3

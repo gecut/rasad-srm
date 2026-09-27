@@ -1,0 +1,43 @@
+{
+  "project": "Rasad SRM",
+  "revision": "v2",
+  "generated_at": "2026-09-23",
+  "agent_map": "AGENTS.md",
+  "normative_docs": [
+    "docs/PROJECT.md",
+    "docs/DOMAIN.md",
+    "docs/BUSINESS_RULES.md",
+    "docs/STATUS_MODEL.md",
+    "docs/DATA_MODEL.md",
+    "docs/WORKFLOWS.md",
+    "docs/AUTHENTICATION.md",
+    "docs/ROLES_AND_PERMISSIONS.md",
+    "docs/ADMIN_PANEL.md",
+    "docs/CEREMONY_OPERATIONS.md",
+    "docs/INVITATION_APP.md",
+    "docs/TEACHER_APP.md",
+    "docs/RECEPTION_APP.md",
+    "docs/UX_RULES.md",
+    "docs/ARCHITECTURE.md",
+    "docs/IMPLEMENTATION_RULES.md",
+    "docs/DECISIONS.md",
+    "docs/ROADMAP.md",
+    "docs/MIGRATION_NOTES.md"
+  ],
+  "architecture": {
+    "workspace": "pnpm",
+    "cms": "apps/cms",
+    "panel": "apps/panel",
+    "contracts": "packages/contracts",
+    "panelStack": [
+      "Vite",
+      "React 19",
+      "TanStack Router",
+      "HeroUI v3",
+      "Tailwind CSS v4",
+      "Payload REST SDK"
+    ],
+    "topology": "same-origin",
+    "businessRules": "server-side"
+  }
+}

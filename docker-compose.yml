@@ -1,43 +1,46 @@
-version: '3'
-
 services:
-  payload:
-    image: node:20-alpine
-    ports:
-      - '3000:3000'
-    volumes:
-      - .:/home/node/app
-      - node_modules:/home/node/app/node_modules
-    working_dir: /home/node/app/
-    command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm dev"
+  cms:
+    image: node:24.21.0-alpine
+    ports: ['3000:3000']
+    volumes: ['.:/app', 'node_modules:/app/node_modules']
+    working_dir: /app
+    command: sh -c "corepack enable && corepack prepare pnpm@11.25.0 --activate && pnpm install --frozen-lockfile && pnpm --filter @rasad/cms migrate && pnpm dev:cms --hostname 0.0.0.0"
     depends_on:
-      - mongo
-      # - postgres
-    env_file:
-      - .env
-
-  # Ensure your DATABASE_URL uses 'mongo' as the hostname ie. mongodb://mongo/my-db-name
-  mongo:
-    image: mongo:latest
-    ports:
-      - '27017:27017'
-    command:
-      - --storageEngine=wiredTiger
-    volumes:
-      - data:/data/db
-    logging:
-      driver: none
-
-  # Uncomment the following to use postgres
-  # postgres:
-  #   restart: always
-  #   image: postgres:latest
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
-
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000/admin/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      start_period: 120s
+      retries: 12
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/rasad_srm
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:?Set PAYLOAD_SECRET}
+      PUBLIC_ORIGIN: http://localhost:5173
+  panel:
+    image: node:24.21.0-alpine
+    ports: ['5173:5173']
+    volumes: ['.:/app', 'node_modules:/app/node_modules']
+    working_dir: /app
+    command: sh -c "corepack enable && corepack prepare pnpm@11.25.0 --activate && pnpm dev:panel"
+    depends_on:
+      cms: { condition: service_healthy }
+    environment: { CMS_PROXY_TARGET: 'http://cms:3000' }
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    ports: ['5432:5432']
+    environment: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: rasad_srm }
+    volumes: ['postgres_data:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d rasad_srm']
+      interval: 5s
+      retries: 10
 volumes:
-  data:
-  # pgdata:
+  postgres_data:
   node_modules:
