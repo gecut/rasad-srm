@@ -1,0 +1,22 @@
+[
+  { "query": "In our shop app, migrate the existing product collection to @nexload-sdk/payload-schema but keep its access, hooks, drafts, and tabs unchanged.", "should_trigger": true },
+  { "query": "This payload-schema entity uses field.native({ payload: { type: 'point' } }); should I attach a Zod tuple or keep it Payload-only?", "should_trigger": true },
+  { "query": "Why does entity.schema pick throw SCHEMA_UNAVAILABLE for my payload-schema address group, and what does blockingFieldPath mean?", "should_trigger": true },
+  { "query": "Our Payload Local API write bypasses the trim normalization defined in a payload-schema entity; diagnose the collection integration.", "should_trigger": true },
+  { "query": "Compose a create input and a card projection from existing payload-schema fields without treating populated relations as IDs.", "should_trigger": true },
+  { "query": "Move static and request-time defaults from this consumer collection into the correct payload-schema factory options.", "should_trigger": true },
+  { "query": "Place payload-schema entity.payload.pick output inside existing Payload tabs while preserving the caller's field order.", "should_trigger": true },
+  { "query": "Model one category and many polymorphic owners in a consumer payload-schema entity, including the canonical ID shapes.", "should_trigger": true },
+  { "query": "Migrate this array to payload-schema while allowing Payload row IDs in stored documents but excluding them from our update schema.", "should_trigger": true },
+  { "query": "A JavaScript consumer passes an unknown key to payload-schema payload.pick; explain the runtime error and safe migration.", "should_trigger": true },
+  { "query": "Inside @nexload-sdk/payload-schema, fix the private compiler so nested ValidationError paths include array indexes.", "should_trigger": false },
+  { "query": "Review the payload-schema field seed and decide whether option objects should be snapshotted during defineEntity.", "should_trigger": false },
+  { "query": "Add a new scalar factory and public option type to the payload-schema package itself.", "should_trigger": false },
+  { "query": "Audit payload-schema package exports, declaration output, sideEffects, and deep-import rejection before release.", "should_trigger": false },
+  { "query": "The payload-schema packed consumer fails only on Payload 3.85; debug the compatibility helper and release evidence.", "should_trigger": false },
+  { "query": "Change payload-schema PayloadSchemaError.toJSON so compiler causes remain native but never serialize.", "should_trigger": false },
+  { "query": "Write internal learning tests for async Zod refinements in the payload-schema canonical adapter.", "should_trigger": false },
+  { "query": "Refactor descriptor cloning in payload-schema without executing consumer getters.", "should_trigger": false },
+  { "query": "Update internal payload-schema release documentation after checking manifest, changelog, and actual workflows.", "should_trigger": false },
+  { "query": "Add CI lanes for the payload-schema package and all matched @payloadcms dependencies.", "should_trigger": false }
+]

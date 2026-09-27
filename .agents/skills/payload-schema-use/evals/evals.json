@@ -1,0 +1,65 @@
+{
+  "skill_name": "payload-schema-use",
+  "evals": [
+    {
+      "id": 1,
+      "category": "happy_path",
+      "prompt": "Review the attached product migration fixture against the current @nexload-sdk/payload-schema public contract. Return an implementation outline with exact ownership, field order, and verification evidence.",
+      "expected_output": "A public-API migration that preserves collection lifecycle and proves both canonical parsing and real Payload writes.",
+      "files": ["evals/fixtures/migration-review.md"],
+      "expectations": [
+        "Uses defineEntity and public field factories while keeping hooks, access, drafts, localization, layout, and generated persistence types in the collection.",
+        "Preserves declaration order title, slug, inventory, category and compiles only the migrated fields without absorbing internalNotes.",
+        "Requires direct canonical parsing, consumer typecheck, and a real Payload Local API write as observable verification."
+      ]
+    },
+    {
+      "id": 2,
+      "category": "edge_case",
+      "prompt": "Diagnose the attached schema-less native descendant fixture using the current package behavior. Return the exact error contract and two complete alternatives.",
+      "expected_output": "A precise SCHEMA_UNAVAILABLE diagnosis that keeps Payload compilation available and does not omit data.",
+      "files": ["evals/fixtures/schema-unavailable.md"],
+      "expectations": [
+        "Reports SCHEMA_UNAVAILABLE with phase schema-derivation, reason schema-less-descendant, and blockingFieldPath details.metadata.",
+        "States that Payload compilation remains available while the parent canonical schema is unavailable.",
+        "Offers schema attachment or explicit ownership/container restructuring without silently dropping metadata."
+      ]
+    },
+    {
+      "id": 3,
+      "category": "failure_security",
+      "prompt": "Audit every definition in the attached defaults fixture. Return a table of first failure, phase, correction, and serialization constraints.",
+      "expected_output": "Correct default precedence, reserved option handling, schema-less behavior, and safe error reporting.",
+      "files": ["evals/fixtures/defaults-review.md"],
+      "expectations": [
+        "Reports CONFLICTING_DEFAULT_CONFIGURATION before other checks for simultaneous default modes and phase definition.",
+        "Reports RESERVED_PAYLOAD_OPTION for payload.defaultValue and INVALID_FIELD_CONFIGURATION for a schema-less static default.",
+        "States that defaults never add Zod .default() and serialized errors exclude rejected values and full config."
+      ]
+    },
+    {
+      "id": 4,
+      "category": "review_diagnosis",
+      "prompt": "Diagnose the attached Local API normalization failure and specify a regression test with observable stored output.",
+      "expected_output": "The collection adopts compiled fields, preserves consumer hook ordering, and proves normalization through Local API.",
+      "files": ["evals/fixtures/local-api-normalization.md"],
+      "expectations": [
+        "Identifies the hand-written collection field as the reason entity normalization does not run.",
+        "Places the consumer lowercase beforeValidate hook before the appended canonical trim adapter and predicts the final value draft.",
+        "Requires a Local API create assertion against stored or returned data rather than only application-schema parsing."
+      ]
+    },
+    {
+      "id": 5,
+      "category": "near_miss_composition",
+      "prompt": "Model the attached relationship, row, native point, layout, and populated-output requirements without expanding the package API.",
+      "expected_output": "Exact canonical shapes with application/Payload ownership kept outside the entity.",
+      "files": ["evals/fixtures/relations-layout.md"],
+      "expectations": [
+        "Uses ID for category and Array<{ relationTo: users | teams, value: ID }> for owners; populated category documents stay outside canonical relationships.",
+        "Explains that Payload row ids survive persistence lifecycle but strict canonical gallery items exclude and reject them.",
+        "Keeps tabs and access in the collection and uses field.native with an explicit tuple schema for point."
+      ]
+    }
+  ]
+}
