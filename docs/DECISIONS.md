@@ -124,8 +124,8 @@ Use Payload 3.89 `config.bin` to register `payload seed`, exposed as root `pnpm 
 
 ## D031 — Separate GHCR images for CMS and Panel
 
-Build CMS and Panel independently from the monorepo root context and publish `linux/amd64` images after quality checks on `main` and `v*` pushes. Both images use the same commit SHA tag; production Compose pulls that matching pair. CMS production migrations run with one replica before Panel startup or further CMS scaling. Production secrets and database URLs enter only at runtime.
+Build CMS and Panel independently from the monorepo root context and publish `linux/amd64` images after quality checks on `main` and `v*` pushes. A migration target from the CMS Dockerfile is published with the same commit SHA tag. Production Compose runs migration as a one-off service before starting CMS and Panel. Production secrets and database URLs enter only at runtime.
 
 ## D032 — Dokploy Compose production topology
 
-Run PostgreSQL 17, CMS and Panel in one Dokploy Docker Compose stack. Persist PostgreSQL on a stable named volume; no current CMS collection needs a media volume. Only Panel joins `dokploy-network` for Dokploy Domains routing on internal port 80. PostgreSQL and CMS remain on the private stack network without host ports. Keep one CMS replica for startup migrations and the optional job runner; restore existing production data into the volume before switching from an external database.
+Run PostgreSQL 17, a one-off migration service, CMS and Panel in one Dokploy Docker Compose stack. Persist PostgreSQL on a stable named volume; no current CMS collection needs a media volume. Only Panel joins `dokploy-network` for Dokploy Domains routing on internal port 80. PostgreSQL, migration and CMS remain on the private stack network without host ports. CMS starts only after migration succeeds. Keep one CMS replica for the optional job runner; restore existing production data into the volume before switching from an external database.

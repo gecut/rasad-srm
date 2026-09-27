@@ -107,6 +107,7 @@ Before upgrade:
 2. take and verify a full PostgreSQL backup;
 3. restore it to a separate rehearsal database;
 4. run `pnpm migrate`, inspect migration results, reconcile conflicts and check record counts/relationships;
-5. deploy one CMS replica with automatic schema push disabled, verify, then scale.
+5. restore or attach the authoritative data to the production PostgreSQL volume before deployment;
+6. run the one-off Compose `migrate` service and confirm exit code 0; only then start one CMS replica with schema push disabled, verify, then scale.
 
-Production startup bundles migrations through `prodMigrations`. Do not run old v1 code against the upgraded database. The v2 down migration intentionally refuses destructive reversal: restore the verified backup for rollback. The archive is retained and must not be deleted without a separate retention decision.
+`docker-compose.production.yml` gates CMS startup on successful completion of `migrate`, which runs `payload migrate` from the matching migration image. CMS retains bundled `prodMigrations` as an idempotent startup check. Do not run old v1 code against the upgraded database. The v2 down migration intentionally refuses destructive reversal: restore the verified backup for rollback. The archive is retained and must not be deleted without a separate retention decision.

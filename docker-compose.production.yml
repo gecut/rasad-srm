@@ -20,6 +20,21 @@ services:
       start_period: 30s
       retries: 10
 
+  migrate:
+    image: ${MIGRATION_IMAGE:?Set MIGRATION_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
+    restart: 'no'
+    init: true
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rasad}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-rasad_srm}
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:?Set PAYLOAD_SECRET}
+      SCHEMA_PUSH: 'false'
+      RUN_JOBS: 'false'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
   cms:
     image: ${CMS_IMAGE:?Set CMS_IMAGE}:${IMAGE_TAG:?Set IMAGE_TAG}
     restart: unless-stopped
@@ -32,8 +47,8 @@ services:
       RUN_JOBS: ${RUN_JOBS:-false}
       SMS_PROVIDER: ${SMS_PROVIDER:-unconfigured}
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - backend
     expose:

@@ -13,7 +13,7 @@ COPY apps/panel apps/panel
 COPY packages/contracts packages/contracts
 RUN pnpm --filter @rasad/panel build
 
-FROM nginx:1.28-alpine
+FROM nginx:1.28-alpine AS runtime
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/apps/panel/dist /usr/share/nginx/html
 EXPOSE 80
