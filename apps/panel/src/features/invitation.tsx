@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Card, Chip, Kbd } from '@heroui/react'
 import type { InvitationOutcome, InvitationQueue, PanelContext } from '@rasad/contracts'
 import { errorMessage, request } from '../lib/api'
@@ -78,34 +78,44 @@ export function Invitation() {
     }
   }
 
-  // Keyboard hotkeys (1-4) for high-throughput outcome selection
+  const submitOutcomeRef = useRef(submitOutcome)
+  submitOutcomeRef.current = submitOutcome
+
+  // Keyboard hotkeys (1-4) for high-throughput outcome selection (stable listener)
   useEffect(() => {
     if (!queue?.claim || busy) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.tagName === 'BUTTON' ||
+          target.isContentEditable)
+      ) {
         return
       }
 
       if (event.key === '1') {
         event.preventDefault()
-        void submitOutcome('accepted')
+        void submitOutcomeRef.current('accepted')
       } else if (event.key === '2') {
         event.preventDefault()
-        void submitOutcome('needs_alternative_session')
+        void submitOutcomeRef.current('needs_alternative_session')
       } else if (event.key === '3') {
         event.preventDefault()
-        void submitOutcome('no_answer_sms')
+        void submitOutcomeRef.current('no_answer_sms')
       } else if (event.key === '4') {
         event.preventDefault()
-        void submitOutcome('failed')
+        void submitOutcomeRef.current('failed')
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [queue?.claim, busy, ceremony, note])
+  }, [Boolean(queue?.claim), busy])
 
   return (
     <div className="flex flex-col gap-6">
