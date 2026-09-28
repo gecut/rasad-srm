@@ -6,6 +6,7 @@ import { ErrorNotice, Field, SuccessNotice } from '../components/ui'
 import { formatDate } from '../lib/date'
 import { DangerCircleIcon, MagnifierIcon, UserCheckIcon, UserPlusIcon } from '../components/icons'
 import { ReceptionRow } from './_reception-row'
+import { PanelSelect } from '../components/panel-select'
 
 const emptyForm = {
   firstName: '',
@@ -195,52 +196,42 @@ export function Reception() {
 
         <Card.Content className="pt-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="reception-ceremony" className="text-sm font-medium text-foreground">
-                انتخاب مراسم
-              </label>
-              <select
-                id="reception-ceremony"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-2 focus:outline-accent"
-                disabled={busy}
-                value={ceremony}
-                onChange={(event) => {
-                  setCeremony(event.target.value)
-                  setSessionId('')
-                  resetSearch()
-                }}
-              >
-                <option value="">مراسم را انتخاب کنید</option>
-                {context?.ceremonies.map((item) => (
-                  <option value={item.id} key={item.id}>
-                    {item.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <PanelSelect
+              id="reception-ceremony"
+              label="انتخاب مراسم"
+              value={ceremony}
+              placeholder="مراسم را انتخاب کنید"
+              disabled={busy}
+              options={
+                context?.ceremonies.map((item) => ({
+                  value: String(item.id),
+                  label: item.title,
+                })) || []
+              }
+              onChange={(val) => {
+                setCeremony(val)
+                setSessionId('')
+                resetSearch()
+              }}
+            />
 
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="reception-session" className="text-sm font-medium text-foreground">
-                سانس پذیرش فیزیکی
-              </label>
-              <select
-                id="reception-session"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-2 focus:outline-accent"
-                disabled={busy || !ceremony}
-                value={sessionId}
-                onChange={(event) => {
-                  setSessionId(event.target.value)
-                  resetSearch()
-                }}
-              >
-                <option value="">سانس را انتخاب کنید</option>
-                {sessions.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title || 'سانس'} — {formatDate(item.startsAt)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <PanelSelect
+              id="reception-session"
+              label="سانس پذیرش فیزیکی"
+              value={sessionId}
+              placeholder="سانس را انتخاب کنید"
+              disabled={busy || !ceremony}
+              options={sessions.map((item) => ({
+                value: String(item.id),
+                label: item.title || 'سانس',
+                isFilling: item.status === 'filling',
+                secondaryLabel: formatDate(item.startsAt),
+              }))}
+              onChange={(val) => {
+                setSessionId(val)
+                resetSearch()
+              }}
+            />
           </div>
         </Card.Content>
       </Card>
@@ -462,24 +453,17 @@ export function Reception() {
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="walkin-grade" className="text-sm font-medium text-foreground">
-                    پایه تحصیلی (اختیاری)
-                  </label>
-                  <select
-                    id="walkin-grade"
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-2 focus:outline-accent"
-                    value={form.grade}
-                    onChange={(event) => setForm({ ...form, grade: event.target.value })}
-                  >
-                    <option value="">نامشخص</option>
-                    {[1, 2, 3, 4, 5, 6].map((grade) => (
-                      <option key={grade} value={grade}>
-                        پایه {grade}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <PanelSelect
+                  id="walkin-grade"
+                  label="پایه تحصیلی (اختیاری)"
+                  value={form.grade}
+                  placeholder="نامشخص"
+                  options={[1, 2, 3, 4, 5, 6].map((grade) => ({
+                    value: String(grade),
+                    label: `پایه ${grade}`,
+                  }))}
+                  onChange={(val) => setForm({ ...form, grade: val })}
+                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Field

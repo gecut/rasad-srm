@@ -10,6 +10,7 @@ import {
   TrashIcon,
 } from '../components/icons'
 import { TeacherStudentRow } from './_teacher-student-row'
+import { PanelSelect } from '../components/panel-select'
 
 const STATUS_LABELS: Record<string, string> = {
   referred_to_teacher: 'به مدرس معرفی شده',
@@ -148,24 +149,18 @@ export function Teacher() {
           )}
 
           {roster && roster.classes.length > 1 && (
-            <div className="flex flex-col gap-1.5 max-w-sm">
-              <label htmlFor="teacher-class-select" className="text-sm font-medium text-foreground">
-                انتخاب کلاس
-              </label>
-              <select
-                id="teacher-class-select"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-2 focus:outline-accent"
-                value={classId}
-                disabled={busy || Boolean(pending)}
-                onChange={(event) => setClassId(event.target.value)}
-              >
-                {roster.classes.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <PanelSelect
+              id="teacher-class-select"
+              label="انتخاب کلاس"
+              className="max-w-sm"
+              value={classId}
+              disabled={busy || Boolean(pending)}
+              options={roster.classes.map((item) => ({
+                value: String(item.id),
+                label: item.title,
+              }))}
+              onChange={(val) => setClassId(val)}
+            />
           )}
 
           {roster && roster.classes.length === 1 && (

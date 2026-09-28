@@ -13,6 +13,7 @@ import {
   StopwatchIcon,
 } from '../components/icons'
 import { InvitationTimer } from './_invitation-timer'
+import { PanelSelect } from '../components/panel-select'
 
 const OUTCOME_CONFIG: Record<
   InvitationOutcome,
@@ -183,29 +184,25 @@ export function Invitation() {
 
         <Card.Content>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
-            <div className="flex-1 flex flex-col gap-1.5">
-              <label htmlFor="ceremony-select" className="text-sm font-medium text-foreground">
-                انتخاب مراسم
-              </label>
-              <select
-                id="ceremony-select"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-2 focus:outline-accent"
-                value={ceremony}
-                disabled={busy || Boolean(queue?.claim)}
-                onChange={(event) => {
-                  setCeremony(event.target.value)
-                  setQueue(undefined)
-                  setDone('')
-                }}
-              >
-                <option value="">مراسم را انتخاب کنید</option>
-                {context?.ceremonies.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <PanelSelect
+              id="ceremony-select"
+              label="انتخاب مراسم"
+              className="flex-1"
+              value={ceremony}
+              placeholder="مراسم را انتخاب کنید"
+              disabled={busy || Boolean(queue?.claim)}
+              options={
+                context?.ceremonies.map((item) => ({
+                  value: String(item.id),
+                  label: item.title,
+                })) || []
+              }
+              onChange={(val) => {
+                setCeremony(val)
+                setQueue(undefined)
+                setDone('')
+              }}
+            />
 
             <Button
               variant="primary"
