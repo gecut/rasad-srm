@@ -166,8 +166,8 @@ export function Reception() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Sticky Context Bar */}
-      <Card className="sticky top-16 z-20 border border-border bg-surface/95 backdrop-blur-md shadow-xs">
+      {/* Reception Context Bar */}
+      <Card className="border border-border bg-surface shadow-xs">
         <Card.Header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-border">
           <div>
             <Card.Title className="text-xl font-bold">پذیرش و ورود به مراسم</Card.Title>
