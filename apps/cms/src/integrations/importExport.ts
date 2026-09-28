@@ -112,13 +112,10 @@ export const configuredImportExportPlugin: Plugin = importExportPlugin({
       },
       import: {
         disableJobsQueue: true,
-        matchField: 'mobile',
         hooks: {
-          before: [
-            ({ data }) => {
-              return data.map(normalizeStudentRow)
-            },
-          ],
+          before: ({ data }) => {
+            return data.map((row) => normalizeStudentRow(row as Record<string, unknown>)) as typeof data
+          },
         },
       },
     },
