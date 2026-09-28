@@ -77,6 +77,7 @@ export interface Config {
     invitations: Invitation;
     'invitation-claims': InvitationClaim;
     'session-checkins': SessionCheckin;
+    neighborhoods: Neighborhood;
     exports: Export;
     imports: Import;
     'payload-kv': PayloadKv;
@@ -85,7 +86,12 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    students: {
+      checkins: 'session-checkins';
+      invitations: 'invitations';
+    };
+  };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     teachers: TeachersSelect<false> | TeachersSelect<true>;
@@ -97,6 +103,7 @@ export interface Config {
     invitations: InvitationsSelect<false> | InvitationsSelect<true>;
     'invitation-claims': InvitationClaimsSelect<false> | InvitationClaimsSelect<true>;
     'session-checkins': SessionCheckinsSelect<false> | SessionCheckinsSelect<true>;
+    neighborhoods: NeighborhoodsSelect<false> | NeighborhoodsSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     imports: ImportsSelect<false> | ImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -235,6 +242,11 @@ export interface Student {
   mobile?: string | null;
   motherMobile?: string | null;
   fatherMobile?: string | null;
+  landline?: string | null;
+  neighborhood?: (number | null) | Neighborhood;
+  address?: string | null;
+  referrer?: string | null;
+  notes?: string | null;
   /**
    * پایه تحصیلی فعلی در مدرسه (۱ تا ۶)
    */
@@ -264,36 +276,51 @@ export interface Student {
    * توسط سیستم پس از تایید تثبیت ثبت می‌شود.
    */
   stabilizedAt?: string | null;
+  checkins?: {
+    docs?: (number | SessionCheckin)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  invitations?: {
+    docs?: (number | Invitation)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "follow-ups".
+ * via the `definition` "neighborhoods".
  */
-export interface FollowUp {
+export interface Neighborhood {
   id: number;
-  /**
-   * دانش‌آموزی که این پیگیری برای او ثبت شده است.
-   */
-  student: number | Student;
-  /**
-   * کارشناس یا کاربری که این اقدام را ثبت کرده است.
-   */
-  specialist: number | User;
-  note: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ceremonies".
- */
-export interface Ceremony {
-  id: number;
-  title: string;
+  name: string;
   description?: string | null;
-  status: 'draft' | 'scheduled' | 'active' | 'inviting' | 'completed' | 'cancelled';
+  /**
+   * لیست محله‌ها، خیابان‌ها و نقاط شاخص این محدوده جهت جستجو و دسته‌بندی سریع (مانند: هفت تیر، حافظ، صدف)
+   */
+  subDistricts?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "session-checkins".
+ */
+export interface SessionCheckin {
+  id: number;
+  student: number | Student;
+  session: number | Session;
+  checkedInBy: number | User;
+  checkedInAt: string;
+  source: 'invited' | 'walk_in';
+  note?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -309,6 +336,18 @@ export interface Session {
   endsAt?: string | null;
   status: 'draft' | 'queued' | 'filling' | 'sealed' | 'active' | 'completed' | 'cancelled';
   fillingStartedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ceremonies".
+ */
+export interface Ceremony {
+  id: number;
+  title: string;
+  description?: string | null;
+  status: 'draft' | 'scheduled' | 'active' | 'inviting' | 'completed' | 'cancelled';
   updatedAt: string;
   createdAt: string;
 }
@@ -341,6 +380,24 @@ export interface Invitation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "follow-ups".
+ */
+export interface FollowUp {
+  id: number;
+  /**
+   * دانش‌آموزی که این پیگیری برای او ثبت شده است.
+   */
+  student: number | Student;
+  /**
+   * کارشناس یا کاربری که این اقدام را ثبت کرده است.
+   */
+  specialist: number | User;
+  note: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "invitation-claims".
  */
 export interface InvitationClaim {
@@ -351,21 +408,6 @@ export interface InvitationClaim {
   inviter: number | User;
   token: string;
   expiresAt: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "session-checkins".
- */
-export interface SessionCheckin {
-  id: number;
-  student: number | Student;
-  session: number | Session;
-  checkedInBy: number | User;
-  checkedInAt: string;
-  source: 'invited' | 'walk_in';
-  note?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -598,6 +640,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'session-checkins';
         value: number | SessionCheckin;
+      } | null)
+    | ({
+        relationTo: 'neighborhoods';
+        value: number | Neighborhood;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -704,6 +750,11 @@ export interface StudentsSelect<T extends boolean = true> {
   mobile?: T;
   motherMobile?: T;
   fatherMobile?: T;
+  landline?: T;
+  neighborhood?: T;
+  address?: T;
+  referrer?: T;
+  notes?: T;
   grade?: T;
   readinessStatus?: T;
   currentClass?: T;
@@ -712,6 +763,8 @@ export interface StudentsSelect<T extends boolean = true> {
   referredAt?: T;
   absorbedAt?: T;
   stabilizedAt?: T;
+  checkins?: T;
+  invitations?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -794,6 +847,22 @@ export interface SessionCheckinsSelect<T extends boolean = true> {
   checkedInAt?: T;
   source?: T;
   note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "neighborhoods_select".
+ */
+export interface NeighborhoodsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  subDistricts?:
+    | T
+    | {
+        name?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -969,6 +1038,7 @@ export interface TaskCreateCollectionExport {
       | 'invitations'
       | 'invitation-claims'
       | 'session-checkins'
+      | 'neighborhoods'
       | 'exports'
       | 'imports';
     drafts?: ('yes' | 'no') | null;

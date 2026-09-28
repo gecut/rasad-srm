@@ -21,7 +21,9 @@
     "format:check": "prettier --check .",
     "migrate": "payload migrate",
     "jobs": "payload jobs:run",
-    "seed:dev": "cross-env NODE_OPTIONS=--no-deprecation payload seed"
+    "seed:dev": "cross-env NODE_OPTIONS=--no-deprecation payload seed",
+    "seed:historical": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed-historical-events-and-neighborhoods.ts",
+    "import:students": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/import-students-production.ts"
   },
   "dependencies": {
     "@internationalized/date": "3.12.4",

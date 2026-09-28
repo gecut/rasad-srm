@@ -18,6 +18,7 @@ export const Students: CollectionConfig = {
       'lastName',
       'firstName',
       'grade',
+      'neighborhood',
       'lifecycleStatus',
       'readinessStatus',
       'currentClass',
@@ -42,7 +43,7 @@ export const Students: CollectionConfig = {
     beforeValidate: [
       async ({ data, originalDoc, req }) => {
         if (!data) return data
-        for (const key of ['firstName', 'lastName'])
+        for (const key of ['firstName', 'lastName', 'address', 'referrer', 'notes'])
           if (typeof data[key] === 'string')
             data[key] = data[key]
               .normalize('NFKC')
@@ -53,6 +54,15 @@ export const Students: CollectionConfig = {
 
         for (const key of ['mobile', 'motherMobile', 'fatherMobile']) {
           if (data[key]) data[key] = normalizePhone(data[key])
+        }
+
+        if (typeof data.landline === 'string') {
+          const cleaned = data.landline
+            .normalize('NFKC')
+            .replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+            .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+            .trim()
+          data.landline = cleaned !== '' ? cleaned : null
         }
         const merged = { ...originalDoc, ...data }
         if (merged.lifecycleStatus === 'referred_to_teacher' && !merged.currentClass)
@@ -160,6 +170,46 @@ export const Students: CollectionConfig = {
       ],
     },
     {
+      name: 'landline',
+      label: 'تلفن ثابت منزل',
+      type: 'text',
+      access: {
+        update: ({ req }) => Boolean(req.user?.role === 'admin' || req.user?.role === 'employee'),
+      },
+    },
+    {
+      name: 'neighborhood',
+      label: 'محدوده منزل',
+      type: 'relationship',
+      relationTo: 'neighborhoods',
+      hasMany: false,
+      index: true,
+      access: {
+        update: ({ req }) => Boolean(req.user?.role === 'admin' || req.user?.role === 'employee'),
+      },
+    },
+    {
+      name: 'address',
+      label: 'نشانی دقیق منزل',
+      type: 'textarea',
+      access: {
+        update: ({ req }) => Boolean(req.user?.role === 'admin' || req.user?.role === 'employee'),
+      },
+    },
+    {
+      name: 'referrer',
+      label: 'نام معرف',
+      type: 'text',
+      access: {
+        update: ({ req }) => Boolean(req.user?.role === 'admin' || req.user?.role === 'employee'),
+      },
+    },
+    {
+      name: 'notes',
+      label: 'یادداشت‌های پرونده',
+      type: 'textarea',
+    },
+    {
       name: 'grade',
       label: 'پایه تحصیلی',
       type: 'number',
@@ -261,6 +311,28 @@ export const Students: CollectionConfig = {
       admin: {
         readOnly: true,
         description: 'توسط سیستم پس از تایید تثبیت ثبت می‌شود.',
+      },
+    },
+    {
+      name: 'checkins',
+      label: 'سوابق پذیرش در مراسم‌ها',
+      type: 'join',
+      collection: 'session-checkins',
+      on: 'student',
+      admin: {
+        allowCreate: false,
+        defaultColumns: ['session', 'checkedInAt', 'source'],
+      },
+    },
+    {
+      name: 'invitations',
+      label: 'سوابق دعوت به مراسم‌ها',
+      type: 'join',
+      collection: 'invitations',
+      on: 'student',
+      admin: {
+        allowCreate: false,
+        defaultColumns: ['ceremony', 'assignedSession', 'outcome', 'processedAt'],
       },
     },
   ],

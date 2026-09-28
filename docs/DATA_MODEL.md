@@ -19,26 +19,41 @@ Auth configuration uses username login with email login allowed for Admin-side u
 
 ## 2. `students`
 
-| Field             | Type                   | Notes                                                         |
-| ----------------- | ---------------------- | ------------------------------------------------------------- |
-| `firstName`       | text                   | required                                                      |
-| `lastName`        | text                   | required                                                      |
-| `grade`           | select/number          | optional descriptive data, 1–6 when present                   |
-| `mobile`          | text                   | optional                                                      |
-| `motherMobile`    | text                   | optional                                                      |
-| `fatherMobile`    | text                   | optional                                                      |
-| `lifecycleStatus` | select                 | see STATUS_MODEL                                              |
-| `readinessStatus` | select                 | `normal`, `waitlisted`                                        |
-| `currentClass`    | relationship → classes | max one                                                       |
-| `referredAt`      | date-time              | nullable                                                      |
-| `absorbedAt`      | date-time              | nullable                                                      |
-| `stabilizedAt`    | date-time              | nullable                                                      |
-| `removedReason`   | text/select            | nullable; required by relevant workflow                       |
-| `origin`          | select                 | `admin`, `reception_walk_in`, `import`, other approved source |
+| Field             | Type                             | Notes                                                         |
+| ----------------- | -------------------------------- | ------------------------------------------------------------- |
+| `firstName`       | text                             | required                                                      |
+| `lastName`        | text                             | required                                                      |
+| `grade`           | select/number                    | optional descriptive data, 1–6 when present                   |
+| `mobile`          | text                             | optional                                                      |
+| `motherMobile`    | text                             | optional                                                      |
+| `fatherMobile`    | text                             | optional                                                      |
+| `landline`        | text                             | optional home landline phone                                  |
+| `neighborhood`    | relationship → neighborhoods     | max one                                                       |
+| `address`         | textarea                         | optional home address                                         |
+| `referrer`        | text                             | optional referrer name/source                                 |
+| `notes`           | textarea                         | optional dossier notes                                        |
+| `checkins`        | join → session-checkins          | reverse navigation to all attended ceremonies/sessions        |
+| `invitations`     | join → invitations               | reverse navigation to all ceremony invitation outcomes        |
+| `lifecycleStatus` | select                           | see STATUS_MODEL                                              |
+| `readinessStatus` | select                           | `normal`, `waitlisted`                                        |
+| `currentClass`    | relationship → classes           | max one                                                       |
+| `referredAt`      | date-time                        | nullable                                                      |
+| `absorbedAt`      | date-time                        | nullable                                                      |
+| `stabilizedAt`    | date-time                        | nullable                                                      |
+| `removedReason`   | text/select                      | nullable; required by relevant workflow                       |
+| `origin`          | select                           | `admin`, `reception_walk_in`, `import`, other approved source |
 
 At least one phone is required for invitation eligibility, but not for walk-in creation.
 
-## 3. `teachers`
+## 3. `neighborhoods`
+
+| Field          | Type                        | Notes                                                              |
+| -------------- | --------------------------- | ------------------------------------------------------------------ |
+| `name`         | text                        | required, unique, indexed neighborhood name (e.g. وکیل‌آباد)       |
+| `description`  | textarea                    | optional description of the area                                   |
+| `subDistricts` | array of `{ name: string }` | sub-areas, quarters, streets for fast lookup (e.g. هفت تیر، حافظ)  |
+
+## 4. `teachers`
 
 | Field       | Type   |
 | ----------- | ------ |
@@ -49,7 +64,7 @@ At least one phone is required for invitation eligibility, but not for walk-in c
 
 The auth account is linked from `users.teacherProfile`; do not duplicate passwords here.
 
-## 4. `classes`
+## 5. `classes`
 
 | Field               | Type                             |
 | ------------------- | -------------------------------- |
@@ -61,14 +76,14 @@ The auth account is linked from `users.teacherProfile`; do not duplicate passwor
 
 Class capacity remains informational. This is unrelated to removed Session capacity.
 
-## 5. `follow-ups`
+## 6. `follow-ups`
 
 - `student` → students
 - `specialist` → users
 - `note`
 - Payload timestamps
 
-## 6. `ceremonies`
+## 7. `ceremonies`
 
 | Field         | Type               |
 | ------------- | ------------------ |
@@ -76,7 +91,7 @@ Class capacity remains informational. This is unrelated to removed Session capac
 | `description` | textarea/rich text |
 | `status`      | select             |
 
-## 7. `sessions`
+## 8. `sessions`
 
 | Field              | Type                      | Notes                                                      |
 | ------------------ | ------------------------- | ---------------------------------------------------------- |
@@ -91,7 +106,7 @@ Removed from v1: `grade`, `capacity`, accepted/remaining capacity counters.
 
 Default fill order is `startsAt ASC`.
 
-## 8. `invitations`
+## 9. `invitations`
 
 One current ceremony-level invitation record per `student + ceremony`.
 
@@ -112,7 +127,7 @@ Unique business constraint: one Invitation document per Student + Ceremony. Repr
 
 `contactTarget` is removed.
 
-## 9. `session-checkins`
+## 10. `session-checkins`
 
 | Field         | Type                    | Notes                |
 | ------------- | ----------------------- | -------------------- |
@@ -122,6 +137,8 @@ Unique business constraint: one Invitation document per Student + Ceremony. Repr
 | `checkedInAt` | date-time               | required             |
 | `source`      | select                  | `invited`, `walk_in` |
 | `note`        | textarea                | optional             |
+
+## 11. `invitation-claims`
 
 Unique constraint: one Student + Session check-in.
 

@@ -18,6 +18,7 @@ import { Ceremonies } from './collections/Ceremonies'
 import { Sessions } from './collections/Sessions'
 import { Invitations } from './collections/Invitations'
 import { InvitationClaims } from './collections/InvitationClaims'
+import { Neighborhoods } from './collections/Neighborhoods'
 import { sendSmsTask } from './domain/sms/sendSmsTask'
 import { configuredImportExportPlugin } from './integrations/importExport'
 
@@ -70,6 +71,7 @@ export default buildConfig({
     Invitations,
     InvitationClaims,
     SessionCheckins,
+    Neighborhoods,
   ],
   endpoints: panelEndpoints,
   jobs: {

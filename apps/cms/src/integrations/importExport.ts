@@ -18,7 +18,7 @@ export function normalizeStudentRow(row: Record<string, unknown>): Record<string
   result.origin = 'import'
 
   // 2. Persian letter normalization
-  for (const key of ['firstName', 'lastName'] as const) {
+  for (const key of ['firstName', 'lastName', 'address', 'referrer', 'notes'] as const) {
     if (typeof result[key] === 'string') {
       result[key] = (result[key] as string)
         .normalize('NFKC')
@@ -39,6 +39,16 @@ export function normalizeStudentRow(row: Record<string, unknown>): Record<string
         // Keep raw value so collection beforeValidate can report a descriptive error
       }
     }
+  }
+
+  // 4. Normalize landline if provided
+  if (typeof result.landline === 'string') {
+    const cleaned = result.landline
+      .normalize('NFKC')
+      .replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+      .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+      .trim()
+    result.landline = cleaned !== '' ? cleaned : null
   }
 
   // 4. Convert Jalali dates if provided
@@ -119,16 +129,21 @@ export const configuredImportExportPlugin: Plugin = importExportPlugin({
         },
       },
     },
-    // Operational collections: export-only
+    // Operational collections with import/export support
     {
       slug: 'classes',
       export: { disableJobsQueue: true, disableSave: true },
-      import: false,
+      import: { disableJobsQueue: true },
     },
     {
       slug: 'teachers',
       export: { disableJobsQueue: true, disableSave: true },
-      import: false,
+      import: { disableJobsQueue: true },
+    },
+    {
+      slug: 'neighborhoods',
+      export: { disableJobsQueue: true, disableSave: true },
+      import: { disableJobsQueue: true },
     },
     {
       slug: 'ceremonies',

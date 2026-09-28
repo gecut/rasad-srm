@@ -92,6 +92,23 @@ describe('Data Import/Export Plugin Integration', () => {
       expect(typeof row.referredAt).toBe('string')
       expect(row.referredAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
     })
+
+    it('normalizes landline, address, referrer, and notes', () => {
+      const row = normalizeStudentRow({
+        firstName: 'امیررضا',
+        lastName: 'آتشکار  ',
+        landline: ' ۳۵۰۹۰۴۱۴ ',
+        address: 'لادن23 پ20  ',
+        referrer: 'خانوم مشایخی ',
+        notes: 'خواهان کلاس ',
+      })
+      expect(row.lastName).toBe('آتشکار')
+      expect(row.landline).toBe('35090414')
+      expect(row.address).toBe('لادن23 پ20')
+      expect(row.referrer).toBe('خانوم مشایخی')
+      expect(row.notes).toBe('خواهان کلاس')
+      expect(row.origin).toBe('import')
+    })
   })
 
   describe('2. Collection-level Access Control', () => {
