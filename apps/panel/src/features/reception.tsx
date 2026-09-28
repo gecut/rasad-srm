@@ -4,6 +4,9 @@ import type { PanelContext, ReceptionSearch, ReceptionStudent } from '@rasad/con
 import { APIError, errorMessage, normalizePhone, request } from '../lib/api'
 import { ErrorNotice, Field, SuccessNotice } from '../components/ui'
 import { formatDate } from '../lib/date'
+import { DangerCircleIcon, MagnifierIcon, UserCheckIcon, UserPlusIcon } from '../components/icons'
+import { ReceptionRow } from './_reception-row'
+import { PanelSelect } from '../components/panel-select'
 
 const emptyForm = {
   firstName: '',
@@ -20,6 +23,7 @@ export function Reception() {
   const [sessionId, setSessionId] = useState('')
   const [query, setQuery] = useState('')
   const [students, setStudents] = useState<ReceptionStudent[]>([])
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const [searched, setSearched] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [creating, setCreating] = useState(false)
@@ -44,12 +48,20 @@ export function Reception() {
     }
   }, [])
 
-  // Auto-focus search input with '/' or 'F2'
+  // Auto-focus search input with '/' or 'F2' (guarded when modal is open or typing in form controls)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (creating) return
       if (event.key === '/' || event.key === 'F2') {
         const target = event.target as HTMLElement | null
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        if (
+          target &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.tagName === 'SELECT' ||
+            target.tagName === 'BUTTON' ||
+            target.isContentEditable)
+        ) {
           return
         }
         event.preventDefault()
@@ -58,13 +70,14 @@ export function Reception() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [creating])
 
   const sessions = context?.ceremonies.find((item) => String(item.id) === ceremony)?.sessions || []
   const activeSession = sessions.find((item) => String(item.id) === sessionId)
 
   function resetSearch() {
     setStudents([])
+    setSelectedIndex(0)
     setSearched(false)
     setSuccess('')
     setError('')
@@ -84,6 +97,7 @@ export function Reception() {
         })}`,
       )
       setStudents(data.students)
+      setSelectedIndex(0)
       setSearched(true)
     } catch (err) {
       setError(errorMessage(err))
@@ -95,6 +109,7 @@ export function Reception() {
   function completed() {
     setQuery('')
     setStudents([])
+    setSelectedIndex(0)
     setSearched(false)
     setForm(emptyForm)
     setCreating(false)
@@ -158,8 +173,8 @@ export function Reception() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Sticky Context Bar */}
-      <Card className="sticky top-16 z-20 border border-border bg-surface/95 backdrop-blur-md shadow-xs">
+      {/* Reception Context Bar */}
+      <Card className="border border-border bg-surface shadow-xs">
         <Card.Header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-border">
           <div>
             <Card.Title className="text-xl font-bold">پذیرش و ورود به مراسم</Card.Title>
@@ -181,52 +196,42 @@ export function Reception() {
 
         <Card.Content className="pt-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="reception-ceremony" className="text-sm font-medium text-foreground">
-                انتخاب مراسم
-              </label>
-              <select
-                id="reception-ceremony"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-2 focus:outline-accent"
-                disabled={busy}
-                value={ceremony}
-                onChange={(event) => {
-                  setCeremony(event.target.value)
-                  setSessionId('')
-                  resetSearch()
-                }}
-              >
-                <option value="">مراسم را انتخاب کنید</option>
-                {context?.ceremonies.map((item) => (
-                  <option value={item.id} key={item.id}>
-                    {item.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <PanelSelect
+              id="reception-ceremony"
+              label="انتخاب مراسم"
+              value={ceremony}
+              placeholder="مراسم را انتخاب کنید"
+              disabled={busy}
+              options={
+                context?.ceremonies.map((item) => ({
+                  value: String(item.id),
+                  label: item.title,
+                })) || []
+              }
+              onChange={(val) => {
+                setCeremony(val)
+                setSessionId('')
+                resetSearch()
+              }}
+            />
 
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="reception-session" className="text-sm font-medium text-foreground">
-                سانس پذیرش فیزیکی
-              </label>
-              <select
-                id="reception-session"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-2 focus:outline-accent"
-                disabled={busy || !ceremony}
-                value={sessionId}
-                onChange={(event) => {
-                  setSessionId(event.target.value)
-                  resetSearch()
-                }}
-              >
-                <option value="">سانس را انتخاب کنید</option>
-                {sessions.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title || 'سانس'} — {formatDate(item.startsAt)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <PanelSelect
+              id="reception-session"
+              label="سانس پذیرش فیزیکی"
+              value={sessionId}
+              placeholder="سانس را انتخاب کنید"
+              disabled={busy || !ceremony}
+              options={sessions.map((item) => ({
+                value: String(item.id),
+                label: item.title || 'سانس',
+                isFilling: item.status === 'filling',
+                secondaryLabel: formatDate(item.startsAt),
+              }))}
+              onChange={(val) => {
+                setSessionId(val)
+                resetSearch()
+              }}
+            />
           </div>
         </Card.Content>
       </Card>
@@ -249,14 +254,37 @@ export function Reception() {
                 نام یا شماره موبایل دانش‌آموز
               </label>
               <div className="relative flex items-center">
+                <div className="absolute right-3 pointer-events-none flex items-center text-muted">
+                  <MagnifierIcon className="size-5" />
+                </div>
                 <input
                   id="reception-search-input"
                   ref={searchRef}
                   type="search"
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={(event) => {
+                    setQuery(event.target.value)
+                    if (searched) setSearched(false)
+                  }}
+                  onKeyDown={(event) => {
+                    if (searched && students.length > 0) {
+                      if (event.key === 'ArrowDown') {
+                        event.preventDefault()
+                        setSelectedIndex((prev) => (prev + 1) % students.length)
+                      } else if (event.key === 'ArrowUp') {
+                        event.preventDefault()
+                        setSelectedIndex((prev) => (prev - 1 + students.length) % students.length)
+                      } else if (event.key === 'Enter') {
+                        event.preventDefault()
+                        const targetStudent = students[selectedIndex] ?? students[0]
+                        if (targetStudent && !targetStudent.checkedIn) {
+                          void checkIn(targetStudent.id)
+                        }
+                      }
+                    }
+                  }}
                   placeholder="نام دانش‌آموز یا شماره موبایل را وارد کنید... (کلید / برای جست‌وجو)"
-                  className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-base text-foreground focus:outline-2 focus:outline-accent"
+                  className="w-full rounded-lg border border-border bg-surface pr-10 pl-4 py-2.5 text-base text-foreground focus:outline-2 focus:outline-accent"
                   required
                 />
               </div>
@@ -282,8 +310,10 @@ export function Reception() {
                   setModalError('')
                   setCreating(true)
                 }}
+                className="flex items-center gap-1.5"
               >
-                + دانش‌آموز جدید (مهمان)
+                <UserPlusIcon className="size-4" />
+                <span>دانش‌آموز جدید (مهمان)</span>
               </Button>
 
               {!sessionId && (
@@ -310,60 +340,26 @@ export function Reception() {
       )}
 
       {students.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <div className="text-xs font-semibold text-muted uppercase">
-            نتایج جست‌وجو ({students.length} مورد)
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-muted">
+            <span>نتایج جست‌وجو ({students.length} مورد)</span>
+            <span className="hidden sm:inline font-normal">
+              با کلیدهای ↑ و ↓ جابه‌جا شوید و با Enter حضور را ثبت کنید
+            </span>
           </div>
 
-          {students.map((student) => {
-            const isDifferentSession =
-              student.assignedSessionId && student.assignedSessionId !== Number(sessionId)
-
-            return (
-              <Card key={student.id} className="border border-border bg-surface shadow-xs hover:border-accent/40 transition-colors">
-                <Card.Content className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2.5">
-                      <strong className="text-lg font-bold text-foreground">
-                        {student.firstName} {student.lastName}
-                      </strong>
-                      <Chip variant="soft" color="default">
-                        {student.grade ? `پایه ${student.grade}` : 'پایه نامشخص'}
-                      </Chip>
-                      {student.checkedIn && (
-                        <Chip variant="soft" color="success">
-                          حضور ثبت شده
-                        </Chip>
-                      )}
-                    </div>
-
-                    {student.phone && (
-                      <span className="text-sm text-muted font-mono" dir="ltr">
-                        <bdi>{student.phone}</bdi>
-                      </span>
-                    )}
-
-                    {isDifferentSession && (
-                      <div className="mt-1 text-xs text-warning bg-warning/10 border border-warning/20 px-2.5 py-1 rounded-md">
-                        توجه: دعوت این دانش‌آموز برای سانس «{student.assignedSessionTitle || 'سانس دیگری'}» بوده است.
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 sm:self-center">
-                    <Button
-                      variant={student.checkedIn ? 'outline' : 'primary'}
-                      size="md"
-                      isDisabled={busy || student.checkedIn || !sessionId}
-                      onPress={() => checkIn(student.id)}
-                    >
-                      {student.checkedIn ? 'قبلاً پذیرش شده' : 'ثبت حضور'}
-                    </Button>
-                  </div>
-                </Card.Content>
-              </Card>
-            )
-          })}
+          <div className="flex flex-col gap-2">
+            {students.map((student, index) => (
+              <ReceptionRow
+                key={student.id}
+                student={student}
+                currentSessionId={sessionId}
+                isSelected={index === selectedIndex}
+                busy={busy}
+                onCheckIn={checkIn}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -385,33 +381,49 @@ export function Reception() {
 
               {/* 409 Duplicate candidates picker */}
               {candidates.length > 0 && (
-                <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex flex-col gap-2">
-                  <span className="text-xs font-semibold text-warning">
-                    دانش‌آموز(انی) با این نام یا شماره از قبل وجود دارد:
-                  </span>
+                <div className="bg-warning/10 border border-warning/30 rounded-lg p-3.5 flex flex-col gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <DangerCircleIcon className="size-4 text-warning shrink-0" />
+                    <span className="text-xs font-semibold text-warning">
+                      دانش‌آموز(انی) با این نام یا شماره تماس از قبل در سامانه وجود دارد:
+                    </span>
+                  </div>
+
                   <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
                     {candidates.map((cand) => (
                       <div
                         key={cand.id}
-                        className="flex items-center justify-between gap-2 p-2 rounded bg-surface border border-border text-xs"
+                        className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-surface border border-border text-xs"
                       >
                         <div>
-                          <strong>
+                          <strong className="text-foreground">
                             {cand.firstName} {cand.lastName}
                           </strong>
-                          {cand.phone && <span className="text-muted block dir-ltr">{cand.phone}</span>}
+                          {cand.grade && <span className="text-muted mr-1.5">(پایه {cand.grade})</span>}
+                          {cand.phone && (
+                            <span className="text-muted block text-xs font-mono" dir="ltr">
+                              <bdi>{cand.phone}</bdi>
+                            </span>
+                          )}
                         </div>
                         <Button
                           size="sm"
                           variant="primary"
+                          isDisabled={busy}
                           onPress={() => {
                             void checkIn(cand.id)
                           }}
+                          className="flex items-center gap-1.5"
                         >
-                          ثبت حضور همین فرد
+                          <UserCheckIcon className="size-3.5" />
+                          <span>ثبت حضور همین فرد</span>
                         </Button>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="bg-surface/80 rounded-md p-2.5 border border-border/60 text-xs text-muted leading-relaxed">
+                    💡 <strong>تشابه اسمی واقعی؟</strong> اگر این شخص مهمان جدیدی است و تنها تشابه اسمی دارد، لطفاً در فیلد نام‌خانوادگی مشخصه تمایز (مانند نام پدر یا پسوند) را درج فرمایید تا در سامانه تفکیک شود.
                   </div>
                 </div>
               )}
@@ -441,24 +453,17 @@ export function Reception() {
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="walkin-grade" className="text-sm font-medium text-foreground">
-                    پایه تحصیلی (اختیاری)
-                  </label>
-                  <select
-                    id="walkin-grade"
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-2 focus:outline-accent"
-                    value={form.grade}
-                    onChange={(event) => setForm({ ...form, grade: event.target.value })}
-                  >
-                    <option value="">نامشخص</option>
-                    {[1, 2, 3, 4, 5, 6].map((grade) => (
-                      <option key={grade} value={grade}>
-                        پایه {grade}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <PanelSelect
+                  id="walkin-grade"
+                  label="پایه تحصیلی (اختیاری)"
+                  value={form.grade}
+                  placeholder="نامشخص"
+                  options={[1, 2, 3, 4, 5, 6].map((grade) => ({
+                    value: String(grade),
+                    label: `پایه ${grade}`,
+                  }))}
+                  onChange={(val) => setForm({ ...form, grade: val })}
+                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Field
@@ -495,8 +500,10 @@ export function Reception() {
                 type="submit"
                 variant="primary"
                 isDisabled={busy || !sessionId || !form.firstName.trim() || !form.lastName.trim()}
+                className="flex items-center gap-1.5"
               >
-                {busy ? 'در حال ثبت…' : 'ثبت دانش‌آموز و حضور'}
+                <UserPlusIcon className="size-4" />
+                <span>{busy ? 'در حال ثبت…' : 'ثبت دانش‌آموز و حضور'}</span>
               </Button>
             </Modal.Footer>
           </Modal.Dialog>

@@ -1,9 +1,10 @@
-import { createFileRoute, Outlet, redirect, useRouter } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet, redirect, useRouter } from '@tanstack/react-router'
 import { Button, Chip } from '@heroui/react'
 import { useState } from 'react'
 import { isOperationalRole, session } from '../lib/auth'
 import { errorMessage, request } from '../lib/api'
 import { ErrorNotice } from '../components/ui'
+import { LogoutIcon } from '../components/icons'
 
 const ROLE_LABELS: Record<string, string> = {
   inviter: 'مسئول دعوت',
@@ -41,9 +42,9 @@ function Shell() {
       <header className="border-b border-border bg-surface/80 sticky top-0 z-30 backdrop-blur-md px-4 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <a href="/" aria-label="صفحه اصلی رصد" className="flex items-center gap-2">
+            <Link to="/" aria-label="صفحه اصلی رصد" className="flex items-center gap-2">
               <span className="font-extrabold text-xl tracking-tight text-foreground">رصد</span>
-            </a>
+            </Link>
             <Chip color="accent" variant="soft">
               {roleLabel}
             </Chip>
@@ -72,6 +73,7 @@ function Shell() {
                 }
               }}
             >
+              <LogoutIcon className="size-4" />
               {busy ? 'در حال خروج…' : 'خروج'}
             </Button>
           </div>

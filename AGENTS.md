@@ -32,6 +32,11 @@ Then read the relevant specs:
 - Approved task panels are `/invite`, `/teacher`, and `/reception`.
 - pnpm monorepo: `apps/cms` owns Payload/Next and server rules; `apps/panel` is one Vite SPA for all custom panels; `packages/contracts` shares generated API types.
 - Custom panels use React 19+, TanStack Router file-based routes, HeroUI v3, Tailwind CSS v4, and the Payload REST SDK.
+- Panel icons use `@solar-icons/react` (`linear` family) via tree-shakable subpath imports (`@solar-icons/react/linear/<kebab-name>`); root barrel imports are banned for bundle and HMR performance.
+- Panel UI mandates Vazirmatn font with `font-display: swap`, WCAG AA contrast (minimum 4.5:1), and RTL-first geometry.
+- Reception search is keyboard-first: Enter checks in single matches, arrow keys navigate multiple matches, and focus returns to search immediately.
+- Invitation calling UI displays a live claim countdown with graceful expiration freeze, preserving operator notes on re-claim.
+- Teacher roster enforces live client filtering and state rollback on network mutation errors.
 - Prefer same-origin production routing; Vite proxies `/api` in development.
 - One auth-enabled `users` collection serves Admin and custom-panel identities.
 - Custom-panel users authenticate with phone number + password; the phone is stored as normalized auth `username`.

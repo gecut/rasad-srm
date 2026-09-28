@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react'
-import { Alert, Card, Chip, Input, Label, TextArea, TextField } from '@heroui/react'
+import { Alert, Chip, Input, Label, TextArea, TextField } from '@heroui/react'
 
 export function Field({
   label,
@@ -99,28 +98,6 @@ export function SuccessNotice({
         <Alert.Description>{message}</Alert.Description>
       </Alert.Content>
     </Alert>
-  )
-}
-
-export function Section({
-  title,
-  subtitle,
-  children,
-  className = '',
-}: {
-  title: string
-  subtitle?: string
-  children: ReactNode
-  className?: string
-}) {
-  return (
-    <Card className={`my-3 border border-border bg-surface ${className}`}>
-      <Card.Header>
-        <Card.Title className="text-lg font-semibold">{title}</Card.Title>
-        {subtitle && <Card.Description className="text-sm text-muted">{subtitle}</Card.Description>}
-      </Card.Header>
-      <Card.Content>{children}</Card.Content>
-    </Card>
   )
 }
 

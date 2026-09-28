@@ -3,6 +3,14 @@ import { Alert, Button, Card, Chip, Modal, Tabs } from '@heroui/react'
 import type { TeacherRoster } from '@rasad/contracts'
 import { errorMessage, request } from '../lib/api'
 import { ErrorNotice, SuccessNotice, TextareaField } from '../components/ui'
+import {
+  CheckCircleIcon,
+  MagnifierIcon,
+  StopwatchIcon,
+  TrashIcon,
+} from '../components/icons'
+import { TeacherStudentRow } from './_teacher-student-row'
+import { PanelSelect } from '../components/panel-select'
 
 const STATUS_LABELS: Record<string, string> = {
   referred_to_teacher: 'به مدرس معرفی شده',
@@ -17,6 +25,7 @@ export function Teacher() {
   const [roster, setRoster] = useState<TeacherRoster>()
   const [classId, setClassId] = useState('')
   const [filter, setFilter] = useState('referred_to_teacher')
+  const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [pending, setPending] = useState<{
@@ -46,33 +55,38 @@ export function Teacher() {
     setBusy(true)
     setError('')
     setSuccess('')
+    const previousRoster = roster // Snapshot for rollback on failure
+    // Optimistic update of local roster
+    setRoster(
+      (current) =>
+        current && {
+          classes: current.classes.map((item) => ({
+            ...item,
+            students: item.students.map((student) =>
+              student.id === pending.studentId
+                ? { ...student, lifecycleStatus: pending.status }
+                : student,
+            ),
+          })),
+        },
+    )
     try {
       await request('/panel/teacher/status', {
         studentId: pending.studentId,
         status: pending.status,
         reason,
       })
-      // Optimistic update of local roster
-      setRoster(
-        (current) =>
-          current && {
-            classes: current.classes.map((item) => ({
-              ...item,
-              students: item.students.map((student) =>
-                student.id === pending.studentId
-                  ? { ...student, lifecycleStatus: pending.status }
-                  : student,
-              ),
-            })),
-          },
-      )
       const actionName = pending.status === 'absorbed' ? 'جذب' : 'حذف'
       setSuccess(`وضعیت دانش‌آموز با موفقیت به «${actionName} شده» تغییر یافت.`)
       setPending(null)
       setReason('')
       await load()
     } catch (err) {
-      setError(errorMessage(err))
+      // Revert optimistic update on failure!
+      if (previousRoster) {
+        setRoster(previousRoster)
+      }
+      setError(`خطا در تغییر وضعیت: ${errorMessage(err)}. تغییرات به حالت قبل بازگردانده شد.`)
     } finally {
       setBusy(false)
     }
@@ -87,8 +101,14 @@ export function Teacher() {
   const removedCount =
     selectedClass?.students.filter((s) => s.lifecycleStatus === 'removed').length || 0
 
-  const filteredStudents =
-    selectedClass?.students.filter((student) => student.lifecycleStatus === filter) || []
+  const filteredStudents = (selectedClass?.students || []).filter((student) => {
+    if (student.lifecycleStatus !== filter) return false
+    if (!searchQuery.trim()) return true
+    const q = searchQuery.trim().toLowerCase()
+    const fullName = `${student.firstName} ${student.lastName}`.toLowerCase()
+    const mobile = student.mobile || ''
+    return fullName.includes(q) || mobile.includes(q)
+  })
 
   return (
     <div className="flex flex-col gap-6">
@@ -129,24 +149,18 @@ export function Teacher() {
           )}
 
           {roster && roster.classes.length > 1 && (
-            <div className="flex flex-col gap-1.5 max-w-sm">
-              <label htmlFor="teacher-class-select" className="text-sm font-medium text-foreground">
-                انتخاب کلاس
-              </label>
-              <select
-                id="teacher-class-select"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-2 focus:outline-accent"
-                value={classId}
-                disabled={busy || Boolean(pending)}
-                onChange={(event) => setClassId(event.target.value)}
-              >
-                {roster.classes.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <PanelSelect
+              id="teacher-class-select"
+              label="انتخاب کلاس"
+              className="max-w-sm"
+              value={classId}
+              disabled={busy || Boolean(pending)}
+              options={roster.classes.map((item) => ({
+                value: String(item.id),
+                label: item.title,
+              }))}
+              onChange={(val) => setClassId(val)}
+            />
           )}
 
           {roster && roster.classes.length === 1 && (
@@ -163,39 +177,58 @@ export function Teacher() {
       {/* Tabs for Lifecycle Statuses */}
       {selectedClass && (
         <div className="flex flex-col gap-4">
-          <Tabs selectedKey={filter} onSelectionChange={(key) => setFilter(String(key))}>
-            <Tabs.ListContainer>
-              <Tabs.List aria-label="فیلتر وضعیت دانش‌آموزان">
-                <Tabs.Tab id="referred_to_teacher">
-                  <span className="flex items-center gap-2">
-                    به مدرس معرفی شده
-                    {pendingCount > 0 && (
-                      <Chip color="accent" size="sm" variant="soft">
-                        {pendingCount}
-                      </Chip>
-                    )}
-                  </span>
-                  <Tabs.Indicator />
-                </Tabs.Tab>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <Tabs selectedKey={filter} onSelectionChange={(key) => setFilter(String(key))}>
+              <Tabs.ListContainer>
+                <Tabs.List aria-label="فیلتر وضعیت دانش‌آموزان">
+                  <Tabs.Tab id="referred_to_teacher">
+                    <span className="flex items-center gap-1.5">
+                      <StopwatchIcon className="size-4" />
+                      <span>به مدرس معرفی شده</span>
+                      {pendingCount > 0 && (
+                        <Chip color="accent" size="sm" variant="soft">
+                          {pendingCount}
+                        </Chip>
+                      )}
+                    </span>
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
 
-                <Tabs.Tab id="absorbed">
-                  <span className="flex items-center gap-2">
-                    جذب شده
-                    <span className="text-xs text-muted">({absorbedCount})</span>
-                  </span>
-                  <Tabs.Indicator />
-                </Tabs.Tab>
+                  <Tabs.Tab id="absorbed">
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircleIcon className="size-4 text-success" />
+                      <span>جذب شده</span>
+                      <span className="text-xs text-muted">({absorbedCount})</span>
+                    </span>
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
 
-                <Tabs.Tab id="removed">
-                  <span className="flex items-center gap-2">
-                    حذف شده
-                    <span className="text-xs text-muted">({removedCount})</span>
-                  </span>
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
+                  <Tabs.Tab id="removed">
+                    <span className="flex items-center gap-1.5">
+                      <TrashIcon className="size-4 text-danger" />
+                      <span>حذف شده</span>
+                      <span className="text-xs text-muted">({removedCount})</span>
+                    </span>
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
+            </Tabs>
+
+            {/* Live Client Filter Input */}
+            <div className="relative flex items-center w-full sm:w-64">
+              <div className="absolute right-3 pointer-events-none flex items-center text-muted">
+                <MagnifierIcon className="size-4" />
+              </div>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="جست‌وجوی نام یا موبایل..."
+                className="w-full rounded-lg border border-border bg-surface pr-9 pl-3 py-1.5 text-sm text-foreground focus:outline-2 focus:outline-accent"
+              />
+            </div>
+          </div>
 
           {/* Student Roster List */}
           {filteredStudents.length === 0 ? (
@@ -204,82 +237,34 @@ export function Teacher() {
               <Alert.Content>
                 <Alert.Title>فهرست خالی</Alert.Title>
                 <Alert.Description>
-                  دانش‌آموزی با وضعیت «{STATUS_LABELS[filter]}» در این کلاس وجود ندارد.
+                  {searchQuery.trim()
+                    ? 'هیچ دانش‌آموزی با این عبارت در وضعیت جاری یافت نشد.'
+                    : `دانش‌آموزی با وضعیت «${STATUS_LABELS[filter]}» در این کلاس وجود ندارد.`}
                 </Alert.Description>
               </Alert.Content>
             </Alert>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {filteredStudents.map((student) => (
-                <Card key={student.id} className="border border-border bg-surface shadow-xs">
-                  <Card.Content className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2.5">
-                        <strong className="text-lg font-bold text-foreground">
-                          {student.firstName} {student.lastName}
-                        </strong>
-                        <Chip
-                          color={
-                            student.lifecycleStatus === 'absorbed'
-                              ? 'success'
-                              : student.lifecycleStatus === 'referred_to_teacher'
-                                ? 'accent'
-                                : 'default'
-                          }
-                          variant="soft"
-                        >
-                          {STATUS_LABELS[student.lifecycleStatus] || student.lifecycleStatus}
-                        </Chip>
-                      </div>
-
-                      {student.mobile && (
-                        <a
-                          href={`tel:${student.mobile}`}
-                          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors font-mono"
-                          dir="ltr"
-                        >
-                          <bdi>{student.mobile}</bdi>
-                        </a>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 sm:self-center">
-                      {student.lifecycleStatus === 'referred_to_teacher' && (
-                        <Button
-                          variant="primary"
-                          size="md"
-                          isDisabled={busy || Boolean(pending)}
-                          onPress={() =>
-                            setPending({
-                              studentId: student.id,
-                              status: 'absorbed',
-                              name: `${student.firstName} ${student.lastName}`,
-                            })
-                          }
-                        >
-                          تأیید جذب
-                        </Button>
-                      )}
-
-                      {['referred_to_teacher', 'absorbed'].includes(student.lifecycleStatus) && (
-                        <Button
-                          variant="outline"
-                          size="md"
-                          isDisabled={busy || Boolean(pending)}
-                          onPress={() =>
-                            setPending({
-                              studentId: student.id,
-                              status: 'removed',
-                              name: `${student.firstName} ${student.lastName}`,
-                            })
-                          }
-                        >
-                          حذف از روند
-                        </Button>
-                      )}
-                    </div>
-                  </Card.Content>
-                </Card>
+                <TeacherStudentRow
+                  key={student.id}
+                  student={student}
+                  busy={busy || Boolean(pending)}
+                  onAbsorb={(st) =>
+                    setPending({
+                      studentId: st.id,
+                      status: 'absorbed',
+                      name: `${st.firstName} ${st.lastName}`,
+                    })
+                  }
+                  onRemove={(st) =>
+                    setPending({
+                      studentId: st.id,
+                      status: 'removed',
+                      name: `${st.firstName} ${st.lastName}`,
+                    })
+                  }
+                />
               ))}
             </div>
           )}
