@@ -39,6 +39,8 @@ yarn-error.log*
 next-env.d.ts
 
 .env
+test.env
+apps/cms/test.env
 
 /media
 
