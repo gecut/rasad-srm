@@ -44,12 +44,20 @@ export function Reception() {
     }
   }, [])
 
-  // Auto-focus search input with '/' or 'F2'
+  // Auto-focus search input with '/' or 'F2' (guarded when modal is open or typing in form controls)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (creating) return
       if (event.key === '/' || event.key === 'F2') {
         const target = event.target as HTMLElement | null
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        if (
+          target &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.tagName === 'SELECT' ||
+            target.tagName === 'BUTTON' ||
+            target.isContentEditable)
+        ) {
           return
         }
         event.preventDefault()
@@ -58,7 +66,7 @@ export function Reception() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [creating])
 
   const sessions = context?.ceremonies.find((item) => String(item.id) === ceremony)?.sessions || []
   const activeSession = sessions.find((item) => String(item.id) === sessionId)
@@ -399,7 +407,11 @@ export function Reception() {
                           <strong>
                             {cand.firstName} {cand.lastName}
                           </strong>
-                          {cand.phone && <span className="text-muted block dir-ltr">{cand.phone}</span>}
+                          {cand.phone && (
+                            <span className="text-muted block text-xs" dir="ltr">
+                              <bdi>{cand.phone}</bdi>
+                            </span>
+                          )}
                         </div>
                         <Button
                           size="sm"
