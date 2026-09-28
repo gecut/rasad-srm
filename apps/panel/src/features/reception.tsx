@@ -4,6 +4,8 @@ import type { PanelContext, ReceptionSearch, ReceptionStudent } from '@rasad/con
 import { APIError, errorMessage, normalizePhone, request } from '../lib/api'
 import { ErrorNotice, Field, SuccessNotice } from '../components/ui'
 import { formatDate } from '../lib/date'
+import { MagnifierIcon, UserPlusIcon } from '../components/icons'
+import { ReceptionRow } from './_reception-row'
 
 const emptyForm = {
   firstName: '',
@@ -20,6 +22,7 @@ export function Reception() {
   const [sessionId, setSessionId] = useState('')
   const [query, setQuery] = useState('')
   const [students, setStudents] = useState<ReceptionStudent[]>([])
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const [searched, setSearched] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [creating, setCreating] = useState(false)
@@ -73,6 +76,7 @@ export function Reception() {
 
   function resetSearch() {
     setStudents([])
+    setSelectedIndex(0)
     setSearched(false)
     setSuccess('')
     setError('')
@@ -92,6 +96,7 @@ export function Reception() {
         })}`,
       )
       setStudents(data.students)
+      setSelectedIndex(0)
       setSearched(true)
     } catch (err) {
       setError(errorMessage(err))
@@ -103,6 +108,7 @@ export function Reception() {
   function completed() {
     setQuery('')
     setStudents([])
+    setSelectedIndex(0)
     setSearched(false)
     setForm(emptyForm)
     setCreating(false)
@@ -257,14 +263,37 @@ export function Reception() {
                 نام یا شماره موبایل دانش‌آموز
               </label>
               <div className="relative flex items-center">
+                <div className="absolute right-3 pointer-events-none flex items-center text-muted">
+                  <MagnifierIcon className="size-5" />
+                </div>
                 <input
                   id="reception-search-input"
                   ref={searchRef}
                   type="search"
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={(event) => {
+                    setQuery(event.target.value)
+                    if (searched) setSearched(false)
+                  }}
+                  onKeyDown={(event) => {
+                    if (searched && students.length > 0) {
+                      if (event.key === 'ArrowDown') {
+                        event.preventDefault()
+                        setSelectedIndex((prev) => (prev + 1) % students.length)
+                      } else if (event.key === 'ArrowUp') {
+                        event.preventDefault()
+                        setSelectedIndex((prev) => (prev - 1 + students.length) % students.length)
+                      } else if (event.key === 'Enter') {
+                        event.preventDefault()
+                        const targetStudent = students[selectedIndex] ?? students[0]
+                        if (targetStudent && !targetStudent.checkedIn) {
+                          void checkIn(targetStudent.id)
+                        }
+                      }
+                    }
+                  }}
                   placeholder="نام دانش‌آموز یا شماره موبایل را وارد کنید... (کلید / برای جست‌وجو)"
-                  className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-base text-foreground focus:outline-2 focus:outline-accent"
+                  className="w-full rounded-lg border border-border bg-surface pr-10 pl-4 py-2.5 text-base text-foreground focus:outline-2 focus:outline-accent"
                   required
                 />
               </div>
@@ -290,8 +319,10 @@ export function Reception() {
                   setModalError('')
                   setCreating(true)
                 }}
+                className="flex items-center gap-1.5"
               >
-                + دانش‌آموز جدید (مهمان)
+                <UserPlusIcon className="size-4" />
+                <span>دانش‌آموز جدید (مهمان)</span>
               </Button>
 
               {!sessionId && (
@@ -318,60 +349,26 @@ export function Reception() {
       )}
 
       {students.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <div className="text-xs font-semibold text-muted uppercase">
-            نتایج جست‌وجو ({students.length} مورد)
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-muted">
+            <span>نتایج جست‌وجو ({students.length} مورد)</span>
+            <span className="hidden sm:inline font-normal">
+              با کلیدهای ↑ و ↓ جابه‌جا شوید و با Enter حضور را ثبت کنید
+            </span>
           </div>
 
-          {students.map((student) => {
-            const isDifferentSession =
-              student.assignedSessionId && student.assignedSessionId !== Number(sessionId)
-
-            return (
-              <Card key={student.id} className="border border-border bg-surface shadow-xs hover:border-accent/40 transition-colors">
-                <Card.Content className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2.5">
-                      <strong className="text-lg font-bold text-foreground">
-                        {student.firstName} {student.lastName}
-                      </strong>
-                      <Chip variant="soft" color="default">
-                        {student.grade ? `پایه ${student.grade}` : 'پایه نامشخص'}
-                      </Chip>
-                      {student.checkedIn && (
-                        <Chip variant="soft" color="success">
-                          حضور ثبت شده
-                        </Chip>
-                      )}
-                    </div>
-
-                    {student.phone && (
-                      <span className="text-sm text-muted font-mono" dir="ltr">
-                        <bdi>{student.phone}</bdi>
-                      </span>
-                    )}
-
-                    {isDifferentSession && (
-                      <div className="mt-1 text-xs text-warning bg-warning/10 border border-warning/20 px-2.5 py-1 rounded-md">
-                        توجه: دعوت این دانش‌آموز برای سانس «{student.assignedSessionTitle || 'سانس دیگری'}» بوده است.
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 sm:self-center">
-                    <Button
-                      variant={student.checkedIn ? 'outline' : 'primary'}
-                      size="md"
-                      isDisabled={busy || student.checkedIn || !sessionId}
-                      onPress={() => checkIn(student.id)}
-                    >
-                      {student.checkedIn ? 'قبلاً پذیرش شده' : 'ثبت حضور'}
-                    </Button>
-                  </div>
-                </Card.Content>
-              </Card>
-            )
-          })}
+          <div className="flex flex-col gap-2">
+            {students.map((student, index) => (
+              <ReceptionRow
+                key={student.id}
+                student={student}
+                currentSessionId={sessionId}
+                isSelected={index === selectedIndex}
+                busy={busy}
+                onCheckIn={checkIn}
+              />
+            ))}
+          </div>
         </div>
       )}
 
