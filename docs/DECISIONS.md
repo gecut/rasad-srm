@@ -144,3 +144,11 @@ Deploy `apps/panel` on `ghcr.io/gecut/nginx/spa:1.0.0` as a pure static SPA with
    - Use explicit matrix definitions with individual build-args and `fail-fast: false`.
    - Set `provenance: false` to produce clean single-platform AMD64 manifests for Dokploy without attestation bloat.
    - Publish `latest`, `main`, and semantic version tags in addition to full SHA tags.
+
+## D035 — Panel Design System, Performance Solar Icons, and Operational UX Invariants
+
+1. **Standardized Icon Library & Performance:** Panel UI standardizes on `@solar-icons/react` (`linear` family) via direct tree-shakable subpath imports (`@solar-icons/react/linear/<kebab-name>`). Root barrel imports are banned to preserve small bundle size and instant Vite HMR. All icons share standardized 1.5px stroke and round geometries.
+2. **Typography & Contrast:** Mandate preloaded Vazirmatn webfont with `font-display: swap` across all panel routes and calibrate `--muted` text token to meet WCAG AA minimum 4.5:1 contrast.
+3. **High-Throughput Reception UX:** Reception search is 100% keyboard-first with compact table/row cards (~48px). A single search match checks in immediately on `Enter`. Multiple matches navigate via `↑` / `↓` arrow keys and check in on `Enter`. Check-in immediately clears and returns focus to search. Walk-in 409 conflict provides candidate check-in and clear namesake disambiguation guidance.
+4. **Invitation Live Timer & Note Preservation:** Invitation screen renders a live countdown badge (`MM:SS`) with 3-phase color transitions (normal, warning, danger pulse). Claim expiration safely freezes outcome actions while preserving entered notes and offering a one-click re-claim action. Hotkeys (1-4) strictly ignore form controls.
+5. **Teacher Roster & Form Controls:** Teacher roster features live client-side name/phone filtering, compact single-line student rows, and optimistic update state rollback on network failures. Ceremony and Session dropdowns replace raw HTML `<select>` elements with accessible, theme-consistent `PanelSelect` components.
