@@ -31,6 +31,7 @@ WORKDIR /app
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1
 COPY --from=build --chown=node:node /app/apps/cms/.next/standalone ./
 COPY --from=build --chown=node:node /app/apps/cms/.next/static ./apps/cms/.next/static
+RUN mkdir -p /app/apps/cms/media/imports /app/apps/cms/media/exports /app/media && chown -R node:node /app/apps/cms/media /app/media
 USER node
 EXPOSE 3000
 CMD ["node", "apps/cms/server.js"]

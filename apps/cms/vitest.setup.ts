@@ -34,6 +34,6 @@ beforeAll(async () => {
   const { default: config } = await import('./src/payload.config')
   const payload = await getPayload({ config })
   await payload.db.drizzle.execute(
-    sql`TRUNCATE users, teachers, classes, students, follow_ups, ceremonies, sessions, invitations, invitation_claims, session_checkins, payload_jobs, payload_locked_documents, payload_preferences RESTART IDENTITY CASCADE`,
+    sql`TRUNCATE users, teachers, classes, students, follow_ups, ceremonies, sessions, invitations, invitation_claims, session_checkins, exports, imports, payload_jobs, payload_locked_documents, payload_preferences RESTART IDENTITY CASCADE`,
   )
 }, 30000)

@@ -19,6 +19,7 @@ import { Sessions } from './collections/Sessions'
 import { Invitations } from './collections/Invitations'
 import { InvitationClaims } from './collections/InvitationClaims'
 import { sendSmsTask } from './domain/sms/sendSmsTask'
+import { configuredImportExportPlugin } from './integrations/importExport'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -104,5 +105,5 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [],
+  plugins: [configuredImportExportPlugin],
 })
