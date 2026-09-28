@@ -4,7 +4,7 @@ import type { PanelContext, ReceptionSearch, ReceptionStudent } from '@rasad/con
 import { APIError, errorMessage, normalizePhone, request } from '../lib/api'
 import { ErrorNotice, Field, SuccessNotice } from '../components/ui'
 import { formatDate } from '../lib/date'
-import { MagnifierIcon, UserPlusIcon } from '../components/icons'
+import { DangerCircleIcon, MagnifierIcon, UserCheckIcon, UserPlusIcon } from '../components/icons'
 import { ReceptionRow } from './_reception-row'
 
 const emptyForm = {
@@ -390,22 +390,27 @@ export function Reception() {
 
               {/* 409 Duplicate candidates picker */}
               {candidates.length > 0 && (
-                <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex flex-col gap-2">
-                  <span className="text-xs font-semibold text-warning">
-                    دانش‌آموز(انی) با این نام یا شماره از قبل وجود دارد:
-                  </span>
+                <div className="bg-warning/10 border border-warning/30 rounded-lg p-3.5 flex flex-col gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <DangerCircleIcon className="size-4 text-warning shrink-0" />
+                    <span className="text-xs font-semibold text-warning">
+                      دانش‌آموز(انی) با این نام یا شماره تماس از قبل در سامانه وجود دارد:
+                    </span>
+                  </div>
+
                   <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
                     {candidates.map((cand) => (
                       <div
                         key={cand.id}
-                        className="flex items-center justify-between gap-2 p-2 rounded bg-surface border border-border text-xs"
+                        className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-surface border border-border text-xs"
                       >
                         <div>
-                          <strong>
+                          <strong className="text-foreground">
                             {cand.firstName} {cand.lastName}
                           </strong>
+                          {cand.grade && <span className="text-muted mr-1.5">(پایه {cand.grade})</span>}
                           {cand.phone && (
-                            <span className="text-muted block text-xs" dir="ltr">
+                            <span className="text-muted block text-xs font-mono" dir="ltr">
                               <bdi>{cand.phone}</bdi>
                             </span>
                           )}
@@ -413,14 +418,21 @@ export function Reception() {
                         <Button
                           size="sm"
                           variant="primary"
+                          isDisabled={busy}
                           onPress={() => {
                             void checkIn(cand.id)
                           }}
+                          className="flex items-center gap-1.5"
                         >
-                          ثبت حضور همین فرد
+                          <UserCheckIcon className="size-3.5" />
+                          <span>ثبت حضور همین فرد</span>
                         </Button>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="bg-surface/80 rounded-md p-2.5 border border-border/60 text-xs text-muted leading-relaxed">
+                    💡 <strong>تشابه اسمی واقعی؟</strong> اگر این شخص مهمان جدیدی است و تنها تشابه اسمی دارد، لطفاً در فیلد نام‌خانوادگی مشخصه تمایز (مانند نام پدر یا پسوند) را درج فرمایید تا در سامانه تفکیک شود.
                   </div>
                 </div>
               )}
@@ -504,8 +516,10 @@ export function Reception() {
                 type="submit"
                 variant="primary"
                 isDisabled={busy || !sessionId || !form.firstName.trim() || !form.lastName.trim()}
+                className="flex items-center gap-1.5"
               >
-                {busy ? 'در حال ثبت…' : 'ثبت دانش‌آموز و حضور'}
+                <UserPlusIcon className="size-4" />
+                <span>{busy ? 'در حال ثبت…' : 'ثبت دانش‌آموز و حضور'}</span>
               </Button>
             </Modal.Footer>
           </Modal.Dialog>
