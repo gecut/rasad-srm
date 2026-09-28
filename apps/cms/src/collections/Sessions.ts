@@ -8,6 +8,7 @@ export const Sessions: CollectionConfig = {
   labels: { singular: 'سانس', plural: 'سانس‌ها' },
   admin: {
     group: 'رویدادها',
+    useAsTitle: 'title',
     defaultColumns: ['ceremony', 'title', 'startsAt', 'endsAt', 'status'],
   },
   access: {

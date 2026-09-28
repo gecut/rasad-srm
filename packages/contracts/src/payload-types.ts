@@ -236,21 +236,32 @@ export interface Class {
  */
 export interface Student {
   id: number;
-  origin: 'admin' | 'reception_walk_in' | 'import';
   firstName: string;
   lastName: string;
+  origin: 'admin' | 'reception_walk_in' | 'import';
   mobile?: string | null;
-  motherMobile?: string | null;
   fatherMobile?: string | null;
+  motherMobile?: string | null;
   landline?: string | null;
-  neighborhood?: (number | null) | Neighborhood;
-  address?: string | null;
-  referrer?: string | null;
-  notes?: string | null;
   /**
    * پایه تحصیلی فعلی در مدرسه (۱ تا ۶)
    */
   grade?: number | null;
+  neighborhood?: (number | null) | Neighborhood;
+  referrer?: string | null;
+  address?: string | null;
+  /**
+   * توضیحات تکمیلی و نکات مهم درباره وضعیت دانش‌آموز
+   */
+  notes?: string | null;
+  /**
+   * لیست تمام مراسم‌ها و سانس‌هایی که دانش‌آموز در آن‌ها پذیرش شده است (منبع واحد حقیقت).
+   */
+  checkins?: {
+    docs?: (number | SessionCheckin)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   /**
    * پشت‌خطی بعدی مستقل از چرخه عمر است.
    */
@@ -276,11 +287,9 @@ export interface Student {
    * توسط سیستم پس از تایید تثبیت ثبت می‌شود.
    */
   stabilizedAt?: string | null;
-  checkins?: {
-    docs?: (number | SessionCheckin)[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
-  };
+  /**
+   * تاریخچه تماس‌های اپراتورهای دعوت و نتیجه هر تماس.
+   */
   invitations?: {
     docs?: (number | Invitation)[];
     hasNextPage?: boolean;
@@ -744,18 +753,19 @@ export interface ClassesSelect<T extends boolean = true> {
  * via the `definition` "students_select".
  */
 export interface StudentsSelect<T extends boolean = true> {
-  origin?: T;
   firstName?: T;
   lastName?: T;
+  origin?: T;
   mobile?: T;
-  motherMobile?: T;
   fatherMobile?: T;
+  motherMobile?: T;
   landline?: T;
-  neighborhood?: T;
-  address?: T;
-  referrer?: T;
-  notes?: T;
   grade?: T;
+  neighborhood?: T;
+  referrer?: T;
+  address?: T;
+  notes?: T;
+  checkins?: T;
   readinessStatus?: T;
   currentClass?: T;
   lifecycleStatus?: T;
@@ -763,7 +773,6 @@ export interface StudentsSelect<T extends boolean = true> {
   referredAt?: T;
   absorbedAt?: T;
   stabilizedAt?: T;
-  checkins?: T;
   invitations?: T;
   updatedAt?: T;
   createdAt?: T;

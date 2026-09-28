@@ -28,14 +28,30 @@ Payload Admin remains the default management interface. Do not build a parallel 
 
 Default list columns:
 
-- full name;
-- grade when known;
-- lifecycle;
-- readiness;
-- current Class;
-- updated time.
+- full name (`lastName`, `firstName`);
+- grade when known (`grade`);
+- neighborhood (`neighborhood`);
+- lifecycle status (`lifecycleStatus`);
+- readiness status (`readinessStatus`);
+- current Class (`currentClass`);
+- updated time (`updatedAt`).
 
-Filters should prioritize lifecycle, readiness, current Class, grade, and origin.
+Searchable fields in list view:
+- `firstName`, `lastName`, `mobile`, `fatherMobile`, `motherMobile`, `landline`, `referrer`.
+
+Edit form tabs structure:
+- **Tab 1: مشخصات فردی و ارتباطی (Personal & Contact)**:
+  - Row 1: `firstName` (33%), `lastName` (33%), `origin` (34%)
+  - Row 2: `mobile` (33%), `fatherMobile` (33%), `motherMobile` (34%)
+  - Row 3: `landline` (33%), `grade` (33%), `neighborhood` (34%)
+  - Row 4: `referrer` (33%), `address` (67%)
+  - Row 5: `notes`
+  - Bottom Group: `checkins` (join on `session-checkins.student` showing session, source, arrival time, and check-in user)
+- **Tab 2: حلقه حیات و کلاس (Lifecycle & Class)**:
+  - Row 1: `readinessStatus` (50%), `currentClass` (50%)
+  - Row 2: `lifecycleStatus` (50%), `removedReason` (50%, conditional on removed)
+  - Row 3: `referredAt` (33%), `absorbedAt` (33%), `stabilizedAt` (34%)
+  - Bottom Group: `invitations` (join on `invitations.student` showing ceremony, assigned session, outcome, and processed time)
 
 Product label is `دانش‌آموزان`; do not expose `Contacts` in new UI copy.
 
