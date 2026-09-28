@@ -30,7 +30,7 @@
   --field-placeholder: oklch(55.17% 0.0062 187.41);
   --focus: oklch(40.50% 0.0638 187.41);
   --foreground: oklch(21.03% 0.0031 187.41);
-  --muted: oklch(55.17% 0.0062 187.41);
+  --muted: oklch(42.00% 0.0062 187.41);
   --overlay: oklch(100.00% 0.0009 187.41);
   --overlay-foreground: oklch(21.03% 0.0031 187.41);
   --scrollbar: oklch(87.10% 0.0031 187.41);
@@ -53,8 +53,7 @@
   --field-radius: 0.5rem;
 
   /* Font Family */
-  /* Make sure to load Inter font in your app */
-  --font-sans: var(--font-inter, Vazirmatn, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Tahoma, Arial, sans-serif);
+  --font-sans: 'Vazirmatn', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Tahoma, Arial, sans-serif;
 }
 
 .dark,
