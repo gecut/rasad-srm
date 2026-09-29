@@ -1,11 +1,21 @@
-import type { Access } from 'payload'
+import type { Access, FieldAccess } from 'payload'
 
 export const isAdmin: Access = ({ req }) => {
   return req.user?.status === 'active' && req.user.role === 'admin'
 }
 
+export const isAdminField: FieldAccess = ({ req }) => {
+  return Boolean(req.user?.status === 'active' && req.user?.role === 'admin')
+}
+
 export const isEmployeeOrAdmin: Access = ({ req }) => {
   return Boolean(req.user?.status === 'active' && ['admin', 'employee'].includes(req.user.role))
+}
+
+export const isEmployeeOrAdminField: FieldAccess = ({ req }) => {
+  return Boolean(
+    req.user?.status === 'active' && req.user && ['admin', 'employee'].includes(req.user.role),
+  )
 }
 
 export const isStaff: Access = ({ req }) => {

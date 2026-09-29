@@ -236,17 +236,18 @@ export interface Class {
  */
 export interface Student {
   id: number;
+  fullName?: string | null;
   firstName: string;
   lastName: string;
-  origin: 'admin' | 'reception_walk_in' | 'import';
-  mobile?: string | null;
-  fatherMobile?: string | null;
-  motherMobile?: string | null;
-  landline?: string | null;
   /**
    * پایه تحصیلی فعلی در مدرسه (۱ تا ۶)
    */
   grade?: number | null;
+  origin: 'admin' | 'reception_walk_in' | 'import';
+  mobile?: string | null;
+  landline?: string | null;
+  fatherMobile?: string | null;
+  motherMobile?: string | null;
   neighborhood?: (number | null) | Neighborhood;
   referrer?: string | null;
   address?: string | null;
@@ -254,9 +255,6 @@ export interface Student {
    * توضیحات تکمیلی و نکات مهم درباره وضعیت دانش‌آموز
    */
   notes?: string | null;
-  /**
-   * لیست تمام مراسم‌ها و سانس‌هایی که دانش‌آموز در آن‌ها پذیرش شده است (منبع واحد حقیقت).
-   */
   checkins?: {
     docs?: (number | SessionCheckin)[];
     hasNextPage?: boolean;
@@ -287,9 +285,6 @@ export interface Student {
    * توسط سیستم پس از تایید تثبیت ثبت می‌شود.
    */
   stabilizedAt?: string | null;
-  /**
-   * تاریخچه تماس‌های اپراتورهای دعوت و نتیجه هر تماس.
-   */
   invitations?: {
     docs?: (number | Invitation)[];
     hasNextPage?: boolean;
@@ -753,14 +748,15 @@ export interface ClassesSelect<T extends boolean = true> {
  * via the `definition` "students_select".
  */
 export interface StudentsSelect<T extends boolean = true> {
+  fullName?: T;
   firstName?: T;
   lastName?: T;
+  grade?: T;
   origin?: T;
   mobile?: T;
+  landline?: T;
   fatherMobile?: T;
   motherMobile?: T;
-  landline?: T;
-  grade?: T;
   neighborhood?: T;
   referrer?: T;
   address?: T;
