@@ -412,4 +412,206 @@ describe('Milestone 2 — Students Domain', () => {
       ).rejects.toThrow()
     })
   })
+
+  // ---------------------------------------------------------------------------
+  // Intelligent Lifecycle Transitions & Admin Ergonomics
+  // ---------------------------------------------------------------------------
+  describe('Intelligent Lifecycle Transitions & Admin Ergonomics', () => {
+    let activeClassId: number
+
+    beforeAll(async () => {
+      const teacher = await payload.create({
+        collection: 'teachers',
+        data: {
+          firstName: 'حمید',
+          lastName: 'کمالی',
+          status: 'active',
+        },
+        overrideAccess: true,
+      })
+
+      const cls = await payload.create({
+        collection: 'classes',
+        data: {
+          title: 'کلاس تست ارجاع هوشمند',
+          primaryTeacher: teacher.id,
+          status: 'active',
+        },
+        overrideAccess: true,
+      })
+      activeClassId = cls.id
+    })
+
+    it('auto-transitions unknown student to referred_to_teacher and sets referredAt upon class assignment', async () => {
+      const student = await payload.create({
+        collection: 'students',
+        data: {
+          firstName: 'سهراب',
+          lastName: 'سپهری',
+          grade: 4,
+          origin: 'admin',
+        },
+        overrideAccess: true,
+      })
+
+      expect(student.lifecycleStatus).toBe('unknown')
+      expect(student.currentClass).toBeFalsy()
+
+      const updated = await payload.update({
+        collection: 'students',
+        id: student.id,
+        data: {
+          currentClass: activeClassId,
+        },
+        overrideAccess: true,
+      })
+
+      expect(updated.lifecycleStatus).toBe('referred_to_teacher')
+      expect(updated.referredAt).toBeDefined()
+      const updatedClassId =
+        typeof updated.currentClass === 'object' && updated.currentClass !== null
+          ? updated.currentClass.id
+          : updated.currentClass
+      expect(updatedClassId).toBe(activeClassId)
+    })
+
+    it('gracefully transitions referred_to_teacher to class_seeker when class is unassigned', async () => {
+      const student = await payload.create({
+        collection: 'students',
+        data: {
+          firstName: 'پروین',
+          lastName: 'اعتصامی',
+          grade: 5,
+          currentClass: activeClassId,
+          origin: 'admin',
+        },
+        overrideAccess: true,
+      })
+
+      expect(student.lifecycleStatus).toBe('referred_to_teacher')
+
+      const updated = await payload.update({
+        collection: 'students',
+        id: student.id,
+        data: {
+          currentClass: null,
+        },
+        overrideAccess: true,
+      })
+
+      expect(updated.lifecycleStatus).toBe('class_seeker')
+      expect(updated.referredAt).toBeNull()
+      expect(updated.currentClass).toBeNull()
+    })
+
+    it('re-assigning class to class_seeker student transitions back to referred_to_teacher', async () => {
+      const student = await payload.create({
+        collection: 'students',
+        data: {
+          firstName: 'نیما',
+          lastName: 'یوشیج',
+          grade: 6,
+          lifecycleStatus: 'class_seeker',
+          origin: 'admin',
+        },
+        overrideAccess: true,
+      })
+
+      const updated = await payload.update({
+        collection: 'students',
+        id: student.id,
+        data: {
+          currentClass: activeClassId,
+        },
+        overrideAccess: true,
+      })
+
+      expect(updated.lifecycleStatus).toBe('referred_to_teacher')
+      expect(updated.referredAt).toBeDefined()
+    })
+
+    it('does NOT downgrade or throw error when updating profile of absorbed student', async () => {
+      const absorbedTime = new Date().toISOString()
+      const student = await payload.create({
+        collection: 'students',
+        data: {
+          firstName: 'فردوسی',
+          lastName: 'طوسی',
+          grade: 6,
+          currentClass: activeClassId,
+          absorbedAt: absorbedTime,
+          lifecycleStatus: 'absorbed',
+          origin: 'admin',
+        },
+        overrideAccess: true,
+      })
+
+      expect(student.lifecycleStatus).toBe('absorbed')
+
+      const updated = await payload.update({
+        collection: 'students',
+        id: student.id,
+        data: {
+          notes: 'دانش‌آموز کوشا و پیگیر',
+          address: 'مشهد، توس',
+        },
+        overrideAccess: true,
+      })
+
+      expect(updated.lifecycleStatus).toBe('absorbed')
+      expect(updated.absorbedAt).toBe(absorbedTime)
+      expect(updated.notes).toBe('دانش‌آموز کوشا و پیگیر')
+    })
+
+    it('clears removedReason when reactivating removed student', async () => {
+      const student = await payload.create({
+        collection: 'students',
+        data: {
+          firstName: 'سعدی',
+          lastName: 'شیرازی',
+          grade: 3,
+          lifecycleStatus: 'removed',
+          removedReason: 'عدم پاسخگویی',
+          origin: 'admin',
+        },
+        overrideAccess: true,
+      })
+
+      expect(student.lifecycleStatus).toBe('removed')
+      expect(student.removedReason).toBe('عدم پاسخگویی')
+
+      const reactivated = await payload.update({
+        collection: 'students',
+        id: student.id,
+        data: {
+          lifecycleStatus: 'class_seeker',
+        },
+        overrideAccess: true,
+      })
+
+      expect(reactivated.lifecycleStatus).toBe('class_seeker')
+      expect(reactivated.removedReason).toBeNull()
+    })
+
+    it('computes virtual fullName field when reading student document', async () => {
+      const student = await payload.create({
+        collection: 'students',
+        data: {
+          firstName: 'حافظ',
+          lastName: 'شیرازی',
+          grade: 4,
+          origin: 'admin',
+        },
+        overrideAccess: true,
+      })
+
+      const fetched = await payload.findByID({
+        collection: 'students',
+        id: student.id,
+        overrideAccess: true,
+      })
+
+      expect(fetched.fullName).toBe('حافظ شیرازی')
+    })
+  })
 })

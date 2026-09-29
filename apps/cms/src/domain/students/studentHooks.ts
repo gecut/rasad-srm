@@ -70,13 +70,16 @@ export function applyStudentLifecycleTransitions({
   if (!data) return
 
   const originalStatus = originalDoc?.lifecycleStatus || 'unknown'
+  const isStatusExplicitlyChanged = Boolean(
+    data.lifecycleStatus && data.lifecycleStatus !== originalStatus,
+  )
   const merged: Partial<Student> = { ...originalDoc, ...data }
 
   // 1. Handling currentClass unassignment (cleared to null/empty)
   if (data.currentClass === null || data.currentClass === ('' as unknown)) {
     // If the student was referred to a teacher and class is removed without explicit new status,
     // gracefully transition back to class_seeker (per STATUS_MODEL.md: wants a class, but no active referral).
-    if (originalStatus === 'referred_to_teacher' && !data.lifecycleStatus) {
+    if (originalStatus === 'referred_to_teacher' && !isStatusExplicitlyChanged) {
       data.lifecycleStatus = 'class_seeker'
       data.referredAt = null
       merged.lifecycleStatus = 'class_seeker'
@@ -88,9 +91,8 @@ export function applyStudentLifecycleTransitions({
   // When a student in pre-class states (unknown or class_seeker) is assigned a class:
   const isPreClass = originalStatus === 'unknown' || originalStatus === 'class_seeker'
   const isAssigningClass = Boolean(data.currentClass)
-  const isStatusUntouched = !data.lifecycleStatus || data.lifecycleStatus === originalStatus
 
-  if (isAssigningClass && isPreClass && isStatusUntouched) {
+  if (isAssigningClass && isPreClass && !isStatusExplicitlyChanged) {
     data.lifecycleStatus = 'referred_to_teacher'
     data.referredAt = data.referredAt || new Date().toISOString()
     data.removedReason = null
