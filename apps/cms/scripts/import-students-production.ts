@@ -17,7 +17,8 @@ interface StudentImportRow {
   lastName: string
   origin?: 'import'
   readinessStatus?: 'normal' | 'waitlisted'
-  lifecycleStatus?: 'unknown' | 'class_seeker' | 'referred_to_teacher' | 'absorbed' | 'stabilized' | 'removed'
+  lifecycleStatus?:
+    'unknown' | 'class_seeker' | 'referred_to_teacher' | 'absorbed' | 'stabilized' | 'removed'
   grade?: number | null
   mobile?: string | null
   fatherMobile?: string | null
@@ -138,7 +139,8 @@ async function runImport() {
 
       // Check existing student
       const phoneConditions: Where[] = []
-      if (raw.mobile && raw.mobile.trim()) phoneConditions.push({ mobile: { equals: raw.mobile.trim() } })
+      if (raw.mobile && raw.mobile.trim())
+        phoneConditions.push({ mobile: { equals: raw.mobile.trim() } })
       if (raw.fatherMobile && raw.fatherMobile.trim())
         phoneConditions.push({ fatherMobile: { equals: raw.fatherMobile.trim() } })
       if (raw.motherMobile && raw.motherMobile.trim())

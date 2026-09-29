@@ -16,7 +16,10 @@ describe('Data Import/Export Plugin Integration', () => {
     payload = await getPayload({ config: payloadConfig })
 
     // Clean test tables
-    await payload.delete({ collection: 'users', where: { email: { contains: 'import-export-test' } } })
+    await payload.delete({
+      collection: 'users',
+      where: { email: { contains: 'import-export-test' } },
+    })
 
     // Seed test users
     adminUser = await payload.create({

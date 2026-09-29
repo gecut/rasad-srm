@@ -40,19 +40,52 @@ export async function getTeacherRoster(input: Input): Promise<TeacherRoster> {
     overrideAccess: true,
     req,
   })
+
+  const neighborhoodIds = Array.from(
+    new Set(
+      students.docs
+        .map((s) => (s.neighborhood ? relationID(s.neighborhood) : null))
+        .filter((id): id is number => Boolean(id)),
+    ),
+  )
+
+  const neighborhoods = neighborhoodIds.length
+    ? await payload.find({
+        collection: 'neighborhoods',
+        where: { id: { in: neighborhoodIds } },
+        pagination: false,
+        depth: 0,
+        overrideAccess: true,
+        req,
+      })
+    : { docs: [] }
+  const neighborhoodMap = new Map(neighborhoods.docs.map((n) => [n.id, n.name]))
+
   return {
     classes: classes.docs.map((item) => ({
       id: item.id,
       title: item.title,
       students: students.docs
         .filter((student) => student.currentClass && relationID(student.currentClass) === item.id)
-        .map((student) => ({
-          id: student.id,
-          firstName: student.firstName,
-          lastName: student.lastName,
-          grade: student.grade,
-          lifecycleStatus: student.lifecycleStatus,
-        })),
+        .map((student) => {
+          const nId = student.neighborhood ? relationID(student.neighborhood) : null
+          const nName = nId ? neighborhoodMap.get(nId) || null : null
+          return {
+            id: student.id,
+            firstName: student.firstName,
+            lastName: student.lastName,
+            grade: student.grade,
+            mobile: student.mobile,
+            fatherMobile: student.fatherMobile,
+            motherMobile: student.motherMobile,
+            landline: student.landline,
+            neighborhood: nId && nName ? { id: nId, name: nName } : null,
+            address: student.address,
+            referrer: student.referrer,
+            notes: student.notes,
+            lifecycleStatus: student.lifecycleStatus,
+          }
+        }),
     })),
   }
 }

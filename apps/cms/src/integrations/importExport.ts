@@ -51,6 +51,19 @@ export function normalizeStudentRow(row: Record<string, unknown>): Record<string
     result.landline = cleaned !== '' ? cleaned : null
   }
 
+  // 5. Normalize grade if provided as string or Persian numeral
+  if (result.grade !== undefined && result.grade !== null) {
+    if (typeof result.grade === 'string') {
+      const latin = (result.grade as string)
+        .normalize('NFKC')
+        .replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+        .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+        .trim()
+      const parsed = parseInt(latin, 10)
+      result.grade = Number.isInteger(parsed) ? parsed : result.grade
+    }
+  }
+
   // 4. Convert Jalali dates if provided
   for (const key of ['referredAt', 'absorbedAt', 'stabilizedAt'] as const) {
     const val = result[key]
@@ -61,6 +74,92 @@ export function normalizeStudentRow(row: Record<string, unknown>): Record<string
         // Keep raw value if parsing fails
       }
     }
+  }
+
+  return result
+}
+
+export function normalizeTeacherRow(row: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...row }
+
+  if (typeof result.firstName === 'string') {
+    result.firstName = result.firstName
+      .normalize('NFKC')
+      .replace(/ي/g, 'ی')
+      .replace(/ك/g, 'ک')
+      .trim()
+  }
+
+  if (typeof result.lastName === 'string') {
+    result.lastName = result.lastName.normalize('NFKC').replace(/ي/g, 'ی').replace(/ك/g, 'ک').trim()
+  }
+
+  if (typeof result.mobile === 'string' && result.mobile.trim() !== '') {
+    try {
+      result.mobile = normalizePhone(result.mobile)
+    } catch {
+      // keep raw value so validation reports descriptive error
+    }
+  }
+
+  if (
+    !result.status ||
+    typeof result.status !== 'string' ||
+    !['active', 'inactive'].includes(result.status)
+  ) {
+    result.status = 'active'
+  }
+
+  return result
+}
+
+export function normalizeClassRow(row: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...row }
+
+  if (typeof result.title === 'string') {
+    result.title = result.title.normalize('NFKC').replace(/ي/g, 'ی').replace(/ك/g, 'ک').trim()
+  }
+
+  if (result.capacity !== undefined && result.capacity !== null) {
+    if (typeof result.capacity === 'string') {
+      const latin = (result.capacity as string)
+        .normalize('NFKC')
+        .replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+        .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+        .trim()
+      const parsed = parseInt(latin, 10)
+      result.capacity = Number.isInteger(parsed) ? parsed : result.capacity
+    }
+  }
+
+  if (!result.status || typeof result.status !== 'string') {
+    result.status = 'planned'
+  }
+
+  return result
+}
+
+export function normalizeNeighborhoodRow(row: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...row }
+
+  if (typeof result.name === 'string') {
+    result.name = result.name.normalize('NFKC').replace(/ي/g, 'ی').replace(/ك/g, 'ک').trim()
+  }
+
+  if (typeof result.description === 'string') {
+    result.description = (result.description as string)
+      .normalize('NFKC')
+      .replace(/ي/g, 'ی')
+      .replace(/ك/g, 'ک')
+      .trim()
+  }
+
+  if (typeof result.subDistricts === 'string') {
+    const list = (result.subDistricts as string)
+      .split(/[,،\n]/)
+      .map((s) => s.normalize('NFKC').replace(/ي/g, 'ی').replace(/ك/g, 'ک').trim())
+      .filter(Boolean)
+    result.subDistricts = list.map((name) => ({ name }))
   }
 
   return result
@@ -124,7 +223,9 @@ export const configuredImportExportPlugin: Plugin = importExportPlugin({
         disableJobsQueue: true,
         hooks: {
           before: ({ data }) => {
-            return data.map((row) => normalizeStudentRow(row as Record<string, unknown>)) as typeof data
+            return data.map((row) =>
+              normalizeStudentRow(row as Record<string, unknown>),
+            ) as typeof data
           },
         },
       },
@@ -133,17 +234,44 @@ export const configuredImportExportPlugin: Plugin = importExportPlugin({
     {
       slug: 'classes',
       export: { disableJobsQueue: true, disableSave: true },
-      import: { disableJobsQueue: true },
+      import: {
+        disableJobsQueue: true,
+        hooks: {
+          before: ({ data }) => {
+            return data.map((row) =>
+              normalizeClassRow(row as Record<string, unknown>),
+            ) as typeof data
+          },
+        },
+      },
     },
     {
       slug: 'teachers',
       export: { disableJobsQueue: true, disableSave: true },
-      import: { disableJobsQueue: true },
+      import: {
+        disableJobsQueue: true,
+        hooks: {
+          before: ({ data }) => {
+            return data.map((row) =>
+              normalizeTeacherRow(row as Record<string, unknown>),
+            ) as typeof data
+          },
+        },
+      },
     },
     {
       slug: 'neighborhoods',
       export: { disableJobsQueue: true, disableSave: true },
-      import: { disableJobsQueue: true },
+      import: {
+        disableJobsQueue: true,
+        hooks: {
+          before: ({ data }) => {
+            return data.map((row) =>
+              normalizeNeighborhoodRow(row as Record<string, unknown>),
+            ) as typeof data
+          },
+        },
+      },
     },
     {
       slug: 'ceremonies',

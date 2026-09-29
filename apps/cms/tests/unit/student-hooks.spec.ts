@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import {
-  sanitizeStudentInput,
-  applyStudentLifecycleTransitions,
-} from '@/domain/students/studentHooks'
+import { sanitizeStudentInput } from '@/collections/students/students-sanitize.hooks'
+import { applyStudentLifecycleTransitions } from '@/collections/students/students-lifecycle.hooks'
 import type { Student } from '@/payload-types'
 import type { PayloadRequest } from 'payload'
 
@@ -161,9 +159,9 @@ describe('studentHooks', () => {
     it('requires non-empty removedReason when transitioning to removed', () => {
       const data: Partial<Student> = { lifecycleStatus: 'removed', removedReason: '   ' }
       const originalDoc = { id: 10, lifecycleStatus: 'unknown' } as Student
-      expect(() =>
-        applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq }),
-      ).toThrow('برای دانش‌آموز حذف‌شده، ثبت دلیل حذف الزامی است.')
+      expect(() => applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })).toThrow(
+        'برای دانش‌آموز حذف‌شده، ثبت دلیل حذف الزامی است.',
+      )
     })
   })
 })

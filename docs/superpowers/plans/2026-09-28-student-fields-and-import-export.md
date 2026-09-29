@@ -4,7 +4,8 @@
 
 **Goal:** Expand the Rasad SRM Payload CMS data model with a dedicated `neighborhoods` collection, new `students` fields (`neighborhood`, `landline`, `address`, `referrer`, `notes`), standard relational ceremony attendance via Payload 3 `type: 'join'`, reconfigure the Import/Export plugin for students, classes, teachers, and neighborhoods, and upgrade the production import pipeline.
 
-**Architecture:** 
+**Architecture:**
+
 - Apply domain-driven rules from `payload-collection-design`: maintain a single source of truth for each relationship.
 - Model city neighborhoods as an independent `neighborhoods` collection (`slug: 'neighborhoods'`) with unique, indexed names, referenced by `students.neighborhood`.
 - Include `subDistricts` (array of sub-areas/streets like هفت تیر, حافظ, صدف) inside each neighborhood for fast lookups, keyword searching, and intuitive UI grouping.
@@ -16,6 +17,7 @@
 **Tech Stack:** Payload CMS 3.89.0, PostgreSQL (`@payloadcms/db-postgres`), TypeScript 5.7, Vitest.
 
 **Spec / Baseline Sources:**
+
 - Architecture & Doctrine: [docs/superpowers/specs/](file:///Users/mm25zamanian/Codes/rasad-srm/docs/superpowers/specs/)
 - Collection Design Rules: [.agents/skills/payload-collection-design/SKILL.md](file:///Users/mm25zamanian/Codes/rasad-srm/.agents/skills/payload-collection-design/SKILL.md)
 - Payload CMS Best Practices: [.agents/skills/payload/SKILL.md](file:///Users/mm25zamanian/Codes/rasad-srm/.agents/skills/payload/SKILL.md)
@@ -48,11 +50,13 @@
 ### Task 1: Create `Neighborhoods` Collection & Register in Config
 
 **Files:**
+
 - Create: `apps/cms/src/collections/Neighborhoods.ts`
 - Modify: `apps/cms/src/payload.config.ts:1-75`
 - Test: `apps/cms/tests/int/collections/neighborhoods.test.ts`
 
 **Interfaces:**
+
 - Produces: `Neighborhoods: CollectionConfig` with slug `'neighborhoods'`
 - Consumes: `isStaff`, `isEmployeeOrAdmin` from `../access/roles`
 
@@ -100,6 +104,7 @@ Expected: FAIL (Cannot find collection 'neighborhoods')
 - [ ] **Step 3: Implement `Neighborhoods` collection in `apps/cms/src/collections/Neighborhoods.ts`**
 
 Define `Neighborhoods: CollectionConfig`:
+
 - `slug: 'neighborhoods'`
 - `labels: { singular: 'محدوده منزل', plural: 'محدوده‌های منزل' }`
 - `admin: { group: 'افراد', useAsTitle: 'name', defaultColumns: ['name', 'createdAt'] }`
@@ -130,10 +135,12 @@ git commit -m "feat(cms): add neighborhoods collection"
 ### Task 2: Add New Fields and Reverse Joins to `Students` Collection
 
 **Files:**
+
 - Modify: `apps/cms/src/collections/Students.ts:40-266`
 - Test: `apps/cms/tests/int/collections/students-fields.test.ts`
 
 **Interfaces:**
+
 - Produces: Updated `Students` collection with `neighborhood`, `landline`, `address`, `referrer`, `notes`, `checkins` (join), `invitations` (join).
 - Consumes: `Neighborhoods` collection, `SessionCheckins` collection, `Invitations` collection.
 
@@ -215,15 +222,18 @@ git commit -m "feat(cms): add neighborhood, landline, address, referrer, notes a
 ### Task 3: Seed Script for Historical Ceremonies, Sessions & Neighborhoods
 
 **Files:**
+
 - Create: `apps/cms/scripts/seed-historical-events-and-neighborhoods.ts`
 - Modify: `apps/cms/package.json:20-27`
 
 **Interfaces:**
+
 - Produces: Database records for the 21 unique neighborhoods and 5 completed ceremonies (`نیمه1402`, `غدیر1403`, `نیمه1403`, `غدیر1404`, `غدیر1405`) each with an archival session.
 
 - [ ] **Step 1: Write seeding script `seed-historical-events-and-neighborhoods.ts`**
 
 The script must:
+
 1. Extract and upsert the 21 unique neighborhoods from `students_unified_full.json` (e.g. `سجاد`, `احمدآباد`, `کوهسنگی`, `ابوطالب`, `فرامرز`, `آبکوه`, `وکیل آباد چپ`, `حومه`, `رضاشهر`, `امام رضا`, `قاسم آباد الهیه`, `وکیل آباد راست`).
 2. Upsert the 5 historical ceremonies with `status: 'completed'`:
    - `جشن نیمه شعبان ۱۴۰۲` (slug/key: `نیمه1402`)
@@ -255,10 +265,12 @@ git commit -m "feat(cms): add seed script for neighborhoods and historical cerem
 ### Task 4: Reconfigure Import/Export Plugin for Students, Classes, Teachers & Neighborhoods
 
 **Files:**
+
 - Modify: `apps/cms/src/integrations/importExport.ts:1-170`
 - Test: `apps/cms/tests/int/integrations/import-export.test.ts`
 
 **Interfaces:**
+
 - Consumes: `@payloadcms/plugin-import-export`
 - Produces: Updated `configuredImportExportPlugin` enabling import for `students`, `classes`, `teachers`, `neighborhoods`.
 
@@ -323,9 +335,11 @@ git commit -m "feat(cms): enable imports for classes, teachers, neighborhoods an
 ### Task 5: Upgrade Production Student Import Script
 
 **Files:**
+
 - Modify: `apps/cms/scripts/import-students-production.ts:1-157`
 
 **Interfaces:**
+
 - Consumes: `apps/cms/data/import/students_unified_full.json`
 - Produces: Ingested students with neighborhoods, landlines, addresses, referrers, notes, and relational `session-checkins` records for past ceremonies.
 
@@ -358,6 +372,7 @@ git commit -m "feat(cms): upgrade production student import script with full fie
 ### Task 6: Update Normative Documentation (`docs/DATA_MODEL.md` & `docs/DECISIONS.md`)
 
 **Files:**
+
 - Modify: `docs/DATA_MODEL.md:20-60`
 - Modify: `docs/DECISIONS.md`
 
@@ -376,6 +391,7 @@ git commit -m "feat(cms): upgrade production student import script with full fie
 - [ ] **Step 2: Append Architectural Decision to `docs/DECISIONS.md`**
 
 Document ADR:
+
 - **Title:** Modeling Neighborhoods and Relational Ceremony Attendance (Reverse Join)
 - **Status:** Accepted
 - **Context:** Requirements from unified import dataset for neighborhood categorization and tracking ceremony attendances.
@@ -393,6 +409,7 @@ git commit -m "docs: update DATA_MODEL and DECISIONS with neighborhoods and reve
 ### Task 7: Database Migration, Type Generation & End-to-End Verification
 
 **Files:**
+
 - Create/Modify: `apps/cms/src/migrations/*`
 - Modify: `packages/contracts/src/payload-types.ts`
 - Modify: `apps/cms/src/payload-types.ts`
@@ -411,10 +428,11 @@ Expected: Successfully adds `neighborhoods` table and extends `students` columns
 - [ ] **Step 3: Run comprehensive verification**
 
 Run:
+
 1. `pnpm --filter @rasad/cms test:int`
 2. `pnpm --filter @rasad/cms typecheck`
 3. `pnpm typecheck`
-Expected: All tests pass and typecheck completes with 0 errors across the monorepo.
+   Expected: All tests pass and typecheck completes with 0 errors across the monorepo.
 
 - [ ] **Step 4: Commit**
 

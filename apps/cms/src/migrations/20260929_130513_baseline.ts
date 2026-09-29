@@ -10,8 +10,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TYPE "public"."enum_students_readiness_status" AS ENUM('normal', 'waitlisted');
   CREATE TYPE "public"."enum_students_lifecycle_status" AS ENUM('unknown', 'class_seeker', 'referred_to_teacher', 'absorbed', 'stabilized', 'removed');
   CREATE TYPE "public"."enum_ceremonies_status" AS ENUM('draft', 'scheduled', 'active', 'inviting', 'completed', 'cancelled');
+  CREATE TYPE "public"."enum_ceremonies_attendance_policy" AS ENUM('single', 'multiple');
   CREATE TYPE "public"."enum_sessions_status" AS ENUM('draft', 'queued', 'filling', 'sealed', 'active', 'completed', 'cancelled');
-  CREATE TYPE "public"."enum_invitations_outcome" AS ENUM('accepted', 'needs_alternative_session', 'no_answer_sms', 'failed');
+  CREATE TYPE "public"."enum_invitations_outcome" AS ENUM('accepted', 'no_answer', 'declined', 'postponed', 'needs_alternative_session', 'no_answer_sms', 'failed');
   CREATE TYPE "public"."enum_invitations_sms_status" AS ENUM('not_required', 'queued', 'sent', 'failed');
   CREATE TYPE "public"."enum_session_checkins_source" AS ENUM('invited', 'walk_in');
   CREATE TYPE "public"."enum_exports_format" AS ENUM('csv', 'json');
@@ -78,18 +79,18 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   
   CREATE TABLE "students" (
   	"id" serial PRIMARY KEY NOT NULL,
-  	"origin" "enum_students_origin" DEFAULT 'admin' NOT NULL,
   	"first_name" varchar NOT NULL,
   	"last_name" varchar NOT NULL,
-  	"mobile" varchar,
-  	"mother_mobile" varchar,
-  	"father_mobile" varchar,
-  	"landline" varchar,
-  	"neighborhood_id" integer,
-  	"address" varchar,
-  	"referrer" varchar,
-  	"notes" varchar,
   	"grade" numeric,
+  	"origin" "enum_students_origin" DEFAULT 'admin' NOT NULL,
+  	"mobile" varchar,
+  	"landline" varchar,
+  	"father_mobile" varchar,
+  	"mother_mobile" varchar,
+  	"neighborhood_id" integer,
+  	"referrer" varchar,
+  	"address" varchar,
+  	"notes" varchar,
   	"readiness_status" "enum_students_readiness_status" DEFAULT 'normal' NOT NULL,
   	"current_class_id" integer,
   	"lifecycle_status" "enum_students_lifecycle_status" DEFAULT 'unknown' NOT NULL,
@@ -115,6 +116,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"title" varchar NOT NULL,
   	"description" varchar,
   	"status" "enum_ceremonies_status" DEFAULT 'draft' NOT NULL,
+  	"attendance_policy" "enum_ceremonies_attendance_policy" DEFAULT 'single',
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
@@ -127,6 +129,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"ends_at" timestamp(3) with time zone,
   	"status" "enum_sessions_status" DEFAULT 'draft' NOT NULL,
   	"filling_started_at" timestamp(3) with time zone,
+  	"capacity" numeric,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
@@ -140,6 +143,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"inviter_id" integer NOT NULL,
   	"outcome" "enum_invitations_outcome" NOT NULL,
   	"note" varchar,
+  	"postponed_until" timestamp(3) with time zone,
   	"sms_status" "enum_invitations_sms_status" DEFAULT 'not_required',
   	"processed_at" timestamp(3) with time zone NOT NULL,
   	"attempts" jsonb,
@@ -381,13 +385,14 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "classes_rels_parent_idx" ON "classes_rels" USING btree ("parent_id");
   CREATE INDEX "classes_rels_path_idx" ON "classes_rels" USING btree ("path");
   CREATE INDEX "classes_rels_teachers_id_idx" ON "classes_rels" USING btree ("teachers_id");
-  CREATE INDEX "students_neighborhood_idx" ON "students" USING btree ("neighborhood_id");
   CREATE INDEX "students_grade_idx" ON "students" USING btree ("grade");
+  CREATE INDEX "students_neighborhood_idx" ON "students" USING btree ("neighborhood_id");
   CREATE INDEX "students_readiness_status_idx" ON "students" USING btree ("readiness_status");
   CREATE INDEX "students_current_class_idx" ON "students" USING btree ("current_class_id");
   CREATE INDEX "students_lifecycle_status_idx" ON "students" USING btree ("lifecycle_status");
   CREATE INDEX "students_updated_at_idx" ON "students" USING btree ("updated_at");
   CREATE INDEX "students_created_at_idx" ON "students" USING btree ("created_at");
+  CREATE INDEX "students_has_callable_phone_idx" ON "students" ((mobile IS NOT NULL OR mother_mobile IS NOT NULL OR father_mobile IS NOT NULL));
   CREATE INDEX "follow_ups_student_idx" ON "follow_ups" USING btree ("student_id");
   CREATE INDEX "follow_ups_specialist_idx" ON "follow_ups" USING btree ("specialist_id");
   CREATE INDEX "follow_ups_updated_at_idx" ON "follow_ups" USING btree ("updated_at");
@@ -400,6 +405,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "sessions_status_idx" ON "sessions" USING btree ("status");
   CREATE INDEX "sessions_updated_at_idx" ON "sessions" USING btree ("updated_at");
   CREATE INDEX "sessions_created_at_idx" ON "sessions" USING btree ("created_at");
+  CREATE UNIQUE INDEX "sessions_single_filling_idx" ON "sessions" ("ceremony_id") WHERE status = 'filling';
   CREATE INDEX "invitations_student_idx" ON "invitations" USING btree ("student_id");
   CREATE INDEX "invitations_ceremony_idx" ON "invitations" USING btree ("ceremony_id");
   CREATE INDEX "invitations_assigned_session_idx" ON "invitations" USING btree ("assigned_session_id");
@@ -479,7 +485,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
-   DROP TABLE "users_sessions" CASCADE;
+   DROP INDEX IF EXISTS "sessions_single_filling_idx";
+  DROP INDEX IF EXISTS "students_has_callable_phone_idx";
+  DROP TABLE "users_sessions" CASCADE;
   DROP TABLE "users" CASCADE;
   DROP TABLE "teachers" CASCADE;
   DROP TABLE "classes" CASCADE;
@@ -512,6 +520,7 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TYPE "public"."enum_students_readiness_status";
   DROP TYPE "public"."enum_students_lifecycle_status";
   DROP TYPE "public"."enum_ceremonies_status";
+  DROP TYPE "public"."enum_ceremonies_attendance_policy";
   DROP TYPE "public"."enum_sessions_status";
   DROP TYPE "public"."enum_invitations_outcome";
   DROP TYPE "public"."enum_invitations_sms_status";

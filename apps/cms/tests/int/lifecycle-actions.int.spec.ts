@@ -8,7 +8,7 @@ import {
   confirmStabilization,
   removeStudentFromLifecycle,
   reenterStudentLifecycle,
-} from '@/domain/students/lifecycleActions'
+} from '@/domain/students/lifecycle-actions'
 import { describe, it, beforeAll, afterAll, expect } from 'vitest'
 
 let payload: Payload

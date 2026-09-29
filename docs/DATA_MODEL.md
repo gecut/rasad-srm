@@ -19,39 +19,39 @@ Auth configuration uses username login with email login allowed for Admin-side u
 
 ## 2. `students`
 
-| Field             | Type                             | Notes                                                         |
-| ----------------- | -------------------------------- | ------------------------------------------------------------- |
-| `firstName`       | text                             | required                                                      |
-| `lastName`        | text                             | required                                                      |
-| `grade`           | select/number                    | optional descriptive data, 1–6 when present                   |
-| `mobile`          | text                             | optional                                                      |
-| `motherMobile`    | text                             | optional                                                      |
-| `fatherMobile`    | text                             | optional                                                      |
-| `landline`        | text                             | optional home landline phone                                  |
-| `neighborhood`    | relationship → neighborhoods     | max one                                                       |
-| `address`         | textarea                         | optional home address                                         |
-| `referrer`        | text                             | optional referrer name/source                                 |
-| `notes`           | textarea                         | optional dossier notes                                        |
-| `checkins`        | join → session-checkins          | reverse navigation to all attended ceremonies/sessions        |
-| `invitations`     | join → invitations               | reverse navigation to all ceremony invitation outcomes        |
-| `lifecycleStatus` | select                           | see STATUS_MODEL                                              |
-| `readinessStatus` | select                           | `normal`, `waitlisted`                                        |
-| `currentClass`    | relationship → classes           | max one                                                       |
-| `referredAt`      | date-time                        | nullable                                                      |
-| `absorbedAt`      | date-time                        | nullable                                                      |
-| `stabilizedAt`    | date-time                        | nullable                                                      |
-| `removedReason`   | text/select                      | nullable; required by relevant workflow                       |
-| `origin`          | select                           | `admin`, `reception_walk_in`, `import`, other approved source |
+| Field             | Type                         | Notes                                                         |
+| ----------------- | ---------------------------- | ------------------------------------------------------------- |
+| `firstName`       | text                         | required                                                      |
+| `lastName`        | text                         | required                                                      |
+| `grade`           | select/number                | optional descriptive data, 1–6 when present                   |
+| `mobile`          | text                         | optional                                                      |
+| `motherMobile`    | text                         | optional                                                      |
+| `fatherMobile`    | text                         | optional                                                      |
+| `landline`        | text                         | optional home landline phone                                  |
+| `neighborhood`    | relationship → neighborhoods | max one                                                       |
+| `address`         | textarea                     | optional home address                                         |
+| `referrer`        | text                         | optional referrer name/source                                 |
+| `notes`           | textarea                     | optional dossier notes                                        |
+| `checkins`        | join → session-checkins      | reverse navigation to all attended ceremonies/sessions        |
+| `invitations`     | join → invitations           | reverse navigation to all ceremony invitation outcomes        |
+| `lifecycleStatus` | select                       | see STATUS_MODEL                                              |
+| `readinessStatus` | select                       | `normal`, `waitlisted`                                        |
+| `currentClass`    | relationship → classes       | max one                                                       |
+| `referredAt`      | date-time                    | nullable                                                      |
+| `absorbedAt`      | date-time                    | nullable                                                      |
+| `stabilizedAt`    | date-time                    | nullable                                                      |
+| `removedReason`   | text/select                  | nullable; required by relevant workflow                       |
+| `origin`          | select                       | `admin`, `reception_walk_in`, `import`, other approved source |
 
 At least one phone is required for invitation eligibility, but not for walk-in creation.
 
 ## 3. `neighborhoods`
 
-| Field          | Type                        | Notes                                                              |
-| -------------- | --------------------------- | ------------------------------------------------------------------ |
-| `name`         | text                        | required, unique, indexed neighborhood name (e.g. وکیل‌آباد)       |
-| `description`  | textarea                    | optional description of the area                                   |
-| `subDistricts` | array of `{ name: string }` | sub-areas, quarters, streets for fast lookup (e.g. هفت تیر، حافظ)  |
+| Field          | Type                        | Notes                                                             |
+| -------------- | --------------------------- | ----------------------------------------------------------------- |
+| `name`         | text                        | required, unique, indexed neighborhood name (e.g. وکیل‌آباد)      |
+| `description`  | textarea                    | optional description of the area                                  |
+| `subDistricts` | array of `{ name: string }` | sub-areas, quarters, streets for fast lookup (e.g. هفت تیر، حافظ) |
 
 ## 4. `teachers`
 

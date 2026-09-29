@@ -1,7 +1,7 @@
 import { getPayload } from 'payload'
 import { sql } from '@payloadcms/db-postgres'
 import config from '../src/payload.config'
-import { advanceCeremonySession } from '../src/domain/ceremonies/sessionService'
+import { advanceCeremonySession } from '../src/domain/ceremonies/session-service'
 const url = new URL(process.env.DATABASE_URL || '')
 if (!url.pathname.endsWith('_test')) throw new Error('Test DB required')
 const p = await getPayload({ config })

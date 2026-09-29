@@ -58,10 +58,10 @@ Unless later changed explicitly, stabilization remains human-controlled and may 
 - Session date/time is stored as a real date-time instant; UI input/display is Jalali/Persian.
 - Session order defaults to chronological `startsAt` order.
 - Sessions have no target grade.
-- Sessions have no capacity.
-- Exactly one Session of a Ceremony may be `filling`.
-- Accepted invitations are always assigned to that current filling Session.
-- Because no capacity exists, an authorized operator explicitly seals the current Session and advances to the next Session.
+- Sessions have an optional nominal capacity for telemetry and operational tracking.
+- Exactly one Session of a Ceremony may be `filling` at a time (enforced via database partial unique index).
+- Accepted invitations are assigned to the selected open Session (defaults to current filling Session).
+- Advancing from one Session to the next or reopening a sealed session is an explicit authorized action guided by live telemetry.
 
 ## 6. Ceremony invitation queue
 
@@ -71,77 +71,74 @@ A Student is eligible for the current Ceremony invitation queue when:
 - at least one phone exists;
 - Student has not already accepted that Ceremony;
 - Student is not otherwise terminally completed for the Ceremony;
-- if latest outcome is `needs_alternative_session`, the current filling Session started after that result was processed;
-- Student is not currently leased/claimed by another inviter.
+- if latest outcome is `no_answer`, the current filling Session started after that result was processed (so unanswered students get another chance on subsequent sessions);
+- Student is not currently leased/claimed by another inviter (claimed using PostgreSQL `FOR UPDATE OF s SKIP LOCKED LIMIT 1`).
 
 There is no grade filter.
 
-The default queue is deterministic, not score-based. Recommended MVP order:
+The default queue is deterministic, not score-based:
 
-1. re-eligible `needs_alternative_session` Students after Session advancement;
-2. never-processed eligible Students;
-3. stable tie-breaker by Student creation/id.
-
-Do not add opaque scoring. If the business later defines priority, document it explicitly.
+1. Re-eligible `no_answer` Students after Session advancement;
+2. Never-processed eligible Students;
+3. Stable tie-breaker by Student creation/id.
 
 ## 7. Invitation outcomes
 
 ### `accepted`
 
-- atomically verify the Ceremony still has the same current `filling` Session;
+- atomically verify the selected Session belongs to the Ceremony and is open for attendance;
 - assign `assignedSession` to that Session;
 - append/update invitation result;
+- dispatch confirmation SMS to all valid registered phone numbers (student, father, mother);
 - Student leaves the Ceremony queue permanently.
 
-### `needs_alternative_session`
+### `no_answer`
 
-- do not assign a Session;
-- Student remains out of the queue while the same Session is filling;
-- after Session advancement, Student becomes eligible again.
+- do not send SMS;
+- Student remains out of the queue while the current Session is filling;
+- after Session advancement, Student becomes re-eligible automatically.
 
-### `no_answer_sms`
+### `declined`
 
-- persist result first;
-- queue SMS;
-- do not block inviter on provider response. This result is terminal for the Ceremony in MVP.
+- student or family declines invitation;
+- terminal for the current Ceremony.
 
-### `failed`
+### `postponed`
 
-- terminal for the current Ceremony in MVP unless product owner later changes the rule.
+- caller reschedules call;
+- student is snoozed until `postponedUntil` timestamp (e.g. 30m, 1h, 2h).
 
-## 8. Sequential filling
+## 8. Sequential filling & operational telemetry
 
-Session filling is controlled by one explicit action:
+Session filling is controlled by explicit authorized actions:
 
-`advanceCeremonySession(ceremonyId)`
+- `advanceCeremonySession(ceremonyId)` seals current session and activates the next queued session. In-flight claims are retained with a grace period.
+- `reopenCeremonySession(ceremonyId, sessionId)` allows authorized staff to reopen a previously sealed session if needed.
 
-The action:
-
-1. authorizes Admin/Employee;
-2. loads current filling Session;
-3. seals it;
-4. selects next chronological queued Session;
-5. marks it `filling` and stores `fillingStartedAt`;
-6. commits atomically where supported.
-
-This replaces capacity-based automatic advancement.
+Payload Admin displays real-time capacity and check-in telemetry (`AdvanceSession.tsx`) to guide operators.
 
 ## 9. Reception/check-in
 
 - Check-in is independent of invitation.
 - An invited Student normally checks into their `assignedSession`.
 - Reception may check a Student into a different Session if they physically arrive there and policy allows; attendance records reality and does not rewrite invitation history.
-- Unknown walk-ins may be quickly created as Students and immediately checked in.
+- For Ceremonies with `attendancePolicy: 'single'`, duplicate attendance across different sessions is blocked (409) and prompts an explicit staff exception override (`forceOverride: true`).
+- Search results display phone numbers with labels, school grade, neighborhood name, and inline quick-edit capabilities.
+- Unknown walk-ins may be created as Students and immediately checked in.
 - Duplicate check-in for the same Student + Session is forbidden.
 
-## 10. Quick walk-in creation
+## 10. Walk-in creation & sibling tolerance
 
 Minimum required input:
 
 - first name;
 - last name.
 
-Grade and phones are captured when known but do not block check-in. The new Student is marked `origin = reception_walk_in`.
+Optional fields captured on walk-in:
+
+- school grade, neighborhood, address, phones (student, mother, father), referrer, notes, and class-seeker toggle.
+- When existing phone numbers match a sibling or family member, receptionist can explicitly confirm «ثبت به عنوان دانش‌آموز جدید (عضو جدید خانواده)» (`allowSharedPhone: true`).
+- The new Student is marked `origin = reception_walk_in`.
 
 ## 11. Passwords
 

@@ -3,6 +3,7 @@
 ## 1. Overview & Goals
 
 Rasad is an internal Student Relationship Management (SRM) system. `apps/panel` is a single Vite SPA built with React 19, TanStack Router, HeroUI v3, and Tailwind CSS v4 that hosts three operational task panels:
+
 - `/invite` — High-throughput sequential calling workstation.
 - `/reception` — Fast ceremony arrival search and walk-in check-in.
 - `/teacher` — Primary teacher class roster and student lifecycle confirmation.
@@ -36,6 +37,7 @@ The current implementation in `apps/panel` relies on crude HTML elements (`<sele
 ## 3. Architecture & File Breakdown
 
 ### 3.1. Styling Foundation (`apps/panel/src/styles/app.css`)
+
 - Retain only:
   - `@import 'tailwindcss';`
   - `@import '@heroui/styles';`
@@ -44,6 +46,7 @@ The current implementation in `apps/panel` relies on crude HTML elements (`<sele
 - Remove all element-level tag overrides (`select`, `textarea`, `h1`, `h2`, `header`, `label`, `.notice`, `.surface`) so HeroUI v3 handles its own styling, borders, focus rings, and transitions.
 
 ### 3.2. Shared UI Primitives (`apps/panel/src/components/ui.tsx`)
+
 - **`Field`**: HeroUI `TextField` with `Label`, `Input`, and `FieldError`.
 - **`TextareaField`**: HeroUI `TextField` or textarea wrapper with `Label` and `TextArea`.
 - **`ErrorAlert`**: HeroUI `Alert` with `variant="danger"`.
@@ -51,6 +54,7 @@ The current implementation in `apps/panel` relies on crude HTML elements (`<sele
 - **`StatusChip`**: Standardized HeroUI `Chip` for lifecycle, invitation, and session statuses.
 
 ### 3.3. Shell & Top Navigation (`apps/panel/src/routes/_authenticated.tsx`)
+
 - Modern operational header:
   - Brand title «رصد» with badge/chip indicating the active role (e.g. «مسئول دعوت»، «پذیرش مراسم»، «مدرس»).
   - Current user phone number display.
@@ -58,12 +62,14 @@ The current implementation in `apps/panel` relies on crude HTML elements (`<sele
   - Clean error banner if session operations fail.
 
 ### 3.4. Login Route (`apps/panel/src/routes/login.tsx`)
+
 - Centered HeroUI `Card` with branded title.
 - Phone number input with `type="tel"`, `inputMode="numeric"`, `dir="ltr"`.
 - Password input with `type="password"`.
 - If redirected with `reason=admin_restricted`, render a HeroUI `Alert variant="warning"` with an explicit button: «ورود به پنل مدیریت».
 
 ### 3.5. Invitation Feature (`apps/panel/src/features/invitation.tsx`)
+
 - **Header Context Card**:
   - Ceremony selector dropdown (cleanly styled).
   - Current filling session tag with Jalali date and start time.
@@ -82,6 +88,7 @@ The current implementation in `apps/panel` relies on crude HTML elements (`<sele
   - Non-browsable status indicator showing remaining eligible queue count.
 
 ### 3.6. Reception Feature (`apps/panel/src/features/reception.tsx`)
+
 - **Sticky Context Header**:
   - Selected ceremony and admitting session with Jalali timestamp.
 - **Search Command Bar**:
@@ -100,6 +107,7 @@ The current implementation in `apps/panel` relies on crude HTML elements (`<sele
   - After success: auto-focus returns to the main search bar.
 
 ### 3.7. Teacher Feature (`apps/panel/src/features/teacher.tsx`)
+
 - **Class Context**:
   - Class selector if multiple classes assigned to teacher.
   - Roster summary counters.

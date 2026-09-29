@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff } from '../access/roles'
+import { isStaff } from '../../access/roles'
+
 export const SessionCheckins: CollectionConfig = {
   slug: 'session-checkins',
   labels: { singular: 'پذیرش', plural: 'پذیرش‌ها' },

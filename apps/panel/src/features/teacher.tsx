@@ -3,14 +3,11 @@ import { Alert, Button, Card, Chip, Modal, Tabs } from '@heroui/react'
 import type { TeacherRoster } from '@rasad/contracts'
 import { errorMessage, request } from '../lib/api'
 import { ErrorNotice, SuccessNotice, TextareaField } from '../components/ui'
-import {
-  CheckCircleIcon,
-  MagnifierIcon,
-  StopwatchIcon,
-  TrashIcon,
-} from '../components/icons'
+import { CheckCircleIcon, CheckSquareIcon, MagnifierIcon, PhoneIcon, StopwatchIcon, TrashIcon } from '../components/icons'
 import { TeacherStudentRow } from './_teacher-student-row'
 import { PanelSelect } from '../components/panel-select'
+
+type TeacherStudent = TeacherRoster['classes'][number]['students'][number]
 
 const STATUS_LABELS: Record<string, string> = {
   referred_to_teacher: 'به مدرس معرفی شده',
@@ -28,6 +25,7 @@ export function Teacher() {
   const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [viewingStudent, setViewingStudent] = useState<TeacherStudent | null>(null)
   const [pending, setPending] = useState<{
     studentId: number
     status: 'absorbed' | 'removed'
@@ -143,7 +141,9 @@ export function Teacher() {
               <Alert.Indicator />
               <Alert.Content>
                 <Alert.Title>کلاسی یافت نشد</Alert.Title>
-                <Alert.Description>در حال حاضر هیچ کلاسی به حساب شما اختصاص داده نشده است.</Alert.Description>
+                <Alert.Description>
+                  در حال حاضر هیچ کلاسی به حساب شما اختصاص داده نشده است.
+                </Alert.Description>
               </Alert.Content>
             </Alert>
           )}
@@ -165,7 +165,8 @@ export function Teacher() {
 
           {roster && roster.classes.length === 1 && (
             <div className="text-sm text-foreground">
-              <span className="text-muted">کلاس جاری:</span> <strong>{roster.classes[0].title}</strong>
+              <span className="text-muted">کلاس جاری:</span>{' '}
+              <strong>{roster.classes[0].title}</strong>
             </div>
           )}
         </Card.Content>
@@ -250,6 +251,7 @@ export function Teacher() {
                   key={student.id}
                   student={student}
                   busy={busy || Boolean(pending)}
+                  onViewDetails={(st) => setViewingStudent(st)}
                   onAbsorb={(st) =>
                     setPending({
                       studentId: st.id,
@@ -299,8 +301,8 @@ export function Teacher() {
               ) : (
                 <div className="flex flex-col gap-3">
                   <p className="text-sm text-foreground leading-relaxed">
-                    حذف دانش‌آموز <strong>«{pending?.name}»</strong> به معنای پایان روند حضور او در این
-                    کلاس است. لطفاً علت حذف را ذکر کنید.
+                    حذف دانش‌آموز <strong>«{pending?.name}»</strong> به معنای پایان روند حضور او در
+                    این کلاس است. لطفاً علت حذف را ذکر کنید.
                   </p>
                   <TextareaField
                     required
@@ -331,7 +333,175 @@ export function Teacher() {
                 isDisabled={busy || (pending?.status === 'removed' && !reason.trim())}
                 onPress={save}
               >
-                {busy ? 'در حال ثبت…' : pending?.status === 'absorbed' ? 'تأیید نهایی جذب' : 'تأیید حذف'}
+                {busy
+                  ? 'در حال ثبت…'
+                  : pending?.status === 'absorbed'
+                    ? 'تأیید نهایی جذب'
+                    : 'تأیید حذف'}
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+
+      {/* Student Dossier Modal (Read-Only) */}
+      <Modal.Backdrop
+        isOpen={Boolean(viewingStudent)}
+        onOpenChange={(open) => !open && setViewingStudent(null)}
+      >
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-lg">
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted font-medium">پرونده دانش‌آموز</span>
+                  {viewingStudent?.grade && (
+                    <Chip size="sm" variant="soft" color="accent">
+                      پایه {viewingStudent.grade}
+                    </Chip>
+                  )}
+                  {viewingStudent?.lifecycleStatus && (
+                    <Chip
+                      size="sm"
+                      variant="soft"
+                      color={
+                        viewingStudent.lifecycleStatus === 'absorbed'
+                          ? 'success'
+                          : viewingStudent.lifecycleStatus === 'referred_to_teacher'
+                            ? 'accent'
+                            : 'default'
+                      }
+                    >
+                      {STATUS_LABELS[viewingStudent.lifecycleStatus] ||
+                        viewingStudent.lifecycleStatus}
+                    </Chip>
+                  )}
+                </div>
+                <Modal.Heading className="text-xl font-bold">
+                  {viewingStudent?.firstName} {viewingStudent?.lastName}
+                </Modal.Heading>
+              </div>
+            </Modal.Header>
+
+            <Modal.Body className="flex flex-col gap-4 text-sm">
+              {/* Contact numbers */}
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-semibold text-muted">شماره‌های تماس:</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    ['دانش‌آموز', viewingStudent?.mobile],
+                    ['پدر', viewingStudent?.fatherMobile],
+                    ['مادر', viewingStudent?.motherMobile],
+                    ['تلفن ثابت', viewingStudent?.landline],
+                  ].map(([label, phone]) =>
+                    phone ? (
+                      <a
+                        key={label}
+                        href={`tel:${phone}`}
+                        className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-surface hover:bg-surface-secondary/40 text-foreground transition-colors font-mono"
+                        dir="ltr"
+                      >
+                        <bdi className="font-semibold text-sm">{phone}</bdi>
+                        <div className="flex items-center gap-1.5 text-xs text-muted font-sans" dir="rtl">
+                          <PhoneIcon className="size-3.5 text-accent" />
+                          <span>{label}</span>
+                        </div>
+                      </a>
+                    ) : null,
+                  )}
+                  {!viewingStudent?.mobile &&
+                    !viewingStudent?.fatherMobile &&
+                    !viewingStudent?.motherMobile &&
+                    !viewingStudent?.landline && (
+                      <span className="text-xs text-muted italic">شماره تماسی ثبت نشده است.</span>
+                    )}
+                </div>
+              </div>
+
+              {/* Location and Address */}
+              <div className="flex flex-col gap-1.5 p-3 rounded-lg border border-border/80 bg-surface-secondary/20">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted">محدوده / محله:</span>
+                  <strong className="text-foreground">
+                    {viewingStudent?.neighborhood?.name || 'نامشخص'}
+                  </strong>
+                </div>
+                {viewingStudent?.address && (
+                  <div className="text-xs pt-1.5 mt-1 border-t border-border/40">
+                    <span className="text-muted block mb-0.5">آدرس منزل:</span>
+                    <p className="text-foreground leading-relaxed">{viewingStudent.address}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Referrer and Notes */}
+              {(viewingStudent?.referrer || viewingStudent?.notes) && (
+                <div className="flex flex-col gap-2 p-3 rounded-lg border border-border/80 bg-surface-secondary/20 text-xs">
+                  {viewingStudent.referrer && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted">معرف:</span>
+                      <strong className="text-foreground">{viewingStudent.referrer}</strong>
+                    </div>
+                  )}
+                  {viewingStudent.notes && (
+                    <div className="pt-1.5 mt-1 border-t border-border/40">
+                      <span className="text-muted block mb-0.5">یادداشت‌های پرونده:</span>
+                      <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                        {viewingStudent.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Modal.Body>
+
+            <Modal.Footer className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {viewingStudent?.lifecycleStatus === 'referred_to_teacher' && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onPress={() => {
+                      const st = viewingStudent
+                      setViewingStudent(null)
+                      setPending({
+                        studentId: st.id,
+                        status: 'absorbed',
+                        name: `${st.firstName} ${st.lastName}`,
+                      })
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    <CheckSquareIcon className="size-3.5" />
+                    <span>تأیید جذب</span>
+                  </Button>
+                )}
+                {['referred_to_teacher', 'absorbed'].includes(
+                  viewingStudent?.lifecycleStatus || '',
+                ) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onPress={() => {
+                      const st = viewingStudent!
+                      setViewingStudent(null)
+                      setPending({
+                        studentId: st.id,
+                        status: 'removed',
+                        name: `${st.firstName} ${st.lastName}`,
+                      })
+                    }}
+                    className="text-danger flex items-center gap-1"
+                  >
+                    <TrashIcon className="size-3.5" />
+                    <span>حذف از روند</span>
+                  </Button>
+                )}
+              </div>
+
+              <Button variant="outline" size="sm" onPress={() => setViewingStudent(null)}>
+                بستن
               </Button>
             </Modal.Footer>
           </Modal.Dialog>

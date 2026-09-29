@@ -14,3 +14,7 @@ it('stabilization uses six calendar months rather than 180 days', () => {
   expect(stabilizationAllowed('2026-03-31T12:00:00Z', new Date('2026-09-29T12:00:00Z'))).toBe(false)
   expect(stabilizationAllowed('2026-03-31T12:00:00Z', new Date('2026-09-30T12:00:00Z'))).toBe(true)
 })
+it('defaults to 12:00 local noon when time is omitted or empty', () => {
+  const iso = jalaliInstant('۱۴۰۵/۰۷/۰۲')
+  expect(jalaliParts(iso)).toEqual({ date: '1405/07/02', time: '12:00' })
+})

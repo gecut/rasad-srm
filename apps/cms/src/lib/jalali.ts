@@ -16,13 +16,14 @@ export function jalaliParts(iso?: string | null) {
     time: `${String(d.hour).padStart(2, '0')}:${String(d.minute).padStart(2, '0')}`,
   }
 }
-export function jalaliInstant(date: string, time: string): string {
+export function jalaliInstant(date: string, time?: string): string {
   const latin = (s: string) =>
     s
       .replace(/[۰-۹]/g, (c) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(c)))
       .replace(/[٠-٩]/g, (c) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(c)))
   const match = /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/.exec(latin(date))
-  const clock = /^(\d{1,2}):(\d{2})$/.exec(latin(time))
+  const effectiveTime = time && time.trim() !== '' ? time : '12:00'
+  const clock = /^(\d{1,2}):(\d{2})$/.exec(latin(effectiveTime))
   if (!match || !clock) throw new Error('تاریخ و ساعت معتبر وارد کنید.')
   const [year, month, day] = match.slice(1).map(Number),
     [hour, minute] = clock.slice(1).map(Number)

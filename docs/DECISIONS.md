@@ -160,3 +160,31 @@ Deploy `apps/panel` on `ghcr.io/gecut/nginx/spa:1.0.0` as a pure static SPA with
 3. **Relational Ceremony Attendance via Reverse Join:** Adhere to the single-source-of-truth doctrine: actual attendance remains strictly modeled in `session-checkins` (`student` + `session`). Reverse navigation from `students` is provided via Payload 3 `type: 'join'` (`checkins` and `invitations`), eliminating mirrored foreign keys or redundant historical columns.
 4. **Historical Event Seed & Archival Ingestion:** Legacy ceremonies from CSV imports (`نیمه1402`, `غدیر1403`, `نیمه1403`, `غدیر1404`, `غدیر1405`) are represented as completed ceremonies with archival sessions. Legacy attendances are mapped directly into valid `session-checkins` records with historical grade annotations, ensuring all past and future attendances share one unified queryable domain schema.
 5. **Import/Export Plugin Expansion:** Enable synchronous CSV/JSON imports for `classes`, `teachers`, and `neighborhoods` alongside `students`, with pre-import normalization for Persian strings, phone digits, and dates.
+
+## D037 — Ceremony Invitation Concurrency, Live Telemetry, and Reception Workflow Redesign
+
+1. **Lock-Free Claiming & Concurrency Safety:**
+   - Eliminate coarse ceremony-level table/advisory locks (`pg_advisory_xact_lock`) in favor of PostgreSQL row-level lock skipping: `SELECT s.id FROM students s ... FOR UPDATE OF s SKIP LOCKED LIMIT 1`. This allows dozens of inviter operators to claim student cards simultaneously with zero contention or database lock wait states.
+   - Enforce single-filling invariant at the database engine level via a partial unique index: `CREATE UNIQUE INDEX sessions_single_filling_idx ON sessions (ceremony_id) WHERE status = 'filling'`.
+   - Preserve in-flight claims during session advance with a graceful expiration period. Advancing a session does not delete active calls; operators can complete in-flight calls or select alternative sessions.
+2. **Session Telemetry & Payload Admin Operational Dashboard:**
+   - Add optional `capacity` (numeric) to Sessions and `attendancePolicy` (`single` vs `multiple`) to Ceremonies.
+   - Replace the legacy raw advance button in Payload Admin with an interactive operational telemetry dashboard (`AdvanceSession.tsx`) displaying live fill ratios, progress bars, and controls for sequential advancement and explicit session reopen (`reopenCeremonySession`).
+3. **Invitation Panel Ergonomics & Multi-Phone SMS:**
+   - Enrich the inviter queue card with a comprehensive dossier: school grade, neighborhood name, referrer, and badges for the student's last 2 attended ceremonies.
+   - Provide direct session selection with live capacity badges, allowing callers to assign students directly to alternative open sessions.
+   - Consolidate call outcomes into 4 semantic buttons with hotkeys (1-4): `accepted`, `no_answer` (re-queues automatically for subsequent sessions; no SMS), `declined`, and `postponed` (with quick duration picker).
+   - On `accepted`, personalized confirmation SMS is dispatched to all valid registered phones (student, father, mother).
+4. **Reception Panel Redesign & Sibling Tolerance:**
+   - Reception search results display all available phone numbers with relationship tags, school grade chip, neighborhood name, and an inline "ویرایش سریع" (Quick Edit) modal saving directly to `/panel/reception/student/update`.
+   - Walk-in registration expands to capture full student fields (neighborhood, address, referrer, notes, and class-seeker toggle).
+   - Duplicate phone detection on walk-in offers candidate check-in while providing an explicit button: «ثبت به عنوان دانش‌آموز جدید (عضو جدید خانواده)» (`allowSharedPhone: true`) to seamlessly support siblings and shared family phone numbers.
+   - In `single` attendance ceremonies, duplicate attendance across sessions is blocked (409) and presents an explanatory modal detailing previous check-in time with an authorized staff exception override (`forceOverride: true`).
+
+## D038 — Unrestricted Family Phone Sharing, Reception Live Breakdown, Teacher Dossier, and Clean Migration Baseline
+
+1. **Unrestricted Family Phone Sharing in Walk-in:** Phone numbers in SRM walk-in registration are non-unique. Walk-in registration does not block or return a 409 conflict when a mobile or landline matches an existing family member. Duplicate check is restricted strictly to identical candidate full names (`firstName` + `lastName`).
+2. **Reception Panel Live Telemetry Breakdown:** The reception dashboard incorporates a ceremony-wide telemetry card displaying total checked-in attendees across the entire ceremony alongside nominal capacity, plus an interactive grid of all ceremony sessions with live attendee counts, percentages, and 1-click active session switching.
+3. **Teacher Panel Read-Only Student Dossier:** Teachers have access to the complete student dossier (grade, student/parent/landline phones with `tel:` links, neighborhood, address, referrer, notes) via a dedicated modal, maintaining the principle that teachers hold read-only dossier access while operational mutations remain confined to lifecycle transitions (`absorbed` / `removed`).
+4. **Extensible Pattern-based SMS Architecture:** An extensible pattern SMS contract (`ISmsProvider.sendPatternSms(SendPatternParams)`) decouples background SMS dispatch from telecom vendors (Kavenegar/FarazSMS). The `SimulatedSmsProvider` captures and logs token interpolations in-memory for zero-friction testing and dev environments, ready for drop-in production vendor configuration without domain changes.
+5. **Single Consolidated Migration Baseline:** All fragmented migrations are replaced with a single, comprehensive baseline migration (`20260929_130513_baseline.ts`) covering all collections, foreign keys, and PostgreSQL partial unique indexes (`sessions_single_filling_idx` and `students_has_callable_phone_idx`).

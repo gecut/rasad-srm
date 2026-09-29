@@ -5,8 +5,8 @@ import { fixture } from '../helpers/v2'
 import {
   getNextCeremonyInvite,
   submitInvitationOutcome,
-} from '@/domain/invitations/invitationService'
-import { advanceCeremonySession } from '@/domain/ceremonies/sessionService'
+} from '@/domain/invitations/invitation-service'
+import { advanceCeremonySession } from '@/domain/ceremonies/session-service'
 let payload: Payload
 beforeAll(async () => {
   payload = await getPayload({ config })
@@ -108,5 +108,52 @@ describe('Ceremony invitations', () => {
         outcome: 'failed',
       }),
     ).rejects.toThrow()
+  })
+  it('no_answer outcome suppresses student until next session advancement then prioritizes without SMS', async () => {
+    const f = await fixture(payload),
+      input = { payload, user: f.inviter, ceremonyId: f.ceremony.id }
+    const a = await getNextCeremonyInvite(input)
+    const result = await submitInvitationOutcome({
+      ...input,
+      claimToken: a.claim!.token,
+      sessionId: f.first.id,
+      outcome: 'no_answer',
+    })
+    expect(result.outcome).toBe('no_answer')
+    expect(result.assignedSession).toBeNull()
+
+    const invitation = await payload.findByID({ collection: 'invitations', id: result.id })
+    expect(invitation.smsStatus).toBe('not_required')
+
+    // Suppressed while f.first is filling
+    expect((await getNextCeremonyInvite(input)).claim?.student.id).not.toBe(a.claim!.student.id)
+
+    // Advance session to f.second
+    await advanceCeremonySession({
+      payload,
+      user: f.admin,
+      ceremonyId: f.ceremony.id,
+      expectedSessionId: f.first.id,
+    })
+
+    // Now re-eligible and prioritized for the new session
+    expect((await getNextCeremonyInvite(input)).claim?.student.id).toBe(a.claim!.student.id)
+  })
+  it('allows caller to select an alternative open session directly and queues SMS on accepted', async () => {
+    const f = await fixture(payload),
+      input = { payload, user: f.inviter, ceremonyId: f.ceremony.id }
+    const a = await getNextCeremonyInvite(input)
+    // Inviter chooses f.second directly instead of current filling f.first
+    const result = await submitInvitationOutcome({
+      ...input,
+      claimToken: a.claim!.token,
+      sessionId: f.second.id,
+      outcome: 'accepted',
+    })
+    expect(result.outcome).toBe('accepted')
+    expect(result.assignedSession).toBe(f.second.id)
+
+    const invitation = await payload.findByID({ collection: 'invitations', id: result.id })
+    expect(invitation.smsStatus).toBe('queued')
   })
 })

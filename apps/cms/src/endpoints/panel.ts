@@ -3,15 +3,21 @@ import { authorize, DomainError } from '../domain/shared/core'
 import {
   getNextCeremonyInvite,
   submitInvitationOutcome,
-} from '../domain/invitations/invitationService'
-import { advanceCeremonySession } from '../domain/ceremonies/sessionService'
-import { getTeacherRoster, updateTeacherStudent } from '../domain/teacher/teacherService'
+} from '../domain/invitations/invitation-service'
+import {
+  advanceCeremonySession,
+  reopenCeremonySession,
+  getSessionTelemetry,
+} from '../domain/ceremonies/session-service'
+import { getTeacherRoster, updateTeacherStudent } from '../domain/teacher/teacher-service'
 import {
   searchReceptionStudents,
   checkInStudent,
   quickCreateAndCheckInStudent,
-} from '../domain/reception/receptionService'
+  updateReceptionStudent,
+} from '../domain/reception/reception-service'
 import type { InvitationOutcome } from '@rasad/contracts'
+import type { Session } from '@/payload-types'
 
 function id(value: unknown): number {
   const number = typeof value === 'string' ? Number(value) : value
@@ -97,14 +103,24 @@ function endpoint(
 export const panelEndpoints: Endpoint[] = [
   endpoint('/panel/context', 'get', async (req) => {
     await authorize(req.payload, req.user, ['admin', 'employee', 'inviter', 'receptionist'], req)
-    const ceremonies = await req.payload.find({
-      collection: 'ceremonies',
-      where: { status: { in: ['scheduled', 'inviting', 'active'] } },
-      sort: 'createdAt',
-      limit: 100,
-      depth: 0,
-      req,
-    })
+    const [ceremonies, neighborhoods] = await Promise.all([
+      req.payload.find({
+        collection: 'ceremonies',
+        where: { status: { in: ['scheduled', 'inviting', 'active'] } },
+        sort: 'createdAt',
+        limit: 100,
+        depth: 0,
+        req,
+      }),
+      req.payload.find({
+        collection: 'neighborhoods',
+        pagination: false,
+        sort: 'name',
+        depth: 0,
+        req,
+      }),
+    ])
+
     const sessions = await req.payload.find({
       collection: 'sessions',
       where: {
@@ -118,13 +134,48 @@ export const panelEndpoints: Endpoint[] = [
       depth: 0,
       req,
     })
+
+    const sessionsWithStats = await Promise.all(
+      sessions.docs.map(async (s: Session) => {
+        const stats = await getSessionTelemetry(req.payload, s.id, req)
+        return {
+          id: s.id,
+          ceremonyId:
+            typeof s.ceremony === 'object' && s.ceremony !== null
+              ? s.ceremony.id
+              : (s.ceremony as number),
+          title: s.title,
+          startsAt: s.startsAt,
+          endsAt: s.endsAt,
+          status: s.status,
+          capacity: s.capacity,
+          acceptedCount: stats.acceptedCount,
+          checkedInCount: stats.checkedInCount,
+        }
+      }),
+    )
+
     return {
       ceremonies: ceremonies.docs.map((c) => ({
         id: c.id,
         title: c.title,
-        sessions: sessions.docs
-          .filter((s) => s.ceremony === c.id)
-          .map((s) => ({ id: s.id, title: s.title, startsAt: s.startsAt, status: s.status })),
+        attendancePolicy: c.attendancePolicy,
+        sessions: sessionsWithStats
+          .filter((s) => s.ceremonyId === c.id)
+          .map((s) => ({
+            id: s.id,
+            title: s.title,
+            startsAt: s.startsAt,
+            endsAt: s.endsAt,
+            status: s.status,
+            capacity: s.capacity,
+            acceptedCount: s.acceptedCount,
+            checkedInCount: s.checkedInCount,
+          })),
+      })),
+      neighborhoods: neighborhoods.docs.map((n) => ({
+        id: n.id,
+        name: n.name,
       })),
     }
   }),
@@ -145,6 +196,7 @@ export const panelEndpoints: Endpoint[] = [
       claimToken: text(b.claimToken, true, 100)!,
       outcome: text(b.outcome, true, 50) as InvitationOutcome,
       note: text(b.note),
+      postponedUntil: text(b.postponedUntil),
       req,
     }),
   ),
@@ -154,6 +206,15 @@ export const panelEndpoints: Endpoint[] = [
       user: req.user,
       ceremonyId: id(b.ceremonyId),
       expectedSessionId: b.expectedSessionId === null ? null : id(b.expectedSessionId),
+      req,
+    }),
+  ),
+  endpoint('/panel/ceremony/reopen', 'post', (req, b) =>
+    reopenCeremonySession({
+      payload: req.payload,
+      user: req.user,
+      ceremonyId: id(b.ceremonyId),
+      sessionId: id(b.sessionId),
       req,
     }),
   ),
@@ -188,6 +249,7 @@ export const panelEndpoints: Endpoint[] = [
       user: req.user,
       studentId: id(b.studentId),
       sessionId: id(b.sessionId),
+      forceOverride: Boolean(b.forceOverride),
       req,
     }),
   ),
@@ -202,6 +264,34 @@ export const panelEndpoints: Endpoint[] = [
       mobile: text(b.mobile, false, 30),
       motherMobile: text(b.motherMobile, false, 30),
       fatherMobile: text(b.fatherMobile, false, 30),
+      landline: text(b.landline, false, 30),
+      neighborhoodId: b.neighborhoodId == null ? undefined : id(b.neighborhoodId),
+      address: text(b.address, false, 500),
+      referrer: text(b.referrer, false, 100),
+      notes: text(b.notes, false, 1000),
+      isClassSeeker: Boolean(b.isClassSeeker),
+      allowSharedPhone: Boolean(b.allowSharedPhone),
+      req,
+    }),
+  ),
+  endpoint('/panel/reception/student/update', 'post', (req, b) =>
+    updateReceptionStudent({
+      payload: req.payload,
+      user: req.user,
+      sessionId: id(b.sessionId || 1),
+      studentId: id(b.studentId),
+      firstName: text(b.firstName, false, 100),
+      lastName: text(b.lastName, false, 100),
+      grade: b.grade == null ? undefined : id(b.grade),
+      mobile: text(b.mobile, false, 30),
+      motherMobile: text(b.motherMobile, false, 30),
+      fatherMobile: text(b.fatherMobile, false, 30),
+      landline: text(b.landline, false, 30),
+      neighborhoodId: b.neighborhoodId == null ? undefined : id(b.neighborhoodId),
+      address: text(b.address, false, 500),
+      referrer: text(b.referrer, false, 100),
+      notes: text(b.notes, false, 1000),
+      isClassSeeker: b.isClassSeeker === undefined ? undefined : Boolean(b.isClassSeeker),
       req,
     }),
   ),

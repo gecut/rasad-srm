@@ -640,14 +640,6 @@
           "primaryKey": true,
           "notNull": true
         },
-        "origin": {
-          "name": "origin",
-          "type": "enum_students_origin",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'admin'"
-        },
         "first_name": {
           "name": "first_name",
           "type": "varchar",
@@ -660,20 +652,22 @@
           "primaryKey": false,
           "notNull": true
         },
+        "grade": {
+          "name": "grade",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "origin": {
+          "name": "origin",
+          "type": "enum_students_origin",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'admin'"
+        },
         "mobile": {
           "name": "mobile",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mother_mobile": {
-          "name": "mother_mobile",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "father_mobile": {
-          "name": "father_mobile",
           "type": "varchar",
           "primaryKey": false,
           "notNull": false
@@ -684,15 +678,21 @@
           "primaryKey": false,
           "notNull": false
         },
-        "neighborhood_id": {
-          "name": "neighborhood_id",
-          "type": "integer",
+        "father_mobile": {
+          "name": "father_mobile",
+          "type": "varchar",
           "primaryKey": false,
           "notNull": false
         },
-        "address": {
-          "name": "address",
+        "mother_mobile": {
+          "name": "mother_mobile",
           "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "neighborhood_id": {
+          "name": "neighborhood_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -702,15 +702,15 @@
           "primaryKey": false,
           "notNull": false
         },
-        "notes": {
-          "name": "notes",
+        "address": {
+          "name": "address",
           "type": "varchar",
           "primaryKey": false,
           "notNull": false
         },
-        "grade": {
-          "name": "grade",
-          "type": "numeric",
+        "notes": {
+          "name": "notes",
+          "type": "varchar",
           "primaryKey": false,
           "notNull": false
         },
@@ -776,11 +776,11 @@
         }
       },
       "indexes": {
-        "students_neighborhood_idx": {
-          "name": "students_neighborhood_idx",
+        "students_grade_idx": {
+          "name": "students_grade_idx",
           "columns": [
             {
-              "expression": "neighborhood_id",
+              "expression": "grade",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -791,11 +791,11 @@
           "method": "btree",
           "with": {}
         },
-        "students_grade_idx": {
-          "name": "students_grade_idx",
+        "students_neighborhood_idx": {
+          "name": "students_neighborhood_idx",
           "columns": [
             {
-              "expression": "grade",
+              "expression": "neighborhood_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1085,6 +1085,14 @@
           "notNull": true,
           "default": "'draft'"
         },
+        "attendance_policy": {
+          "name": "attendance_policy",
+          "type": "enum_ceremonies_attendance_policy",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'single'"
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp(3) with time zone",
@@ -1199,6 +1207,12 @@
         "filling_started_at": {
           "name": "filling_started_at",
           "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "capacity": {
+          "name": "capacity",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": false
         },
@@ -1365,6 +1379,12 @@
         "note": {
           "name": "note",
           "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "postponed_until": {
+          "name": "postponed_until",
+          "type": "timestamp(3) with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -4089,6 +4109,14 @@
         "cancelled"
       ]
     },
+    "public.enum_ceremonies_attendance_policy": {
+      "name": "enum_ceremonies_attendance_policy",
+      "schema": "public",
+      "values": [
+        "single",
+        "multiple"
+      ]
+    },
     "public.enum_sessions_status": {
       "name": "enum_sessions_status",
       "schema": "public",
@@ -4107,6 +4135,9 @@
       "schema": "public",
       "values": [
         "accepted",
+        "no_answer",
+        "declined",
+        "postponed",
         "needs_alternative_session",
         "no_answer_sms",
         "failed"
@@ -4212,6 +4243,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "e67dd8e2-72dc-4aee-911c-81017d4a8c83",
+  "id": "64c70056-5144-4575-a021-e26897ef92fe",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

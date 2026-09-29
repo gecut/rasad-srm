@@ -37,21 +37,34 @@ Default list columns:
 - updated time (`updatedAt`).
 
 Searchable fields in list view:
+
 - `firstName`, `lastName`, `mobile`, `fatherMobile`, `motherMobile`, `landline`, `referrer`.
 
 Edit form tabs structure:
+
 - **Tab 1: مشخصات فردی و ارتباطی (Personal & Contact)**:
-  - Row 1: `firstName` (33%), `lastName` (33%), `origin` (34%)
-  - Row 2: `mobile` (33%), `fatherMobile` (33%), `motherMobile` (34%)
-  - Row 3: `landline` (33%), `grade` (33%), `neighborhood` (34%)
-  - Row 4: `referrer` (33%), `address` (67%)
-  - Row 5: `notes`
-  - Bottom Group: `checkins` (join on `session-checkins.student` showing session, source, arrival time, and check-in user)
+  - **گروه مشخصات هویتی و تحصیلی**:
+    - Row 1: `firstName` (50%), `lastName` (50%)
+    - Row 2: `grade` (50%, school grade 1-6), `origin` (50%, admin-only registration source)
+  - **گروه شماره‌های تماس و ارتباط با خانواده**:
+    - Row 1: `mobile` (50%, student), `landline` (50%, home landline)
+    - Row 2: `fatherMobile` (50%, father), `motherMobile` (50%, mother)
+  - **گروه محدوده سکونت، نشانی و معرف**:
+    - Row 1: `neighborhood` (50%, relation to neighborhoods), `referrer` (50%, referrer name)
+    - Row 2: `address` (100%, detailed home address)
+  - **گروه یادداشت‌ها و ملاحظات پرونده**:
+    - `notes` (100%, case notes and important context)
+  - **گروه سوابق پذیرش در مراسم‌ها**:
+    - `checkins` (join on `session-checkins.student` showing session, source, arrival time, and check-in user)
 - **Tab 2: حلقه حیات و کلاس (Lifecycle & Class)**:
-  - Row 1: `readinessStatus` (50%), `currentClass` (50%)
-  - Row 2: `lifecycleStatus` (50%), `removedReason` (50%, conditional on removed)
-  - Row 3: `referredAt` (33%), `absorbedAt` (33%), `stabilizedAt` (34%)
-  - Bottom Group: `invitations` (join on `invitations.student` showing ceremony, assigned session, outcome, and processed time)
+  - **گروه وضعیت پذیرش و انتساب کلاس**:
+    - Row 1: `readinessStatus` (50%), `currentClass` (50%)
+  - **گروه مراحل چرخه عمر دانش‌آموز**:
+    - Row 1: `lifecycleStatus` (50%), `removedReason` (50%, conditional on removed)
+  - **گروه گاه‌شمار و نقاط عطف چرخه عمر**:
+    - Row 1: `referredAt` (33%, read-only via `JalaliDateField`), `absorbedAt` (33%, editable via `JalaliDateField` with local noon default), `stabilizedAt` (34%, read-only via `JalaliDateField`)
+  - **گروه سوابق دعوت به مراسم‌ها**:
+    - `invitations` (join on `invitations.student` showing ceremony, assigned session, outcome, and processed time)
 
 Product label is `دانش‌آموزان`; do not expose `Contacts` in new UI copy.
 

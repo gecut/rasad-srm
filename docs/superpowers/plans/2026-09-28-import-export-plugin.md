@@ -9,6 +9,7 @@
 **Tech Stack:** Payload CMS 3.89.0, Next.js 16.3.3, React 19.2.6, PostgreSQL (`@payloadcms/db-postgres`), TypeScript, Vitest.
 
 **Spec / Baseline Sources:**
+
 - Official Documentation: [https://payloadcms.com/docs/plugins/import-export](https://payloadcms.com/docs/plugins/import-export)
 - Official Repository Reference: [payloadcms/payload/tree/3.x/packages/plugin-import-export](https://github.com/payloadcms/payload/tree/3.x/packages/plugin-import-export)
 - Project Business Rules: [docs/BUSINESS_RULES.md](file:///Users/mm25zamanian/Codes/rasad-srm/docs/BUSINESS_RULES.md)
@@ -42,16 +43,19 @@
 ### Task 1: Dependency Installation & Monorepo Package Integration
 
 **Files:**
+
 - Modify: `apps/cms/package.json`
 - Modify: `pnpm-lock.yaml`
 
 **Interfaces:**
+
 - Consumes: `@payloadcms/plugin-import-export@3.89.0` from npm registry.
 - Produces: Installed dependency matching `payload: 3.89.0` and `@payloadcms/ui: 3.89.0`.
 
 - [x] **Step 1: Install `@payloadcms/plugin-import-export`**
 
 Run:
+
 ```bash
 pnpm --filter @rasad/cms add @payloadcms/plugin-import-export@3.89.0
 ```
@@ -72,9 +76,11 @@ git commit -m "chore(cms): add @payloadcms/plugin-import-export dependency"
 ### Task 2: Modular Plugin Configuration Module
 
 **Files:**
+
 - Create: `apps/cms/src/integrations/importExport.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `importExportPlugin` from `@payloadcms/plugin-import-export`
   - `normalizePhone` from `../domain/shared/core`
@@ -86,6 +92,7 @@ git commit -m "chore(cms): add @payloadcms/plugin-import-export dependency"
 - [x] **Step 1: Create plugin integration module `apps/cms/src/integrations/importExport.ts`**
 
 Configure the plugin with:
+
 1. `overrideExportCollection`:
    - Labels: `singular: 'خروجی داده'`, `plural: 'خروجی‌های داده'`.
    - Access: `read: isEmployeeOrAdmin`, `create: isEmployeeOrAdmin`, `delete: isAdmin`.
@@ -124,11 +131,13 @@ git commit -m "feat(cms): create import-export plugin configuration module"
 ### Task 3: Integration into `payload.config.ts` & Code Generation
 
 **Files:**
+
 - Modify: `apps/cms/src/payload.config.ts`
 - Modify: `packages/contracts/src/payload-types.ts`
 - Modify: `apps/cms/src/app/(payload)/admin/importMap.js` (generated)
 
 **Interfaces:**
+
 - Consumes: `configuredImportExportPlugin` from `./integrations/importExport`.
 - Produces: Updated Payload config, regenerated ImportMap, regenerated TypeScript contracts.
 
@@ -139,25 +148,31 @@ Add `configuredImportExportPlugin` to the `plugins: []` array in `payload.config
 - [x] **Step 2: Regenerate importmap**
 
 Run:
+
 ```bash
 pnpm --filter @rasad/cms generate:importmap
 ```
+
 Expected: PASS with importMap updated to include `@payloadcms/plugin-import-export` components.
 
 - [x] **Step 3: Regenerate TypeScript contract types**
 
 Run:
+
 ```bash
 pnpm --filter @rasad/cms generate:types
 ```
+
 Expected: PASS with `packages/contracts/src/payload-types.ts` containing `Export` and `Import` interfaces.
 
 - [x] **Step 4: Verify typecheck**
 
 Run:
+
 ```bash
 pnpm --filter @rasad/cms typecheck
 ```
+
 Expected: PASS with 0 TypeScript errors.
 
 - [x] **Step 5: Commit**
@@ -172,16 +187,19 @@ git commit -m "feat(cms): register import-export plugin and regenerate contracts
 ### Task 4: Database Migration for PostgreSQL
 
 **Files:**
+
 - Create: `apps/cms/src/migrations/YYYYMMDD_HHMMSS_add_import_export_tables.ts`
 - Modify: `apps/cms/src/migrations/index.ts`
 
 **Interfaces:**
+
 - Consumes: Payload schema definition with `exports` and `imports` collections.
 - Produces: Migration file creating PostgreSQL tables `payload_exports`, `payload_imports` (or `exports`, `imports`) and associated foreign keys and indexes.
 
 - [x] **Step 1: Generate migration file**
 
 Run:
+
 ```bash
 pnpm --filter @rasad/cms payload migrate:create add_import_export_tables
 ```
@@ -193,9 +211,11 @@ Import the generated migration and add it to the `migrations` array in `apps/cms
 - [x] **Step 3: Verify migration execution in test/dev environment**
 
 Run:
+
 ```bash
 pnpm --filter @rasad/cms migrate
 ```
+
 Expected: Migration executes successfully and tables are created.
 
 - [x] **Step 4: Commit**
@@ -210,9 +230,11 @@ git commit -m "feat(cms): add database migration for import-export tables"
 ### Task 5: Integration Tests for Import & Export Workflows
 
 **Files:**
+
 - Create: `apps/cms/tests/int/import-export.int.spec.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `payload` instance from test setup
   - Sample test data (students CSV)
@@ -221,6 +243,7 @@ git commit -m "feat(cms): add database migration for import-export tables"
 - [x] **Step 1: Write integration tests in `apps/cms/tests/int/import-export.int.spec.ts`**
 
 Cover the following test cases:
+
 1. **Export Students:** Direct export of existing students returns valid CSV/JSON headers and records for admin and employee.
 2. **Import Students with Hooks:**
    - Import a CSV batch of students containing non-normalized Persian text (`علي كمالي`), raw mobile numbers (`09123456789`), and Jalali dates (`1403/07/01`).
@@ -234,17 +257,21 @@ Cover the following test cases:
 - [x] **Step 2: Run integration tests**
 
 Run:
+
 ```bash
 pnpm --filter @rasad/cms test:int tests/int/import-export.int.spec.ts
 ```
+
 Expected: All tests PASS.
 
 - [x] **Step 3: Run full integration test suite**
 
 Run:
+
 ```bash
 pnpm --filter @rasad/cms test:int
 ```
+
 Expected: All existing and new integration tests PASS.
 
 - [x] **Step 4: Commit**
@@ -259,15 +286,18 @@ git commit -m "test(cms): add integration tests for import-export plugin"
 ### Task 6: Dockerfile & Storage Persistence Verification
 
 **Files:**
+
 - Modify: `apps/cms/Dockerfile` (if storage directory creation or volume permissions are needed)
 
 **Interfaces:**
+
 - Consumes: Node runtime in Docker container.
 - Produces: Ensured `/app/media` directory writable by `node` user in production.
 
 - [x] **Step 1: Inspect and update Dockerfile runtime stage**
 
 Ensure `apps/cms/Dockerfile` creates and chowns the `media` directory for temporary file processing:
+
 ```dockerfile
 RUN mkdir -p /app/media/imports /app/media/exports && chown -R node:node /app/media
 ```
@@ -275,9 +305,11 @@ RUN mkdir -p /app/media/imports /app/media/exports && chown -R node:node /app/me
 - [x] **Step 2: Verify production Docker build**
 
 Run:
+
 ```bash
 docker build -f apps/cms/Dockerfile -t rasad-cms-test .
 ```
+
 Expected: Build succeeds with standalone Next.js server.
 
 - [x] **Step 3: Commit**

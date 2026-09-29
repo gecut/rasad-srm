@@ -1,15 +1,13 @@
-import { lockTransaction } from '../domain/shared/core'
 import type { CollectionConfig } from 'payload'
 import {
   isAdminField,
   isEmployeeOrAdmin,
   isEmployeeOrAdminField,
   isStaff,
-} from '../access/roles'
-import {
-  sanitizeStudentInput,
-  applyStudentLifecycleTransitions,
-} from '../domain/students/studentHooks'
+} from '../../access/roles'
+import { lockTransaction } from '../../domain/shared/core'
+import { applyStudentLifecycleTransitions } from './students-lifecycle.hooks'
+import { sanitizeStudentInput } from './students-sanitize.hooks'
 
 export const Students: CollectionConfig = {
   slug: 'students',
@@ -136,7 +134,12 @@ export const Students: CollectionConfig = {
                       },
                       validate: (val: unknown) => {
                         if (val == null) return true
-                        if (typeof val !== 'number' || !Number.isInteger(val) || val < 1 || val > 6) {
+                        if (
+                          typeof val !== 'number' ||
+                          !Number.isInteger(val) ||
+                          val < 1 ||
+                          val > 6
+                        ) {
                           return 'پایه تحصیلی باید عدد صحیح بین ۱ تا ۶ باشد.'
                         }
                         return true

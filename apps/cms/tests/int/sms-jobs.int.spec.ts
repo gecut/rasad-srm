@@ -5,7 +5,7 @@ import { fixture } from '../helpers/v2'
 import {
   getNextCeremonyInvite,
   submitInvitationOutcome,
-} from '@/domain/invitations/invitationService'
+} from '@/domain/invitations/invitation-service'
 import { MockSmsProvider, setSmsProvider } from '@/integrations/sms/mockProvider'
 let payload: Payload
 beforeAll(async () => {

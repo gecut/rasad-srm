@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
-import { lockTransaction } from '../domain/shared/core'
-import { isEmployeeOrAdmin, isStaff } from '../access/roles'
+import { isEmployeeOrAdmin, isStaff } from '../../access/roles'
+import { lockClassBeforeChange } from './classes.hooks'
 
 export const Classes: CollectionConfig = {
   slug: 'classes',
@@ -20,12 +20,7 @@ export const Classes: CollectionConfig = {
     delete: isEmployeeOrAdmin,
   },
   hooks: {
-    beforeChange: [
-      async ({ data, originalDoc, req }) => {
-        if (originalDoc?.id) await lockTransaction(req.payload, req, `class:${originalDoc.id}`)
-        return data
-      },
-    ],
+    beforeChange: [lockClassBeforeChange],
   },
   fields: [
     {

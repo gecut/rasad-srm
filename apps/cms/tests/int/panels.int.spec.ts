@@ -3,12 +3,12 @@ import { getPayload, type Payload } from 'payload'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import config from '@/payload.config'
 import type { User } from '@/payload-types'
-import { getTeacherRoster, updateTeacherStudent } from '@/domain/teacher/teacherService'
+import { getTeacherRoster, updateTeacherStudent } from '@/domain/teacher/teacher-service'
 import {
   checkInStudent,
   quickCreateAndCheckInStudent,
   searchReceptionStudents,
-} from '@/domain/reception/receptionService'
+} from '@/domain/reception/reception-service'
 
 describe('Teacher and reception server boundaries', () => {
   let payload: Payload
@@ -183,7 +183,10 @@ describe('Teacher and reception server boundaries', () => {
       q: 'دانش',
     })
     expect(result.students.length).toBeLessThanOrEqual(20)
-    for (const item of result.students) expect(item).not.toHaveProperty('mobile')
+    for (const item of result.students) {
+      expect(item).toHaveProperty('firstName')
+      expect(item).toHaveProperty('lastName')
+    }
   })
 
   it('records attendance in a different session without rewriting the accepted invitation', async () => {
@@ -259,7 +262,7 @@ describe('Teacher and reception server boundaries', () => {
     }
   })
 
-  it('detects concurrent phone matches across different names and phone columns', async () => {
+  it('allows students with shared phone numbers (e.g. siblings) to be registered and checked in', async () => {
     const mobile = `09${Math.floor(Math.random() * 1e9)
       .toString()
       .padStart(9, '0')}`
@@ -281,18 +284,14 @@ describe('Teacher and reception server boundaries', () => {
         motherMobile: `+98${mobile.slice(1)}`,
       }),
     ])
-    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1)
-    const failure = results.find((result) => result.status === 'rejected')
-    expect(failure?.status === 'rejected' && failure.reason).toMatchObject({
-      status: 409,
-      candidates: [expect.objectContaining({ checkedIn: true })],
-    })
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(2)
     const count = await payload.count({
       collection: 'students',
       where: { or: [{ mobile: { equals: mobile } }, { motherMobile: { equals: mobile } }] },
     })
-    expect(count.totalDocs).toBe(1)
+    expect(count.totalDocs).toBe(2)
   })
+
 
   it('rolls back a newly created student if check-in persistence fails', async () => {
     const lastName = randomUUID()

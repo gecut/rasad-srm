@@ -10,13 +10,13 @@ import {
 } from '../../scripts/dev-seed/fixtures'
 import { assertSeedTarget } from '../../scripts/dev-seed/safety'
 import { relationID } from '@/domain/shared/core'
-import { getTeacherRoster, updateTeacherStudent } from '@/domain/teacher/teacherService'
-import { searchReceptionStudents, checkInStudent } from '@/domain/reception/receptionService'
+import { getTeacherRoster, updateTeacherStudent } from '@/domain/teacher/teacher-service'
+import { searchReceptionStudents, checkInStudent } from '@/domain/reception/reception-service'
 import {
   getNextCeremonyInvite,
   submitInvitationOutcome,
-} from '@/domain/invitations/invitationService'
-import { advanceCeremonySession } from '@/domain/ceremonies/sessionService'
+} from '@/domain/invitations/invitation-service'
+import { advanceCeremonySession } from '@/domain/ceremonies/session-service'
 
 const safe: NodeJS.ProcessEnv = {
   DATABASE_URL: 'postgresql://postgres@127.0.0.1:55439/rasad_seed_test',

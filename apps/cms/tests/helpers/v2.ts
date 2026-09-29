@@ -1,6 +1,6 @@
 import type { Payload } from 'payload'
 import { randomUUID } from 'node:crypto'
-import { advanceCeremonySession } from '@/domain/ceremonies/sessionService'
+import { advanceCeremonySession } from '@/domain/ceremonies/session-service'
 export async function fixture(payload: Payload) {
   const suffix = randomUUID()
   const admin = await payload.create({

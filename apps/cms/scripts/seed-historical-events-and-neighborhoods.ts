@@ -17,7 +17,11 @@ export const HISTORICAL_CEREMONIES = [
   { key: 'غدیر1405', title: 'جشن غدیر ۱۴۰۵', date: '2026-06-04T08:00:00.000Z' },
 ]
 
-export const SEED_NEIGHBORHOODS: Array<{ name: string; description?: string; subDistricts?: string[] }> = [
+export const SEED_NEIGHBORHOODS: Array<{
+  name: string
+  description?: string
+  subDistricts?: string[]
+}> = [
   {
     name: 'سجاد',
     description: 'محدوده بلوار سجاد و خیابان‌های اطراف',

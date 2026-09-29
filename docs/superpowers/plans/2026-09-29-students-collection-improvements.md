@@ -5,6 +5,7 @@
 **Goal:** Transform the `Students` collection validation and lifecycle management from rigid, manual validation errors into an intelligent, forgiving state machine; extract modular hooks into a dedicated domain module; guard class selection in Admin UI; enhance document display with full Persian names; and eliminate DRY access-control duplications.
 
 **Architecture:**
+
 - Extract all input sanitization (Unicode NFKC, Persian characters `ی`/`ک`, phone and landline normalization) and lifecycle transitions from the monolithic inline hook in `Students.ts` into a dedicated domain module `apps/cms/src/domain/students/studentHooks.ts`.
 - Implement intelligent lifecycle state transitions:
   - When `currentClass` is assigned to a student in pre-class states (`unknown` or `class_seeker`), automatically transition to `referred_to_teacher`, stamp `referredAt`, and clear any previous `removedReason`.
@@ -19,6 +20,7 @@
 **Tech Stack:** Payload CMS 3.89.0, PostgreSQL (`@payloadcms/db-postgres`), TypeScript 5.7, Vitest.
 
 **Spec / Baseline Sources:**
+
 - Student Lifecycle Doctrine: [docs/STATUS_MODEL.md](file:///Users/mm25zamanian/Codes/rasad-srm/docs/STATUS_MODEL.md)
 - Business Rules: [docs/BUSINESS_RULES.md](file:///Users/mm25zamanian/Codes/rasad-srm/docs/BUSINESS_RULES.md)
 - Workflows (W1, W2, W3, W4, W5, W14): [docs/WORKFLOWS.md](file:///Users/mm25zamanian/Codes/rasad-srm/docs/WORKFLOWS.md)
@@ -51,10 +53,12 @@
 ### Task 1: Domain Hook Extraction & Unit Tests (`studentHooks.ts`)
 
 **Files:**
+
 - Create: `apps/cms/src/domain/students/studentHooks.ts`
 - Test: `apps/cms/tests/unit/studentHooks.spec.ts`
 
 **Interfaces:**
+
 - Produces:
   - `sanitizeStudentInput(data: Partial<Student>): void`
   - `applyStudentLifecycleTransitions(args: { data: Partial<Student>; originalDoc?: Student; req: PayloadRequest }): Promise<void> | void`
@@ -68,7 +72,10 @@
 ```typescript
 // apps/cms/tests/unit/studentHooks.spec.ts
 import { describe, it, expect } from 'vitest'
-import { sanitizeStudentInput, applyStudentLifecycleTransitions } from '@/domain/students/studentHooks'
+import {
+  sanitizeStudentInput,
+  applyStudentLifecycleTransitions,
+} from '@/domain/students/studentHooks'
 import type { Student } from '@/payload-types'
 
 describe('studentHooks', () => {
@@ -146,6 +153,7 @@ Expected: FAIL (module not found)
 - [ ] **Step 3: Implement `studentHooks.ts` in `apps/cms/src/domain/students/studentHooks.ts`**
 
 Implement:
+
 1. `sanitizeStudentInput` with text and phone cleaning.
 2. `applyStudentLifecycleTransitions` with state-machine auto-transitions, date synchronizations, and invariant enforcement.
 
@@ -166,9 +174,11 @@ git commit -m "feat(cms): add modular student hooks with intelligent lifecycle t
 ### Task 2: Refactor `Students.ts` Collection
 
 **Files:**
+
 - Modify: `apps/cms/src/collections/Students.ts:1-523`
 
 **Interfaces:**
+
 - Consumes:
   - `sanitizeStudentInput`, `applyStudentLifecycleTransitions` from `../domain/students/studentHooks`
   - `isEmployeeOrAdmin` from `../access/roles`
@@ -180,6 +190,7 @@ Replace monolithic inline code in `hooks.beforeValidate` with calls to `sanitize
 - [ ] **Step 2: Add virtual `fullName` field and set `useAsTitle: 'fullName'`**
 
 Add field:
+
 ```typescript
 {
   name: 'fullName',
@@ -198,11 +209,13 @@ Add field:
   },
 }
 ```
+
 Set `admin.useAsTitle: 'fullName'`.
 
 - [ ] **Step 3: Add `filterOptions` to `currentClass`**
 
 Add:
+
 ```typescript
 filterOptions: {
   status: {
@@ -232,11 +245,13 @@ git commit -m "refactor(cms): streamline Students collection with modular hooks 
 ### Task 3: Integration Tests for Smart Transitions & Admin Workflows
 
 **Files:**
+
 - Modify: `apps/cms/tests/int/students.int.spec.ts`
 
 - [ ] **Step 1: Add integration test scenarios for automated transitions**
 
 Add tests covering:
+
 - Assigning class to student automatically transitions to `referred_to_teacher` and sets `referredAt`.
 - Subsequent profile update on `referred_to_teacher`, `absorbed`, or `stabilized` student does not revert status or throw error.
 - Unassigning class from `referred_to_teacher` student automatically transitions back to `class_seeker`.

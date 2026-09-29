@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isEmployeeOrAdmin, isStaff } from '../access/roles'
+import { isEmployeeOrAdmin, isStaff } from '../../access/roles'
 
 export const Ceremonies: CollectionConfig = {
   slug: 'ceremonies',
@@ -13,7 +13,7 @@ export const Ceremonies: CollectionConfig = {
     defaultColumns: ['title', 'status', 'createdAt'],
   },
   access: {
-    read: isStaff, // All authenticated roles including inviter can read ceremonies
+    read: isStaff,
     create: isEmployeeOrAdmin,
     update: isEmployeeOrAdmin,
     delete: isEmployeeOrAdmin,
@@ -49,6 +49,17 @@ export const Ceremonies: CollectionConfig = {
         { label: 'در حال دعوت', value: 'inviting' },
         { label: 'تکمیل‌شده (Completed)', value: 'completed' },
         { label: 'لغوشده (Cancelled)', value: 'cancelled' },
+      ],
+    },
+    {
+      name: 'attendancePolicy',
+      label: 'سیاست حضور در مراسم',
+      type: 'select',
+      required: false,
+      defaultValue: 'single',
+      options: [
+        { label: 'یک‌باره (تک‌حضوری در کل مراسم)', value: 'single' },
+        { label: 'چندباره (امکان حضور در چند سانس)', value: 'multiple' },
       ],
     },
   ],

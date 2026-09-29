@@ -62,7 +62,13 @@ export function TextareaField({
   rows?: number
 }) {
   return (
-    <TextField isRequired={required} name={name} value={value} onChange={onChange} className="w-full">
+    <TextField
+      isRequired={required}
+      name={name}
+      value={value}
+      onChange={onChange}
+      className="w-full"
+    >
       <Label className="text-sm font-medium text-foreground">{label}</Label>
       <TextArea rows={rows} placeholder={placeholder} />
     </TextField>

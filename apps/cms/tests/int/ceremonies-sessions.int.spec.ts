@@ -2,7 +2,7 @@ import { getPayload, type Payload } from 'payload'
 import config from '@/payload.config'
 import { beforeAll, describe, it, expect } from 'vitest'
 import { fixture } from '../helpers/v2'
-import { advanceCeremonySession } from '@/domain/ceremonies/sessionService'
+import { advanceCeremonySession } from '@/domain/ceremonies/session-service'
 let payload: Payload
 beforeAll(async () => {
   payload = await getPayload({ config })

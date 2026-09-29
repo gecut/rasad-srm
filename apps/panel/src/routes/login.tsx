@@ -111,7 +111,13 @@ function Login() {
               </Button>
             )}
 
-            <Button type="submit" variant="primary" size="lg" className="w-full mt-2" isDisabled={busy}>
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full mt-2"
+              isDisabled={busy}
+            >
               {busy ? 'در حال ورود…' : 'ورود به حساب'}
             </Button>
           </form>

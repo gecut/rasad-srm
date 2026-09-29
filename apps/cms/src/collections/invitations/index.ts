@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isStaff } from '../access/roles'
+import { isStaff } from '../../access/roles'
 
 export const Invitations: CollectionConfig = {
   slug: 'invitations',
@@ -62,12 +62,20 @@ export const Invitations: CollectionConfig = {
       index: true,
       options: [
         { label: 'پذیرفته شد', value: 'accepted' },
-        { label: 'سانس دیگر', value: 'needs_alternative_session' },
-        { label: 'بی‌پاسخ و پیامک', value: 'no_answer_sms' },
-        { label: 'ناموفق', value: 'failed' },
+        { label: 'عدم پاسخ', value: 'no_answer' },
+        { label: 'انصراف', value: 'declined' },
+        { label: 'تعویق و تماس مجدد', value: 'postponed' },
+        { label: 'سانس دیگر (قدیمی)', value: 'needs_alternative_session' },
+        { label: 'بی‌پاسخ و پیامک (قدیمی)', value: 'no_answer_sms' },
+        { label: 'ناموفق (قدیمی)', value: 'failed' },
       ],
     },
     { name: 'note', label: 'یادداشت', type: 'textarea' },
+    {
+      name: 'postponedUntil',
+      label: 'زمان تماس مجدد',
+      type: 'date',
+    },
     {
       name: 'smsStatus',
       label: 'وضعیت پیامک',

@@ -25,6 +25,7 @@ export async function fillingSession(
   if (result.docs.length > 1) throw new Error('Multiple filling sessions violate invariant')
   return result.docs[0] || null
 }
+
 export async function advanceCeremonySession({
   payload,
   user,
@@ -71,13 +72,76 @@ export async function advanceCeremonySession({
             req,
           })
         : null
-      await payload.delete({
-        collection: 'invitation-claims',
-        where: { ceremony: { equals: ceremonyId } },
-        req,
-      })
+      // In-flight claims are intentionally preserved with their remaining lease time
+      // so active callers speaking with families do not lose their current card.
       return { session }
     },
     parent,
   )
+}
+
+export async function reopenCeremonySession({
+  payload,
+  user,
+  ceremonyId,
+  sessionId,
+  req: parent,
+}: {
+  payload: Payload
+  user: User | null | undefined
+  ceremonyId: number
+  sessionId: number
+  req?: PayloadRequest
+}) {
+  const actor = await authorize(payload, user, ['admin', 'employee'], parent)
+  return transaction(
+    payload,
+    actor,
+    `ceremony:${ceremonyId}`,
+    async (req) => {
+      await authorize(payload, actor, ['admin', 'employee'], req)
+      const currentFilling = await fillingSession(payload, ceremonyId, req)
+      if (currentFilling) {
+        await payload.update({
+          collection: 'sessions',
+          id: currentFilling.id,
+          data: { status: 'queued' },
+          req,
+        })
+      }
+      const reopened = await payload.update({
+        collection: 'sessions',
+        id: sessionId,
+        data: { status: 'filling' },
+        req,
+      })
+      return { session: reopened }
+    },
+    parent,
+  )
+}
+
+export async function getSessionTelemetry(
+  payload: Payload,
+  sessionId: number,
+  req?: PayloadRequest,
+) {
+  const [accepted, checkins] = await Promise.all([
+    payload.count({
+      collection: 'invitations',
+      where: {
+        and: [{ assignedSession: { equals: sessionId } }, { outcome: { equals: 'accepted' } }],
+      },
+      req,
+    }),
+    payload.count({
+      collection: 'session-checkins',
+      where: { session: { equals: sessionId } },
+      req,
+    }),
+  ])
+  return {
+    acceptedCount: accepted.totalDocs,
+    checkedInCount: checkins.totalDocs,
+  }
 }

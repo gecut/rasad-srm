@@ -5,8 +5,8 @@ import { fixture } from '../helpers/v2'
 import {
   getNextCeremonyInvite,
   submitInvitationOutcome,
-} from '@/domain/invitations/invitationService'
-import { advanceCeremonySession } from '@/domain/ceremonies/sessionService'
+} from '@/domain/invitations/invitation-service'
+import { advanceCeremonySession } from '@/domain/ceremonies/session-service'
 let payload: Payload
 beforeAll(async () => {
   payload = await getPayload({ config })

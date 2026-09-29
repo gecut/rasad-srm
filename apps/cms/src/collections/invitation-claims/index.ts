@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+
 export const InvitationClaims: CollectionConfig = {
   slug: 'invitation-claims',
   admin: { hidden: true },

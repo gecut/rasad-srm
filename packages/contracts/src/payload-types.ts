@@ -340,6 +340,10 @@ export interface Session {
   endsAt?: string | null;
   status: 'draft' | 'queued' | 'filling' | 'sealed' | 'active' | 'completed' | 'cancelled';
   fillingStartedAt?: string | null;
+  /**
+   * ظرفیت مدنظر سانس جهت محاسبه درصد پرشدگی
+   */
+  capacity?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -352,6 +356,7 @@ export interface Ceremony {
   title: string;
   description?: string | null;
   status: 'draft' | 'scheduled' | 'active' | 'inviting' | 'completed' | 'cancelled';
+  attendancePolicy?: ('single' | 'multiple') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -366,8 +371,10 @@ export interface Invitation {
   assignedSession?: (number | null) | Session;
   processedSession: number | Session;
   inviter: number | User;
-  outcome: 'accepted' | 'needs_alternative_session' | 'no_answer_sms' | 'failed';
+  outcome:
+    'accepted' | 'no_answer' | 'declined' | 'postponed' | 'needs_alternative_session' | 'no_answer_sms' | 'failed';
   note?: string | null;
+  postponedUntil?: string | null;
   smsStatus?: ('not_required' | 'queued' | 'sent' | 'failed') | null;
   processedAt: string;
   attempts?:
@@ -792,6 +799,7 @@ export interface CeremoniesSelect<T extends boolean = true> {
   title?: T;
   description?: T;
   status?: T;
+  attendancePolicy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -806,6 +814,7 @@ export interface SessionsSelect<T extends boolean = true> {
   endsAt?: T;
   status?: T;
   fillingStartedAt?: T;
+  capacity?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -821,6 +830,7 @@ export interface InvitationsSelect<T extends boolean = true> {
   inviter?: T;
   outcome?: T;
   note?: T;
+  postponedUntil?: T;
   smsStatus?: T;
   processedAt?: T;
   attempts?: T;

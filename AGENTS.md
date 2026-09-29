@@ -46,9 +46,9 @@ Then read the relevant specs:
 - Class assignment remains manual.
 - Student lifecycle and ceremony invitation outcome are separate concerns.
 - Ceremony invitation is ceremony-centric. A Session is assigned only to a successful accepted invitation.
-- Sessions have no school-grade targeting and no capacity field.
-- Sessions inside a Ceremony are filled sequentially. Exactly one Session may be in `filling` state at a time.
-- Because Sessions have no capacity, moving from one filling Session to the next is an explicit authorized action.
+- Sessions have no school-grade targeting. Sessions have an optional nominal capacity field for operational telemetry.
+- Sessions inside a Ceremony are filled sequentially. Exactly one Session may be in `filling` state at a time (enforced via PostgreSQL partial unique index).
+- Moving from one filling Session to the next or reopening a session is an explicit authorized action guided by live telemetry.
 - Reception attendance is a separate record and does not require a prior invitation.
 - Server-side authorization and invariants are authoritative.
 

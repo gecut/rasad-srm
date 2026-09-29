@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isEmployeeOrAdmin, isStaff } from '../access/roles'
+import { isEmployeeOrAdmin, isStaff } from '../../access/roles'
 
 export const Teachers: CollectionConfig = {
   slug: 'teachers',

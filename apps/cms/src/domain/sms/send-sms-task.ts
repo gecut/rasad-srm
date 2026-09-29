@@ -43,8 +43,11 @@ export const sendSmsTask: TaskConfig = {
       throw new Error(`دعوت با شناسه ${invitationId} یافت نشد.`)
     }
 
-    // Only invitations with outcome 'no_answer_sms' require SMS
-    if (invitation.outcome !== 'no_answer_sms' || invitation.smsStatus === 'sent') {
+    // Invitations with outcome 'accepted' or legacy 'no_answer_sms' require SMS
+    if (
+      (invitation.outcome !== 'accepted' && invitation.outcome !== 'no_answer_sms') ||
+      invitation.smsStatus === 'sent'
+    ) {
       return {
         output: { success: true },
         state: 'succeeded',
@@ -73,10 +76,12 @@ export const sendSmsTask: TaskConfig = {
       throw new Error(`دانش‌آموز با شناسه ${studentId} یافت نشد.`)
     }
 
-    // Determine target recipient phone number
-    const recipient = student.mobile || student.motherMobile || student.fatherMobile
+    // Determine target recipient phone numbers
+    const recipients = [student.mobile, student.motherMobile, student.fatherMobile].filter(
+      (p): p is string => Boolean(p && /^09\d{9}$/.test(p)),
+    )
 
-    if (!recipient) {
+    if (!recipients.length) {
       await req.payload.update({
         collection: 'invitations',
         id: invitationId,
@@ -86,26 +91,81 @@ export const sendSmsTask: TaskConfig = {
       throw new Error(`شماره تماسی برای ارسال پیامک به دانش‌آموز شناسه ${student.id} موجود نیست.`)
     }
 
-    const message = `دانش‌آموز گرامی، تماس ما در ارتباط با برنامه رصد بی‌پاسخ ماند. جهت هماهنگی با شما تماس خواهیم گرفت.`
-
     const provider = getSmsProvider()
-    const sendResult = await provider.sendSms({
-      recipient,
-      message,
-      metadata: {
-        invitationId,
-        studentId: student.id,
-      },
-    })
+    let lastMessageId = ''
+    let anySuccess = false
 
-    if (!sendResult.success) {
+    const studentFullName =
+      `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'دانش‌آموز گرامی'
+
+    let patternCode: string
+    let tokens: Record<string, string | number>
+    let plainMessage: string
+
+    if (invitation.outcome === 'accepted') {
+      let sessionTitle = 'سانس مراسم'
+      if (invitation.assignedSession) {
+        const sess = await req.payload.findByID({
+          collection: 'sessions',
+          id:
+            typeof invitation.assignedSession === 'object'
+              ? invitation.assignedSession.id
+              : invitation.assignedSession,
+          depth: 0,
+          req,
+        })
+        if (sess?.title) sessionTitle = sess.title
+      }
+
+      patternCode = process.env.SMS_PATTERN_INVITATION_ACCEPTED || 'invitation_accepted'
+      tokens = {
+        name: studentFullName,
+        session: sessionTitle,
+      }
+      plainMessage = `دانش‌آموز گرامی ${studentFullName}، دعوت شما به مراسم (${sessionTitle}) با موفقیت ثبت شد.`
+    } else {
+      patternCode = process.env.SMS_PATTERN_NO_ANSWER || 'no_answer'
+      tokens = {
+        name: studentFullName,
+      }
+      plainMessage = `دانش‌آموز گرامی ${studentFullName}، تماس ما در ارتباط با برنامه رصد بی‌پاسخ ماند. جهت هماهنگی با شما تماس خواهیم گرفت.`
+    }
+
+    for (const recipient of recipients) {
+      const sendResult =
+        typeof provider.sendPatternSms === 'function'
+          ? await provider.sendPatternSms({
+              recipient,
+              patternCode,
+              tokens,
+              metadata: {
+                invitationId,
+                studentId: student.id,
+              },
+            })
+          : await provider.sendSms({
+              recipient,
+              message: plainMessage,
+              metadata: {
+                invitationId,
+                studentId: student.id,
+              },
+            })
+
+      if (sendResult.success) {
+        anySuccess = true
+        lastMessageId = sendResult.messageId || ''
+      }
+    }
+
+    if (!anySuccess) {
       await req.payload.update({
         collection: 'invitations',
         id: invitationId,
         data: { smsStatus: 'failed' },
         req,
       })
-      throw new Error(sendResult.error || 'ارسال پیامک با خطا مواجه شد.')
+      throw new Error('ارسال پیامک با خطا مواجه شد.')
     }
 
     // Update invitation technical smsStatus to sent
@@ -119,7 +179,7 @@ export const sendSmsTask: TaskConfig = {
     return {
       output: {
         success: true,
-        messageId: sendResult.messageId,
+        messageId: lastMessageId,
       },
       state: 'succeeded',
     }

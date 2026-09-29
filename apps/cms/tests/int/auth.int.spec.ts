@@ -1,6 +1,6 @@
 import { getPayload, Payload, type PayloadRequest } from 'payload'
 import config from '@/payload.config'
-import { Users } from '@/collections/Users'
+import { Users } from '@/collections/users'
 import type { User } from '@/payload-types'
 import { registerFirstUserOperation } from 'payload'
 import { describe, it, beforeAll, afterAll, expect } from 'vitest'
