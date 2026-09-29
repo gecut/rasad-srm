@@ -445,12 +445,13 @@ describe('Milestone 2 — Students Domain', () => {
     it('auto-transitions unknown student to referred_to_teacher and sets referredAt upon class assignment', async () => {
       const student = await payload.create({
         collection: 'students',
+        draft: false,
         data: {
           firstName: 'سهراب',
           lastName: 'سپهری',
           grade: 4,
           origin: 'admin',
-        },
+        } as unknown as Student,
         overrideAccess: true,
       })
 
@@ -478,13 +479,14 @@ describe('Milestone 2 — Students Domain', () => {
     it('gracefully transitions referred_to_teacher to class_seeker when class is unassigned', async () => {
       const student = await payload.create({
         collection: 'students',
+        draft: false,
         data: {
           firstName: 'پروین',
           lastName: 'اعتصامی',
           grade: 5,
           currentClass: activeClassId,
           origin: 'admin',
-        },
+        } as unknown as Student,
         overrideAccess: true,
       })
 
@@ -507,13 +509,14 @@ describe('Milestone 2 — Students Domain', () => {
     it('re-assigning class to class_seeker student transitions back to referred_to_teacher', async () => {
       const student = await payload.create({
         collection: 'students',
+        draft: false,
         data: {
           firstName: 'نیما',
           lastName: 'یوشیج',
           grade: 6,
           lifecycleStatus: 'class_seeker',
           origin: 'admin',
-        },
+        } as unknown as Student,
         overrideAccess: true,
       })
 
@@ -534,6 +537,7 @@ describe('Milestone 2 — Students Domain', () => {
       const absorbedTime = new Date().toISOString()
       const student = await payload.create({
         collection: 'students',
+        draft: false,
         data: {
           firstName: 'فردوسی',
           lastName: 'طوسی',
@@ -542,7 +546,7 @@ describe('Milestone 2 — Students Domain', () => {
           absorbedAt: absorbedTime,
           lifecycleStatus: 'absorbed',
           origin: 'admin',
-        },
+        } as unknown as Student,
         overrideAccess: true,
       })
 
@@ -566,6 +570,7 @@ describe('Milestone 2 — Students Domain', () => {
     it('clears removedReason when reactivating removed student', async () => {
       const student = await payload.create({
         collection: 'students',
+        draft: false,
         data: {
           firstName: 'سعدی',
           lastName: 'شیرازی',
@@ -573,7 +578,7 @@ describe('Milestone 2 — Students Domain', () => {
           lifecycleStatus: 'removed',
           removedReason: 'عدم پاسخگویی',
           origin: 'admin',
-        },
+        } as unknown as Student,
         overrideAccess: true,
       })
 
@@ -596,12 +601,13 @@ describe('Milestone 2 — Students Domain', () => {
     it('computes virtual fullName field when reading student document', async () => {
       const student = await payload.create({
         collection: 'students',
+        draft: false,
         data: {
           firstName: 'حافظ',
           lastName: 'شیرازی',
           grade: 4,
           origin: 'admin',
-        },
+        } as unknown as Student,
         overrideAccess: true,
       })
 

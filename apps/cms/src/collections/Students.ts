@@ -1,7 +1,6 @@
 import { lockTransaction } from '../domain/shared/core'
 import type { CollectionConfig } from 'payload'
 import {
-  isAdmin,
   isAdminField,
   isEmployeeOrAdmin,
   isEmployeeOrAdminField,
