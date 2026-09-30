@@ -420,6 +420,7 @@ export async function seedDevelopment(
         data: {
           student: students[studentIndex].id,
           session: sessions[ceremonyIndex][sessionIndex].id,
+          ceremony: ceremonies[ceremonyIndex].id,
           checkedInBy: users[8 + (i % 2)].id,
           checkedInAt:
             ceremonyIndex === 3
@@ -604,6 +605,11 @@ export async function verifySeed(payload: Payload, req?: PayloadRequest) {
     new Set(checkins.map((c) => `${relationID(c.student)}:${relationID(c.session)}`)).size,
     checkins.length,
   )
+  for (const checkin of checkins) {
+    assert(checkin.ceremony, 'Checkin must have a ceremony reference')
+    const session = sessions.find((s) => s.id === relationID(checkin.session))
+    assert.equal(relationID(checkin.ceremony), relationID(session!.ceremony))
+  }
   const active = ceremonies.find((c) => c.status === 'inviting')!
   assert(
     students.filter(
