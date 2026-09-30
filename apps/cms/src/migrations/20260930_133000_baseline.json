@@ -1984,6 +1984,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "ceremony_id": {
+          "name": "ceremony_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {
@@ -2082,6 +2088,42 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "session_checkins_ceremony_idx": {
+          "name": "session_checkins_ceremony_idx",
+          "columns": [
+            {
+              "expression": "ceremony_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "session_checkins_student_ceremony_idx": {
+          "name": "session_checkins_student_ceremony_idx",
+          "columns": [
+            {
+              "expression": "student_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ceremony_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -2117,6 +2159,19 @@
           "tableTo": "users",
           "columnsFrom": [
             "checked_in_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "session_checkins_ceremony_id_ceremonies_id_fk": {
+          "name": "session_checkins_ceremony_id_ceremonies_id_fk",
+          "tableFrom": "session_checkins",
+          "tableTo": "ceremonies",
+          "columnsFrom": [
+            "ceremony_id"
           ],
           "columnsTo": [
             "id"
@@ -4024,6 +4079,135 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.students_rels": {
+      "name": "students_rels",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "path": {
+          "name": "path",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ceremonies_id": {
+          "name": "ceremonies_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "students_rels_order_idx": {
+          "name": "students_rels_order_idx",
+          "columns": [
+            {
+              "expression": "order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "students_rels_parent_idx": {
+          "name": "students_rels_parent_idx",
+          "columns": [
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "students_rels_path_idx": {
+          "name": "students_rels_path_idx",
+          "columns": [
+            {
+              "expression": "path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "students_rels_ceremonies_id_idx": {
+          "name": "students_rels_ceremonies_id_idx",
+          "columns": [
+            {
+              "expression": "ceremonies_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "students_rels_parent_fk": {
+          "name": "students_rels_parent_fk",
+          "tableFrom": "students_rels",
+          "tableTo": "students",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "students_rels_ceremonies_fk": {
+          "name": "students_rels_ceremonies_fk",
+          "tableFrom": "students_rels",
+          "tableTo": "ceremonies",
+          "columnsFrom": [
+            "ceremonies_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     }
   },
   "enums": {

@@ -101,6 +101,14 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
+
+  CREATE TABLE "students_rels" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"order" integer,
+  	"parent_id" integer NOT NULL,
+  	"path" varchar NOT NULL,
+  	"ceremonies_id" integer
+  );
   
   CREATE TABLE "follow_ups" (
   	"id" serial PRIMARY KEY NOT NULL,
@@ -166,6 +174,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TABLE "session_checkins" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"student_id" integer NOT NULL,
+  	"ceremony_id" integer NOT NULL,
   	"session_id" integer NOT NULL,
   	"checked_in_by_id" integer NOT NULL,
   	"checked_in_at" timestamp(3) with time zone NOT NULL,
@@ -335,6 +344,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "classes" ADD CONSTRAINT "classes_primary_teacher_id_teachers_id_fk" FOREIGN KEY ("primary_teacher_id") REFERENCES "public"."teachers"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "classes_rels" ADD CONSTRAINT "classes_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."classes"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "classes_rels" ADD CONSTRAINT "classes_rels_teachers_fk" FOREIGN KEY ("teachers_id") REFERENCES "public"."teachers"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "students_rels" ADD CONSTRAINT "students_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."students"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "students_rels" ADD CONSTRAINT "students_rels_ceremonies_fk" FOREIGN KEY ("ceremonies_id") REFERENCES "public"."ceremonies"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "students" ADD CONSTRAINT "students_neighborhood_id_neighborhoods_id_fk" FOREIGN KEY ("neighborhood_id") REFERENCES "public"."neighborhoods"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "students" ADD CONSTRAINT "students_current_class_id_classes_id_fk" FOREIGN KEY ("current_class_id") REFERENCES "public"."classes"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "follow_ups" ADD CONSTRAINT "follow_ups_student_id_students_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."students"("id") ON DELETE set null ON UPDATE no action;
@@ -350,6 +361,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "invitation_claims" ADD CONSTRAINT "invitation_claims_student_id_students_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."students"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "invitation_claims" ADD CONSTRAINT "invitation_claims_inviter_id_users_id_fk" FOREIGN KEY ("inviter_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "session_checkins" ADD CONSTRAINT "session_checkins_student_id_students_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."students"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "session_checkins" ADD CONSTRAINT "session_checkins_ceremony_id_ceremonies_id_fk" FOREIGN KEY ("ceremony_id") REFERENCES "public"."ceremonies"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "session_checkins" ADD CONSTRAINT "session_checkins_session_id_sessions_id_fk" FOREIGN KEY ("session_id") REFERENCES "public"."sessions"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "session_checkins" ADD CONSTRAINT "session_checkins_checked_in_by_id_users_id_fk" FOREIGN KEY ("checked_in_by_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "neighborhoods_sub_districts" ADD CONSTRAINT "neighborhoods_sub_districts_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."neighborhoods"("id") ON DELETE cascade ON UPDATE no action;
@@ -385,6 +397,10 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "classes_rels_parent_idx" ON "classes_rels" USING btree ("parent_id");
   CREATE INDEX "classes_rels_path_idx" ON "classes_rels" USING btree ("path");
   CREATE INDEX "classes_rels_teachers_id_idx" ON "classes_rels" USING btree ("teachers_id");
+  CREATE INDEX "students_rels_order_idx" ON "students_rels" USING btree ("order");
+  CREATE INDEX "students_rels_parent_idx" ON "students_rels" USING btree ("parent_id");
+  CREATE INDEX "students_rels_path_idx" ON "students_rels" USING btree ("path");
+  CREATE INDEX "students_rels_ceremonies_id_idx" ON "students_rels" USING btree ("ceremonies_id");
   CREATE INDEX "students_grade_idx" ON "students" USING btree ("grade");
   CREATE INDEX "students_neighborhood_idx" ON "students" USING btree ("neighborhood_id");
   CREATE INDEX "students_readiness_status_idx" ON "students" USING btree ("readiness_status");
@@ -426,10 +442,12 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE UNIQUE INDEX "student_ceremony_1_idx" ON "invitation_claims" USING btree ("student_id","ceremony_id");
   CREATE UNIQUE INDEX "inviter_ceremony_idx" ON "invitation_claims" USING btree ("inviter_id","ceremony_id");
   CREATE INDEX "session_checkins_student_idx" ON "session_checkins" USING btree ("student_id");
+  CREATE INDEX "session_checkins_ceremony_idx" ON "session_checkins" USING btree ("ceremony_id");
   CREATE INDEX "session_checkins_session_idx" ON "session_checkins" USING btree ("session_id");
   CREATE INDEX "session_checkins_checked_in_by_idx" ON "session_checkins" USING btree ("checked_in_by_id");
   CREATE INDEX "session_checkins_updated_at_idx" ON "session_checkins" USING btree ("updated_at");
   CREATE INDEX "session_checkins_created_at_idx" ON "session_checkins" USING btree ("created_at");
+  CREATE INDEX "session_checkins_student_ceremony_idx" ON "session_checkins" USING btree ("student_id","ceremony_id");
   CREATE UNIQUE INDEX "student_session_idx" ON "session_checkins" USING btree ("student_id","session_id");
   CREATE INDEX "neighborhoods_sub_districts_order_idx" ON "neighborhoods_sub_districts" USING btree ("_order");
   CREATE INDEX "neighborhoods_sub_districts_parent_id_idx" ON "neighborhoods_sub_districts" USING btree ("_parent_id");
@@ -493,6 +511,7 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "classes" CASCADE;
   DROP TABLE "classes_rels" CASCADE;
   DROP TABLE "students" CASCADE;
+  DROP TABLE "students_rels" CASCADE;
   DROP TABLE "follow_ups" CASCADE;
   DROP TABLE "ceremonies" CASCADE;
   DROP TABLE "sessions" CASCADE;

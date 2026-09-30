@@ -89,7 +89,6 @@ export interface Config {
   collectionsJoins: {
     students: {
       checkins: 'session-checkins';
-      invitations: 'invitations';
     };
   };
   collectionsSelect: {
@@ -255,6 +254,10 @@ export interface Student {
    * توضیحات تکمیلی و نکات مهم درباره وضعیت دانش‌آموز
    */
   notes?: string | null;
+  /**
+   * این فیلد به صورت خودکار از روی پذیرش‌های ثبت‌شده دانش‌آموز همگام‌سازی می‌شود.
+   */
+  attendedCeremonies?: (number | Ceremony)[] | null;
   checkins?: {
     docs?: (number | SessionCheckin)[];
     hasNextPage?: boolean;
@@ -285,11 +288,6 @@ export interface Student {
    * توسط سیستم پس از تایید تثبیت ثبت می‌شود.
    */
   stabilizedAt?: string | null;
-  invitations?: {
-    docs?: (number | Invitation)[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
-  };
   updatedAt: string;
   createdAt: string;
 }
@@ -315,11 +313,25 @@ export interface Neighborhood {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ceremonies".
+ */
+export interface Ceremony {
+  id: number;
+  title: string;
+  description?: string | null;
+  status: 'draft' | 'scheduled' | 'active' | 'inviting' | 'completed' | 'cancelled';
+  attendancePolicy?: ('single' | 'multiple') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "session-checkins".
  */
 export interface SessionCheckin {
   id: number;
   student: number | Student;
+  ceremony: number | Ceremony;
   session: number | Session;
   checkedInBy: number | User;
   checkedInAt: string;
@@ -349,14 +361,19 @@ export interface Session {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ceremonies".
+ * via the `definition` "follow-ups".
  */
-export interface Ceremony {
+export interface FollowUp {
   id: number;
-  title: string;
-  description?: string | null;
-  status: 'draft' | 'scheduled' | 'active' | 'inviting' | 'completed' | 'cancelled';
-  attendancePolicy?: ('single' | 'multiple') | null;
+  /**
+   * دانش‌آموزی که این پیگیری برای او ثبت شده است.
+   */
+  student: number | Student;
+  /**
+   * کارشناس یا کاربری که این اقدام را ثبت کرده است.
+   */
+  specialist: number | User;
+  note: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -386,24 +403,6 @@ export interface Invitation {
     | number
     | boolean
     | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "follow-ups".
- */
-export interface FollowUp {
-  id: number;
-  /**
-   * دانش‌آموزی که این پیگیری برای او ثبت شده است.
-   */
-  student: number | Student;
-  /**
-   * کارشناس یا کاربری که این اقدام را ثبت کرده است.
-   */
-  specialist: number | User;
-  note: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -768,6 +767,7 @@ export interface StudentsSelect<T extends boolean = true> {
   referrer?: T;
   address?: T;
   notes?: T;
+  attendedCeremonies?: T;
   checkins?: T;
   readinessStatus?: T;
   currentClass?: T;
@@ -776,7 +776,6 @@ export interface StudentsSelect<T extends boolean = true> {
   referredAt?: T;
   absorbedAt?: T;
   stabilizedAt?: T;
-  invitations?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -857,6 +856,7 @@ export interface InvitationClaimsSelect<T extends boolean = true> {
  */
 export interface SessionCheckinsSelect<T extends boolean = true> {
   student?: T;
+  ceremony?: T;
   session?: T;
   checkedInBy?: T;
   checkedInAt?: T;
