@@ -6,7 +6,7 @@ export const isUserAdmin: Access = ({ req }) =>
 export const canAccessAdminPanel = ({ req }: { req: PayloadRequest }): boolean =>
   Boolean(
     req.user?.status === 'active' &&
-      ['admin', 'employee', 'follow_up_specialist'].includes(req.user.role),
+    ['admin', 'employee', 'follow_up_specialist'].includes(req.user.role),
   )
 
 export const userReadAccess: Access = ({ req }) =>

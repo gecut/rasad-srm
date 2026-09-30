@@ -292,7 +292,6 @@ describe('Teacher and reception server boundaries', () => {
     expect(count.totalDocs).toBe(2)
   })
 
-
   it('rolls back a newly created student if check-in persistence fails', async () => {
     const lastName = randomUUID()
     const originalCreate = payload.create.bind(payload)

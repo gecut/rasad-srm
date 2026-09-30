@@ -33,11 +33,7 @@ export const validateAndLockSessionBeforeChange: CollectionBeforeChangeHook = as
     if (existing.totalDocs) throw new APIError('سانس دیگری در حال دعوت است.', 409)
     data.fillingStartedAt = new Date().toISOString()
   }
-  if (
-    originalDoc?.status === 'filling' &&
-    merged.status !== 'filling' &&
-    !req.context.domainAction
-  )
+  if (originalDoc?.status === 'filling' && merged.status !== 'filling' && !req.context.domainAction)
     throw new APIError('ابتدا سانس را با عملیات پیشروی ببندید.', 422)
   return data
 }

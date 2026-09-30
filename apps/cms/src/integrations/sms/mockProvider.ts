@@ -1,9 +1,4 @@
-import type {
-  ISmsProvider,
-  SendPatternParams,
-  SendSmsParams,
-  SendSmsResult,
-} from './types'
+import type { ISmsProvider, SendPatternParams, SendSmsParams, SendSmsResult } from './types'
 
 export interface SentSmsRecord {
   type: 'plain' | 'pattern'
@@ -46,9 +41,7 @@ export class SimulatedSmsProvider implements ISmsProvider {
 
     if (process.env.NODE_ENV !== 'test') {
       // Structure log for developer visibility
-      console.info(
-        `[SMS:Plain] -> ${params.recipient}: "${params.message}"`,
-      )
+      console.info(`[SMS:Plain] -> ${params.recipient}: "${params.message}"`)
     }
 
     return {
@@ -131,4 +124,3 @@ export function setSmsProvider(provider: ISmsProvider): void {
 export function resetSmsProvider(): void {
   currentProvider = new SimulatedSmsProvider()
 }
-

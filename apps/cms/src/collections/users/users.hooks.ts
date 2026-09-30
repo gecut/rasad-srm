@@ -22,8 +22,7 @@ export const validateUserBeforeValidate: CollectionBeforeValidateHook = async ({
   if (['teacher', 'inviter', 'receptionist'].includes(merged.role) && !merged.username)
     throw new APIError('شماره موبایل کاربر الزامی است.', 422)
   if (merged.role === 'teacher') {
-    if (!merged.teacherProfile)
-      throw new APIError('مدرس مرتبط با این حساب را انتخاب کنید.', 422)
+    if (!merged.teacherProfile) throw new APIError('مدرس مرتبط با این حساب را انتخاب کنید.', 422)
     const teacher = await req.payload.findByID({
       collection: 'teachers',
       id: relationID(merged.teacherProfile),

@@ -33,4 +33,3 @@ export const SMS_PATTERN_KEYS = {
   INVITATION_ACCEPTED: 'invitation_accepted',
   NO_ANSWER: 'no_answer',
 } as const
-
