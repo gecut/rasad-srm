@@ -32,7 +32,7 @@ export function Field({
       type={type}
       className="w-full"
     >
-      <Label className="text-sm font-medium text-foreground">{label}</Label>
+      <Label>{label}</Label>
       <Input
         autoFocus={autoFocus}
         placeholder={placeholder}
@@ -69,7 +69,7 @@ export function TextareaField({
       onChange={onChange}
       className="w-full"
     >
-      <Label className="text-sm font-medium text-foreground">{label}</Label>
+      <Label>{label}</Label>
       <TextArea rows={rows} placeholder={placeholder} />
     </TextField>
   )

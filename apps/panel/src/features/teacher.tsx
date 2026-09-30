@@ -369,7 +369,7 @@ export function Teacher() {
                     onChange={setReason}
                     className="w-full"
                   >
-                    <Label className="text-sm font-medium">دلیل حذف (الزامی)</Label>
+                    <Label>دلیل حذف (الزامی)</Label>
                     <TextArea
                       rows={3}
                       placeholder="علت انصراف یا عدم امکان ادامه حضور دانش‌آموز..."

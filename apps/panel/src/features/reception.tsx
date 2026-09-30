@@ -550,9 +550,7 @@ export function Reception() {
               className="w-full"
               aria-label="نام یا شماره موبایل دانش‌آموز"
             >
-              <Label className="text-sm font-medium text-foreground">
-                نام یا شماره موبایل دانش‌آموز
-              </Label>
+              <Label>نام یا شماره موبایل دانش‌آموز</Label>
               <SearchField.Group>
                 <SearchField.SearchIcon />
                 <SearchField.Input

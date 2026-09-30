@@ -43,7 +43,7 @@ export function PanelSelect({
         className="w-full"
         variant="secondary"
       >
-        {label && <Label className="text-sm font-medium">{label}</Label>}
+        {label && <Label>{label}</Label>}
         <Select.Trigger>
           <Select.Value />
           <Select.Indicator />
