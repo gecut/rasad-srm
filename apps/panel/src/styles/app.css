@@ -1,5 +1,15 @@
+@import '@fontsource/vazirmatn/300.css';
+@import '@fontsource/vazirmatn/400.css';
+@import '@fontsource/vazirmatn/500.css';
+@import '@fontsource/vazirmatn/600.css';
+@import '@fontsource/vazirmatn/700.css';
 @import 'tailwindcss';
 @import '@heroui/styles';
+
+@theme {
+  --font-sans: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Vazirmatn', monospace;
+}
 
 /*
  * HeroUI Theme Customization
