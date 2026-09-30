@@ -22,6 +22,7 @@ export const Students: CollectionConfig = {
       'lastName',
       'firstName',
       'grade',
+      'attendedCeremonies',
       'neighborhood',
       'lifecycleStatus',
       'readinessStatus',
@@ -283,22 +284,45 @@ export const Students: CollectionConfig = {
             },
             {
               type: 'collapsible',
-              label: 'سوابق پذیرش در مراسم‌ها',
+              label: 'مراسم‌های حضور یافته',
               admin: {
                 initCollapsed: false,
                 description:
-                  'لیست تمام مراسم‌ها و سانس‌هایی که دانش‌آموز در آن‌ها پذیرش شده است (منبع واحد حقیقت).',
+                  'لیست تمام مراسم‌هایی که دانش‌آموز بر اساس ثبت پذیرش قطعی در آن‌ها حضور داشته است (محاسبه خودکار از پذیرش).',
+              },
+              fields: [
+                {
+                  name: 'attendedCeremonies',
+                  label: 'مراسم‌های حضور یافته',
+                  type: 'relationship',
+                  relationTo: 'ceremonies',
+                  hasMany: true,
+                  admin: {
+                    readOnly: true,
+                    description:
+                      'این فیلد به صورت خودکار از روی پذیرش‌های ثبت‌شده دانش‌آموز همگام‌سازی می‌شود.',
+                  },
+                },
+              ],
+            },
+            {
+              type: 'collapsible',
+              label: 'سوابق حضور در مراسم‌ها',
+              admin: {
+                initCollapsed: false,
+                description:
+                  'لیست تمام مراسم‌ها و سانس‌هایی که دانش‌آموز در آن‌ها پذیرش قطعی شده است (منبع واحد حقیقت).',
               },
               fields: [
                 {
                   name: 'checkins',
-                  label: 'سوابق پذیرش در مراسم‌ها',
+                  label: 'ریز سوابق حضور در مراسم‌ها',
                   type: 'join',
                   collection: 'session-checkins',
                   on: 'student',
                   admin: {
                     allowCreate: false,
-                    defaultColumns: ['session', 'source', 'checkedInAt', 'checkedInBy'],
+                    defaultColumns: ['ceremony', 'session', 'source', 'checkedInAt', 'checkedInBy'],
                   },
                 },
               ],
@@ -307,7 +331,7 @@ export const Students: CollectionConfig = {
         },
         {
           label: 'حلقه حیات و کلاس',
-          description: 'وضعیت پذیرش، کلاس فعلی، مراحل چرخه عمر دانش‌آموز و سوابق دعوت‌ها',
+          description: 'وضعیت پذیرش، کلاس فعلی و مراحل چرخه عمر دانش‌آموز',
           fields: [
             {
               type: 'collapsible',
@@ -452,27 +476,6 @@ export const Students: CollectionConfig = {
                       },
                     },
                   ],
-                },
-              ],
-            },
-            {
-              type: 'collapsible',
-              label: 'سوابق دعوت به مراسم‌ها',
-              admin: {
-                initCollapsed: false,
-                description: 'تاریخچه تماس‌های اپراتورهای دعوت و نتیجه هر تماس.',
-              },
-              fields: [
-                {
-                  name: 'invitations',
-                  label: 'سوابق دعوت به مراسم‌ها',
-                  type: 'join',
-                  collection: 'invitations',
-                  on: 'student',
-                  admin: {
-                    allowCreate: false,
-                    defaultColumns: ['ceremony', 'assignedSession', 'outcome', 'processedAt'],
-                  },
                 },
               ],
             },
