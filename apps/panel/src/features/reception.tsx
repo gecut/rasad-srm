@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Button, Card, Checkbox, Chip, Modal } from '@heroui/react'
+import {
+  Alert,
+  Button,
+  Card,
+  Checkbox,
+  Chip,
+  Label,
+  Modal,
+  SearchField,
+} from '@heroui/react'
 import type { PanelContext, ReceptionSearch, ReceptionStudent } from '@rasad/contracts'
 import { APIError, errorMessage, normalizePhone, request } from '../lib/api'
 import { ErrorNotice, Field, SuccessNotice } from '../components/ui'
@@ -8,7 +17,6 @@ import {
   CheckSquareIcon,
   DangerCircleIcon,
   EditIcon,
-  MagnifierIcon,
   UserCheckIcon,
   UserPlusIcon,
 } from '../components/icons'
@@ -456,43 +464,62 @@ export function Reception() {
                     ? Math.round(((s.checkedInCount ?? 0) / s.capacity) * 100)
                     : null
                   return (
-                    <button
+                    <Card
                       key={s.id}
-                      type="button"
-                      disabled={busy}
+                      role="button"
+                      tabIndex={busy ? -1 : 0}
+                      aria-pressed={isCurrent}
+                      aria-disabled={busy}
                       onClick={() => {
+                        if (busy) return
                         setSessionId(String(s.id))
                         resetSearch()
                       }}
-                      className={`p-2.5 rounded-lg border text-right transition-all flex flex-col gap-1 cursor-pointer select-none ${
+                      onKeyDown={(event) => {
+                        if (busy) return
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          setSessionId(String(s.id))
+                          resetSearch()
+                        }
+                      }}
+                      className={`transition-all border text-right cursor-pointer select-none ${
                         isCurrent
                           ? 'border-accent bg-accent/10 ring-2 ring-accent'
-                          : 'border-border bg-surface hover:bg-muted/15'
+                          : 'border-border bg-surface hover:bg-surface-secondary/40'
                       }`}
                     >
-                      <div className="flex items-center justify-between text-xs gap-1">
-                        <strong className="truncate text-foreground font-bold">{s.title || 'سانس'}</strong>
-                        {s.status === 'filling' && (
-                          <span className="text-[10px] text-accent font-medium shrink-0">در حال تکمیل</span>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-muted truncate">{formatDate(s.startsAt)}</span>
-                      <div className="flex items-center justify-between text-[11px] pt-1 mt-1 border-t border-border/50">
-                        <span className="text-muted">حاضرین:</span>
-                        <span
-                          className={`font-semibold ${
-                            fillRatio && fillRatio >= 100
-                              ? 'text-danger'
-                              : fillRatio && fillRatio >= 80
-                                ? 'text-warning'
-                                : 'text-foreground'
-                          }`}
-                        >
-                          {s.checkedInCount ?? 0} {s.capacity ? `/ ${s.capacity}` : 'نفر'}
-                          {fillRatio !== null ? ` (${fillRatio}٪)` : ''}
+                      <Card.Content className="p-2.5 flex flex-col gap-1">
+                        <div className="flex items-center justify-between text-xs gap-1">
+                          <strong className="truncate text-foreground font-bold">
+                            {s.title || 'سانس'}
+                          </strong>
+                          {s.status === 'filling' && (
+                            <Chip size="sm" variant="soft" color="accent" className="text-[10px] h-4 px-1 shrink-0">
+                              در حال تکمیل
+                            </Chip>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-muted truncate">
+                          {formatDate(s.startsAt)}
                         </span>
-                      </div>
-                    </button>
+                        <div className="flex items-center justify-between text-[11px] pt-1 mt-1 border-t border-border/50">
+                          <span className="text-muted">حاضرین:</span>
+                          <span
+                            className={`font-semibold ${
+                              fillRatio && fillRatio >= 100
+                                ? 'text-danger'
+                                : fillRatio && fillRatio >= 80
+                                  ? 'text-warning'
+                                  : 'text-foreground'
+                            }`}
+                          >
+                            {s.checkedInCount ?? 0} {s.capacity ? `/ ${s.capacity}` : 'نفر'}
+                            {fillRatio !== null ? ` (${fillRatio}٪)` : ''}
+                          </span>
+                        </div>
+                      </Card.Content>
+                    </Card>
                   )
                 })}
               </div>
@@ -514,26 +541,24 @@ export function Reception() {
               void search()
             }}
           >
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="reception-search-input"
-                className="text-sm font-medium text-foreground"
-              >
+            <SearchField
+              value={query}
+              onChange={(val) => {
+                setQuery(val)
+                if (searched) setSearched(false)
+              }}
+              className="w-full"
+              aria-label="نام یا شماره موبایل دانش‌آموز"
+            >
+              <Label className="text-sm font-medium text-foreground">
                 نام یا شماره موبایل دانش‌آموز
-              </label>
-              <div className="relative flex items-center">
-                <div className="absolute right-3 pointer-events-none flex items-center text-muted">
-                  <MagnifierIcon className="size-5" />
-                </div>
-                <input
+              </Label>
+              <SearchField.Group>
+                <SearchField.SearchIcon />
+                <SearchField.Input
                   id="reception-search-input"
                   ref={searchRef}
-                  type="search"
-                  value={query}
-                  onChange={(event) => {
-                    setQuery(event.target.value)
-                    if (searched) setSearched(false)
-                  }}
+                  placeholder="نام دانش‌آموز یا شماره موبایل را وارد کنید... (کلید / برای جست‌وجو)"
                   onKeyDown={(event) => {
                     if (searched && students.length > 0) {
                       if (event.key === 'ArrowDown') {
@@ -551,12 +576,10 @@ export function Reception() {
                       }
                     }
                   }}
-                  placeholder="نام دانش‌آموز یا شماره موبایل را وارد کنید... (کلید / برای جست‌وجو)"
-                  className="w-full rounded-lg border border-border bg-surface pr-10 pl-4 py-2.5 text-base text-foreground focus:outline-2 focus:outline-accent"
-                  required
                 />
-              </div>
-            </div>
+                <SearchField.ClearButton onPress={() => resetSearch()} />
+              </SearchField.Group>
+            </SearchField>
 
             <div className="flex flex-wrap items-center gap-3">
               <Button
