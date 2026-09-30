@@ -2,19 +2,19 @@
 
 ## Built-in shapes
 
-| Factory | Canonical value |
-|---|---|
-| `text`, `textarea`, `slug` | string; slug normalizes NFKC/lowercase/separators |
-| `number` | finite number with configured constraints |
-| `money` | safe integer in minor units; currency is metadata |
-| `boolean` | boolean |
-| `date` | timezone-qualified datetime normalized to UTC ISO |
-| `select` | one literal or an array of literals |
-| `relationship`, `upload` | ID or polymorphic `{ relationTo, value }`; array when `hasMany` |
-| `group` | strict object when every data descendant has a schema |
-| `array` | array of strict objects; Payload row IDs excluded |
-| `richText` | consumer-provided schema; editor/config stays native |
-| `native` | consumer schema when provided; otherwise Payload-only |
+| Factory                    | Canonical value                                                 |
+| -------------------------- | --------------------------------------------------------------- |
+| `text`, `textarea`, `slug` | string; slug normalizes NFKC/lowercase/separators               |
+| `number`                   | finite number with configured constraints                       |
+| `money`                    | safe integer in minor units; currency is metadata               |
+| `boolean`                  | boolean                                                         |
+| `date`                     | timezone-qualified datetime normalized to UTC ISO               |
+| `select`                   | one literal or an array of literals                             |
+| `relationship`, `upload`   | ID or polymorphic `{ relationTo, value }`; array when `hasMany` |
+| `group`                    | strict object when every data descendant has a schema           |
+| `array`                    | array of strict objects; Payload row IDs excluded               |
+| `richText`                 | consumer-provided schema; editor/config stays native            |
+| `native`                   | consumer schema when provided; otherwise Payload-only           |
 
 Use field option types and current docs for exact constraints. Do not infer undocumented conversion, formatting, slug synchronization, populated documents, or editor behavior.
 
@@ -35,7 +35,7 @@ Use `field.native` only for a data-affecting Payload field unsupported by a buil
 
 ```ts
 const location = field.native({
-  payload: { type: "point" },
+  payload: { type: 'point' },
   schema: z.tuple([z.number(), z.number()]),
 })
 ```

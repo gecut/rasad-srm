@@ -2,13 +2,13 @@
 
 ## Classify work before coding
 
-| Work | Preferred location |
-| --- | --- |
-| Pure value from props/state | render or a pure helper |
-| User-triggered command | event handler |
-| Synchronization with DOM, timer, subscription, network, or widget | effect with cleanup |
-| Shared canonical value | nearest common owner |
-| Browser-only interaction | smallest client subtree |
+| Work                                                              | Preferred location      |
+| ----------------------------------------------------------------- | ----------------------- |
+| Pure value from props/state                                       | render or a pure helper |
+| User-triggered command                                            | event handler           |
+| Synchronization with DOM, timer, subscription, network, or widget | effect with cleanup     |
+| Shared canonical value                                            | nearest common owner    |
+| Browser-only interaction                                          | smallest client subtree |
 
 Do not use an effect to copy props into state, derive filtered data, or react to a click that already has a handler. An effect is appropriate when React must keep an external system synchronized.
 

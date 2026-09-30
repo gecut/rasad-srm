@@ -6,7 +6,10 @@
   { "query": "Map health statuses into OpenTelemetry metric records", "should_trigger": true },
   { "query": "Audit OTel health metric label cardinality", "should_trigger": true },
   { "query": "Normalize health metric prefixes and names for Prometheus", "should_trigger": true },
-  { "query": "Why are check-local metrics missing from monitoring exporters?", "should_trigger": true },
+  {
+    "query": "Why are check-local metrics missing from monitoring exporters?",
+    "should_trigger": true
+  },
   { "query": "Test OTel resource attributes unit type and observedAt", "should_trigger": true },
   { "query": "Make health exporter output deterministic", "should_trigger": true },
   { "query": "Write a new database metric collector", "should_trigger": false },

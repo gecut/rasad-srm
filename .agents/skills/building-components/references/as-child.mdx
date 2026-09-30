@@ -63,14 +63,14 @@ function Component({ asChild, children, ...props }) {
       ...children.props,
       // Merge event handlers
       onClick: (e) => {
-        props.onClick?.(e);
-        children.props.onClick?.(e);
+        props.onClick?.(e)
+        children.props.onClick?.(e)
       },
-    });
+    })
   }
 
   // Render default element
-  return <button {...props}>{children}</button>;
+  return <button {...props}>{children}</button>
 }
 ```
 
@@ -131,13 +131,13 @@ Traditional composition often creates deeply nested DOM structures. `asChild` el
 `asChild` enables seamless integration with your existing design system components:
 
 ```tsx
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 
-<DropdownMenu.Trigger asChild>
+;<DropdownMenu.Trigger asChild>
   <Button variant="outline" size="icon">
     <MoreVertical className="h-4 w-4" />
   </Button>
-</DropdownMenu.Trigger>;
+</DropdownMenu.Trigger>
 ```
 
 Your Button component receives all the necessary dropdown trigger behavior without modification.
@@ -238,8 +238,8 @@ interface TriggerProps {
    *
    * @default false
    */
-  asChild?: boolean;
-  children: React.ReactNode;
+  asChild?: boolean
+  children: React.ReactNode
 }
 ```
 
@@ -250,13 +250,13 @@ Verify that custom components work correctly with `asChild`:
 ```tsx
 // Test that props are properly forwarded
 const TestButton = (props) => {
-  console.log("Received props:", props);
-  return <button {...props} />;
-};
+  console.log('Received props:', props)
+  return <button {...props} />
+}
 
-<Tooltip.Trigger asChild>
+;<Tooltip.Trigger asChild>
   <TestButton>Test</TestButton>
-</Tooltip.Trigger>;
+</Tooltip.Trigger>
 ```
 
 ### 4. Handle Edge Cases
@@ -266,11 +266,7 @@ Consider edge cases like conditional rendering:
 ```tsx
 // Handle conditional children
 <Dialog.Trigger asChild>
-  {isLoading ? (
-    <Skeleton className="h-10 w-20" />
-  ) : (
-    <Button>Open Dialog</Button>
-  )}
+  {isLoading ? <Skeleton className="h-10 w-20" /> : <Button>Open Dialog</Button>}
 </Dialog.Trigger>
 ```
 
@@ -282,12 +278,10 @@ As discussed in [Types](/docs/types), you should always spread props to the unde
 
 ```tsx
 // ❌ Won't receive trigger behavior
-const BadButton = ({ children }) => <button>{children}</button>;
+const BadButton = ({ children }) => <button>{children}</button>
 
 // ✅ Properly receives all props
-const GoodButton = ({ children, ...props }) => (
-  <button {...props}>{children}</button>
-);
+const GoodButton = ({ children, ...props }) => <button {...props}>{children}</button>
 ```
 
 ### Multiple Children

@@ -11,18 +11,18 @@ Register Node/container checks with the Node runtime adapter in that module. Cor
 For a Node-backed route:
 
 ```ts
-import { createNextHealthRoute } from "@nexload-sdk/healthcheck-next";
-import { healthManager } from "@/server/health";
+import { createNextHealthRoute } from '@nexload-sdk/healthcheck-next'
+import { healthManager } from '@/server/health'
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
 export const { GET, HEAD } = createNextHealthRoute(healthManager, {
-  scope: "readiness",
-  format: "summary",
-});
+  scope: 'readiness',
+  format: 'summary',
+})
 ```
 
 Use the factory output directly unless wrapping behavior is necessary and covered by tests. A metrics route exports GET only.

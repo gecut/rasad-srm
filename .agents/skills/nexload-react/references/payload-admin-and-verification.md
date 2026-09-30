@@ -18,13 +18,13 @@ Detailed Payload access control, hooks, field configuration, import-map policy, 
 
 ## Verification matrix
 
-| Change | Minimum evidence |
-| --- | --- |
-| Pure render or props | typecheck, lint, focused render test |
-| State/effect lifecycle | update, cleanup/unmount, stale async scenario |
-| Server/client boundary | server import/build plus client build when client behavior exists |
-| Payload Admin field | package build and focused Admin/form behavior |
-| Public export | package exports and packed-consumer check; compose with `nexload-package` |
+| Change                 | Minimum evidence                                                          |
+| ---------------------- | ------------------------------------------------------------------------- |
+| Pure render or props   | typecheck, lint, focused render test                                      |
+| State/effect lifecycle | update, cleanup/unmount, stale async scenario                             |
+| Server/client boundary | server import/build plus client build when client behavior exists         |
+| Payload Admin field    | package build and focused Admin/form behavior                             |
+| Public export          | package exports and packed-consumer check; compose with `nexload-package` |
 
 Record commands and exact outcomes. Keep unrelated baseline failures separate. A build proves compilation, not browser behavior; a unit test proves only its exercised contract.
 

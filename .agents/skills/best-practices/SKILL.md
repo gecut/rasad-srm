@@ -4,7 +4,7 @@ description: Apply modern web development best practices for security, compatibi
 license: MIT
 metadata:
   author: web-quality-skills
-  version: "2.0"
+  version: '2.0'
 ---
 
 # Best practices
@@ -28,11 +28,11 @@ Read [the security reference](references/SECURITY.md) when security is in scope 
 
 At minimum:
 
-* **Use HTTPS without mixed content.** Add HSTS only after confirming every relevant subdomain supports HTTPS.
-* **Treat a strict CSP as defense in depth.** Prefer nonces or hashes and test with report-only before enforcement.
-* **Sanitize untrusted HTML and protect DOM XSS sinks.** Prefer text APIs when markup is not required.
-* **Pin and review third-party code.** Use SRI where the delivery model supports it and keep dependencies patched.
-* **Verify response headers at runtime.** Source configuration alone does not prove what the deployed page sends.
+- **Use HTTPS without mixed content.** Add HSTS only after confirming every relevant subdomain supports HTTPS.
+- **Treat a strict CSP as defense in depth.** Prefer nonces or hashes and test with report-only before enforcement.
+- **Sanitize untrusted HTML and protect DOM XSS sinks.** Prefer text APIs when markup is not required.
+- **Pin and review third-party code.** Use SRI where the delivery model supports it and keep dependencies patched.
+- **Verify response headers at runtime.** Source configuration alone does not prove what the deployed page sends.
 
 ## Browser compatibility
 
@@ -40,12 +40,13 @@ At minimum:
 
 ```html
 <!-- ❌ Missing or invalid doctype -->
-<HTML>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html>
+  <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
 
-<!-- ✅ HTML5 doctype -->
-<!DOCTYPE html>
-<html lang="en">
+  <!-- ✅ HTML5 doctype -->
+  <!DOCTYPE html>
+  <html lang="en"></html>
+</html>
 ```
 
 ### Character encoding
@@ -53,17 +54,19 @@ At minimum:
 ```html
 <!-- ❌ Missing or late charset -->
 <html>
-<head>
-  <title>Page</title>
-  <meta charset="UTF-8">
-</head>
+  <head>
+    <title>Page</title>
+    <meta charset="UTF-8" />
+  </head>
 
-<!-- ✅ Charset as first element in head -->
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Page</title>
-</head>
+  <!-- ✅ Charset as first element in head -->
+  <html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>Page</title>
+    </head>
+  </html>
+</html>
 ```
 
 ### Viewport meta tag
@@ -76,8 +79,8 @@ At minimum:
 
 <!-- ✅ Responsive viewport -->
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Page</title>
 </head>
 ```
@@ -120,10 +123,10 @@ If you must load a polyfill at runtime, append a script element — never use `d
 ```html
 <script>
   if (!('fetch' in window)) {
-    const s = document.createElement('script');
-    s.src = '/polyfills/fetch.js';
-    s.defer = true;
-    document.head.appendChild(s);
+    const s = document.createElement('script')
+    s.src = '/polyfills/fetch.js'
+    s.defer = true
+    document.head.appendChild(s)
   }
 </script>
 ```
@@ -165,15 +168,15 @@ if ('serviceWorker' in navigator) {
 
 ```javascript
 // ❌ Non-passive touch/wheel (may block scrolling)
-element.addEventListener('touchstart', handler);
-element.addEventListener('wheel', handler);
+element.addEventListener('touchstart', handler)
+element.addEventListener('wheel', handler)
 
 // ✅ Passive listeners (allows smooth scrolling)
-element.addEventListener('touchstart', handler, { passive: true });
-element.addEventListener('wheel', handler, { passive: true });
+element.addEventListener('touchstart', handler, { passive: true })
+element.addEventListener('wheel', handler, { passive: true })
 
 // ✅ If you need preventDefault, be explicit
-element.addEventListener('touchstart', handler, { passive: false });
+element.addEventListener('touchstart', handler, { passive: false })
 ```
 
 ---
@@ -184,17 +187,17 @@ element.addEventListener('touchstart', handler, { passive: false });
 
 ```javascript
 // ❌ Errors in production
-console.log('Debug info'); // Remove in production
-throw new Error('Unhandled'); // Catch all errors
+console.log('Debug info') // Remove in production
+throw new Error('Unhandled') // Catch all errors
 
 // ✅ Proper error handling
 try {
-  riskyOperation();
+  riskyOperation()
 } catch (error) {
   // Log to error tracking service
-  errorTracker.captureException(error);
+  errorTracker.captureException(error)
   // Show user-friendly message
-  showErrorMessage('Something went wrong. Please try again.');
+  showErrorMessage('Something went wrong. Please try again.')
 }
 ```
 
@@ -202,26 +205,26 @@ try {
 
 ```jsx
 class ErrorBoundary extends React.Component {
-  state = { hasError: false };
-  
+  state = { hasError: false }
+
   static getDerivedStateFromError(error) {
-    return { hasError: true };
+    return { hasError: true }
   }
-  
+
   componentDidCatch(error, info) {
-    errorTracker.captureException(error, { extra: info });
+    errorTracker.captureException(error, { extra: info })
   }
-  
+
   render() {
     if (this.state.hasError) {
-      return <FallbackUI />;
+      return <FallbackUI />
     }
-    return this.props.children;
+    return this.props.children
   }
 }
 
 // Usage
-<ErrorBoundary>
+;<ErrorBoundary>
   <App />
 </ErrorBoundary>
 ```
@@ -231,13 +234,13 @@ class ErrorBoundary extends React.Component {
 ```javascript
 // Catch unhandled errors
 window.addEventListener('error', (event) => {
-  errorTracker.captureException(event.error);
-});
+  errorTracker.captureException(event.error)
+})
 
 // Catch unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
-  errorTracker.captureException(event.reason);
-});
+  errorTracker.captureException(event.reason)
+})
 ```
 
 ---
@@ -251,17 +254,17 @@ window.addEventListener('unhandledrejection', (event) => {
 // webpack.config.js
 module.exports = {
   devtool: 'source-map', // Exposes source code
-};
+}
 
 // ✅ Hidden source maps (uploaded to error tracker)
 module.exports = {
   devtool: 'hidden-source-map',
-};
+}
 
 // ✅ Or no source maps in production
 module.exports = {
   devtool: process.env.NODE_ENV === 'production' ? false : 'source-map',
-};
+}
 ```
 
 **Strip `sourcesContent` from production maps** when uploading to your error tracker. By default, bundlers embed the full original source inside the `.map` file — anyone who obtains the map (including via a misconfigured upload step) gets your unminified code. Configure your bundler to omit `sourcesContent`, or use a Sentry/Bugsnag CLI flag that does so when uploading.
@@ -293,38 +296,42 @@ For Vite, prefer `sourcemap: 'hidden'` over `'true'` so the `//# sourceMappingUR
 
 ```javascript
 // ❌ Handler on every element
-items.forEach(item => {
-  item.addEventListener('click', handleClick);
-});
+items.forEach((item) => {
+  item.addEventListener('click', handleClick)
+})
 
 // ✅ Event delegation
 container.addEventListener('click', (e) => {
   if (e.target.matches('.item')) {
-    handleClick(e);
+    handleClick(e)
   }
-});
+})
 ```
 
 ### Memory management
 
 ```javascript
 // ❌ Memory leak (never removed)
-const handler = () => { /* ... */ };
-window.addEventListener('resize', handler);
+const handler = () => {
+  /* ... */
+}
+window.addEventListener('resize', handler)
 
 // ✅ Cleanup when done
-const handler = () => { /* ... */ };
-window.addEventListener('resize', handler);
+const handler = () => {
+  /* ... */
+}
+window.addEventListener('resize', handler)
 
 // Later, when component unmounts:
-window.removeEventListener('resize', handler);
+window.removeEventListener('resize', handler)
 
 // ✅ Using AbortController
-const controller = new AbortController();
-window.addEventListener('resize', handler, { signal: controller.signal });
+const controller = new AbortController()
+window.addEventListener('resize', handler, { signal: controller.signal })
 
 // Cleanup:
-controller.abort();
+controller.abort()
 ```
 
 ---
@@ -336,23 +343,27 @@ controller.abort();
 ```html
 <!-- ❌ Invalid HTML -->
 <div id="header">
-<div id="header"> <!-- Duplicate ID -->
+  <div id="header">
+    <!-- Duplicate ID -->
 
-<ul>
-  <div>Item</div> <!-- Invalid child -->
-</ul>
+    <ul>
+      <div>Item</div>
+      <!-- Invalid child -->
+    </ul>
 
-<a href="/"><button>Click</button></a> <!-- Invalid nesting -->
+    <a href="/"><button>Click</button></a>
+    <!-- Invalid nesting -->
 
-<!-- ✅ Valid HTML -->
-<header id="site-header">
-</header>
+    <!-- ✅ Valid HTML -->
+    <header id="site-header"></header>
 
-<ul>
-  <li>Item</li>
-</ul>
+    <ul>
+      <li>Item</li>
+    </ul>
 
-<a href="/" class="button">Click</a>
+    <a href="/" class="button">Click</a>
+  </div>
+</div>
 ```
 
 ### Semantic HTML
@@ -387,15 +398,15 @@ controller.abort();
 
 ```html
 <!-- ❌ Distorted images -->
-<img src="photo.jpg" width="300" height="100">
+<img src="photo.jpg" width="300" height="100" />
 <!-- If actual ratio is 4:3, this squishes the image -->
 
 <!-- ✅ Preserve aspect ratio -->
-<img src="photo.jpg" width="300" height="225">
+<img src="photo.jpg" width="300" height="225" />
 <!-- Actual 4:3 dimensions -->
 
 <!-- ✅ CSS object-fit for flexibility -->
-<img src="photo.jpg" style="width: 300px; height: 200px; object-fit: cover;">
+<img src="photo.jpg" style="width: 300px; height: 200px; object-fit: cover;" />
 ```
 
 ---
@@ -406,27 +417,25 @@ controller.abort();
 
 ```javascript
 // ❌ Request on page load (bad UX, often denied)
-navigator.geolocation.getCurrentPosition(success, error);
+navigator.geolocation.getCurrentPosition(success, error)
 
 // ✅ Request in context, after user action
 findNearbyButton.addEventListener('click', async () => {
   // Explain why you need it
   if (await showPermissionExplanation()) {
-    navigator.geolocation.getCurrentPosition(success, error);
+    navigator.geolocation.getCurrentPosition(success, error)
   }
-});
+})
 ```
 
 ### Permissions policy
 
 ```html
 <!-- Restrict powerful features -->
-<meta http-equiv="Permissions-Policy" 
-      content="geolocation=(), camera=(), microphone=()">
+<meta http-equiv="Permissions-Policy" content="geolocation=(), camera=(), microphone=()" />
 
 <!-- Or allow for specific origins -->
-<meta http-equiv="Permissions-Policy" 
-      content="geolocation=(self 'https://maps.example.com')">
+<meta http-equiv="Permissions-Policy" content="geolocation=(self 'https://maps.example.com')" />
 ```
 
 ---
@@ -434,6 +443,7 @@ findNearbyButton.addEventListener('click', async () => {
 ## Audit checklist
 
 ### Security (critical)
+
 - [ ] HTTPS enabled, no mixed content
 - [ ] No vulnerable dependencies (`npm audit`)
 - [ ] CSP headers configured (with `frame-ancestors`, `base-uri`, `form-action`)
@@ -443,6 +453,7 @@ findNearbyButton.addEventListener('click', async () => {
 - [ ] No exposed source maps (and `sourcesContent` stripped from uploaded ones)
 
 ### Compatibility
+
 - [ ] Valid HTML5 doctype
 - [ ] Charset declared first in head
 - [ ] Viewport meta tag present
@@ -450,6 +461,7 @@ findNearbyButton.addEventListener('click', async () => {
 - [ ] Passive event listeners for scroll/touch
 
 ### Code quality
+
 - [ ] No console errors
 - [ ] Valid HTML (no duplicate IDs)
 - [ ] Semantic HTML elements used
@@ -457,6 +469,7 @@ findNearbyButton.addEventListener('click', async () => {
 - [ ] Memory cleanup in components
 
 ### UX
+
 - [ ] No intrusive interstitials
 - [ ] Permission requests in context
 - [ ] Clear error messages
@@ -464,14 +477,14 @@ findNearbyButton.addEventListener('click', async () => {
 
 ## Tools
 
-| Tool | Purpose |
-|------|---------|
-| `npm audit` | Dependency vulnerabilities |
-| [SecurityHeaders.com](https://securityheaders.com) | Header analysis |
-| [W3C Validator](https://validator.w3.org) | HTML validation |
+| Tool                                                            | Purpose                                   |
+| --------------------------------------------------------------- | ----------------------------------------- |
+| `npm audit`                                                     | Dependency vulnerabilities                |
+| [SecurityHeaders.com](https://securityheaders.com)              | Header analysis                           |
+| [W3C Validator](https://validator.w3.org)                       | HTML validation                           |
 | Live Lighthouse audit (Chrome DevTools MCP: `lighthouse_audit`) | Rendered Best Practices checks for agents |
-| Lighthouse CLI | Best Practices audit fallback |
-| [Observatory](https://observatory.mozilla.org) | Security scan |
+| Lighthouse CLI                                                  | Best Practices audit fallback             |
+| [Observatory](https://observatory.mozilla.org)                  | Security scan                             |
 
 ## References
 

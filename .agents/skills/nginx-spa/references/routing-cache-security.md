@@ -31,14 +31,14 @@ One inherited CDN policy selects cache headers in this order:
 
 Default profiles:
 
-| Response class | `Cache-Control` |
-| --- | --- |
-| fingerprinted static asset | `public, max-age=31536000, immutable, s-maxage=31536000` |
-| unversioned static asset | `public, max-age=3600, stale-while-revalidate=30` |
-| `/`, trailing-slash URI, `.htm`, or `.html` | `public, max-age=0, must-revalidate, s-maxage=0` |
-| `.json` or `.webmanifest` | `public, max-age=60, stale-while-revalidate=30` |
-| `service-worker.js` or `sw.js` | `no-cache` |
-| any error or non-GET/HEAD method | `no-store` |
+| Response class                              | `Cache-Control`                                          |
+| ------------------------------------------- | -------------------------------------------------------- |
+| fingerprinted static asset                  | `public, max-age=31536000, immutable, s-maxage=31536000` |
+| unversioned static asset                    | `public, max-age=3600, stale-while-revalidate=30`        |
+| `/`, trailing-slash URI, `.htm`, or `.html` | `public, max-age=0, must-revalidate, s-maxage=0`         |
+| `.json` or `.webmanifest`                   | `public, max-age=60, stale-while-revalidate=30`          |
+| `service-worker.js` or `sw.js`              | `no-cache`                                               |
+| any error or non-GET/HEAD method            | `no-store`                                               |
 
 The fingerprint heuristics recognize a dot or hyphen followed by at least six hexadecimal characters, or a hyphen followed by at least eight URL-safe characters, before a known asset extension. Human-readable names can accidentally match. Verify classification before relying on a year-long immutable policy.
 
@@ -48,16 +48,16 @@ ETag is enabled. Conditional requests may return `304`. `Vary` is `Accept-Encodi
 
 ## Cache variables
 
-| Variable | Default |
-| --- | --- |
-| `NGINX_CDN_CACHE_HASHED` | `public, max-age=31536000, immutable` |
-| `NGINX_CDN_S_MAXAGE` | `31536000` |
+| Variable                             | Default                                           |
+| ------------------------------------ | ------------------------------------------------- |
+| `NGINX_CDN_CACHE_HASHED`             | `public, max-age=31536000, immutable`             |
+| `NGINX_CDN_S_MAXAGE`                 | `31536000`                                        |
 | `NGINX_CDN_CACHE_UNVERSIONED_STATIC` | `public, max-age=3600, stale-while-revalidate=30` |
-| `NGINX_CDN_CACHE_HTML` | `public, max-age=0, must-revalidate` |
-| `NGINX_CDN_HTML_S_MAXAGE` | `0` |
-| `NGINX_CDN_CACHE_JSON` | `public, max-age=60, stale-while-revalidate=30` |
-| `NGINX_CDN_CACHE_SERVICE_WORKER` | `no-cache` |
-| `NGINX_CDN_CACHE_ERROR` | `no-store` |
+| `NGINX_CDN_CACHE_HTML`               | `public, max-age=0, must-revalidate`              |
+| `NGINX_CDN_HTML_S_MAXAGE`            | `0`                                               |
+| `NGINX_CDN_CACHE_JSON`               | `public, max-age=60, stale-while-revalidate=30`   |
+| `NGINX_CDN_CACHE_SERVICE_WORKER`     | `no-cache`                                        |
+| `NGINX_CDN_CACHE_ERROR`              | `no-store`                                        |
 
 Cache text cannot contain control characters, single/double quotes, or backslashes. The two `s-maxage` values are unsigned integers.
 

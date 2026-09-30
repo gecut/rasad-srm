@@ -21,28 +21,28 @@ Use one blank line between distinct statement groups: input preparation, validat
 Readable grouping:
 
 ```ts
-const input = normalizeInput(rawInput);
-const config = resolveConfig(options);
+const input = normalizeInput(rawInput)
+const config = resolveConfig(options)
 
 if (!isValidInput(input)) {
-  return null;
+  return null
 }
 
-const result = transformInput(input, config);
+const result = transformInput(input, config)
 
-return result;
+return result
 ```
 
 Avoid dense, visually flat code:
 
 ```ts
-const input = normalizeInput(rawInput);
-const config = resolveConfig(options);
+const input = normalizeInput(rawInput)
+const config = resolveConfig(options)
 if (!isValidInput(input)) {
-  return null;
+  return null
 }
-const result = transformInput(input, config);
-return result;
+const result = transformInput(input, config)
+return result
 ```
 
 Do not insert a blank line between tightly related declarations, or between a condition and its connected branch. Keep comments adjacent to the code they explain; comments record rationale or constraints, while names and structure should express ordinary intent.

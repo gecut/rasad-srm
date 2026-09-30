@@ -4,31 +4,30 @@ Improve readability of `buildReport` only; preserve outputs, calls, ordering, an
 
 ```ts
 export async function buildReport(id: string) {
-  const record = await loadRecord(id);
-  const config = await loadReportConfig(id);
+  const record = await loadRecord(id)
+  const config = await loadReportConfig(id)
   if (!record) {
-    return null;
+    return null
   }
-  const width = config.width;
+  const width = config.width
 
-  const height = config.height;
+  const height = config.height
 
-
-  const area = width * height;
+  const area = width * height
   if (config.compact) {
-    recordLayout(area);
+    recordLayout(area)
   } else {
-    recordLayout(area * 2);
+    recordLayout(area * 2)
   }
   try {
-    await enrichRecord(record);
+    await enrichRecord(record)
   } catch (error) {
-    recordFailureKind("enrichment");
-    throw error;
+    recordFailureKind('enrichment')
+    throw error
   } finally {
-    releaseReportResources(id);
+    releaseReportResources(id)
   }
-  const rows = mapRows(record, config);
-  return { id, rows };
+  const rows = mapRows(record, config)
+  return { id, rows }
 }
 ```

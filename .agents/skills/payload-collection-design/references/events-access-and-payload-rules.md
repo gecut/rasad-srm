@@ -95,4 +95,3 @@ A junction collection may be hidden from primary Admin navigation when it is not
 Do not hide it if operators need to manage relation metadata or lifecycle.
 
 ---
-

@@ -6,9 +6,11 @@
   position: relative;
 }
 
-.account-actions__delete { margin-left: auto; }
+.account-actions__delete {
+  margin-left: auto;
+}
 .account-actions::after {
-  content: "";
+  content: '';
   position: absolute;
   left: 0;
   right: 410px;

@@ -1,6 +1,6 @@
 ---
 name: nexload-code
-description: "Use when internal TypeScript behavior, refactoring, or repository-wide file naming is the primary task in Nexload: scope discipline, readable functions and modules, type or trust-boundary safety, lifecycle ownership, abstraction value, dependency restraint, internal imports, or honest verification. Route package API compatibility to nexload-package and framework or specialist policy to the owning sibling skill."
+description: 'Use when internal TypeScript behavior, refactoring, or repository-wide file naming is the primary task in Nexload: scope discipline, readable functions and modules, type or trust-boundary safety, lifecycle ownership, abstraction value, dependency restraint, internal imports, or honest verification. Route package API compatibility to nexload-package and framework or specialist policy to the owning sibling skill.'
 ---
 
 # Nexload Code

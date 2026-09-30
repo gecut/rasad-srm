@@ -12,5 +12,9 @@
   width: 286px;
 }
 
-.editorial-hero__prose p { margin: 0 0 1.25em; }
-.editorial-hero__prose blockquote { margin: 2em 0 2em 3em; }
+.editorial-hero__prose p {
+  margin: 0 0 1.25em;
+}
+.editorial-hero__prose blockquote {
+  margin: 2em 0 2em 3em;
+}

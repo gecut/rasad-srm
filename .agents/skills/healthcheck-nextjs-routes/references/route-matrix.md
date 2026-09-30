@@ -1,12 +1,12 @@
 # Route matrix
 
-| Purpose | Factory | Scope | Format/body | Methods | HTTP policy |
-|---|---|---|---|---|---|
-| Liveness | `createNextHealthRoute` | `liveness` | summary or JSON without details | GET, HEAD | default |
-| Readiness | `createNextHealthRoute` | `readiness` | summary/minimal JSON | GET, HEAD | default or strict |
-| Startup | `createNextHealthRoute` | `startup` | summary/minimal JSON | GET, HEAD | default/custom |
-| Diagnostics | `createNextHealthRoute` | `diagnostics` | JSON, optional sanitized details | GET, HEAD | deliberate custom/default |
-| Metrics | `createNextMetricsRoute` | defaults `all` | Prometheus, OpenMetrics, or JSON | GET | always HTTP 200 |
+| Purpose     | Factory                  | Scope          | Format/body                      | Methods   | HTTP policy               |
+| ----------- | ------------------------ | -------------- | -------------------------------- | --------- | ------------------------- |
+| Liveness    | `createNextHealthRoute`  | `liveness`     | summary or JSON without details  | GET, HEAD | default                   |
+| Readiness   | `createNextHealthRoute`  | `readiness`    | summary/minimal JSON             | GET, HEAD | default or strict         |
+| Startup     | `createNextHealthRoute`  | `startup`      | summary/minimal JSON             | GET, HEAD | default/custom            |
+| Diagnostics | `createNextHealthRoute`  | `diagnostics`  | JSON, optional sanitized details | GET, HEAD | deliberate custom/default |
+| Metrics     | `createNextMetricsRoute` | defaults `all` | Prometheus, OpenMetrics, or JSON | GET       | always HTTP 200           |
 
 ## Health response contract
 

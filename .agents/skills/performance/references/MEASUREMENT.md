@@ -4,13 +4,13 @@ Use this workflow when a runnable URL is available, the user asks for measured p
 
 ## Keep the evidence types separate
 
-| Evidence | What it represents | Best use |
-|----------|--------------------|----------|
-| CrUX field data | Aggregated experiences from eligible real Chrome users, normally a rolling 28-day window | Decide whether users have a Core Web Vitals problem |
-| First-party RUM | Measurements collected and reported from the site's own user sessions | Segment and diagnose current production experience |
-| DevTools performance trace | One observed browser session under stated local or emulated conditions | Find LCP, INP, CLS, network, and main-thread causes |
-| Lighthouse lab run | A controlled synthetic navigation | Reproduce load problems and prevent regressions |
-| Static code inspection | Potential issues inferred from source | Form hypotheses when no page can run |
+| Evidence                   | What it represents                                                                       | Best use                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| CrUX field data            | Aggregated experiences from eligible real Chrome users, normally a rolling 28-day window | Decide whether users have a Core Web Vitals problem |
+| First-party RUM            | Measurements collected and reported from the site's own user sessions                    | Segment and diagnose current production experience  |
+| DevTools performance trace | One observed browser session under stated local or emulated conditions                   | Find LCP, INP, CLS, network, and main-thread causes |
+| Lighthouse lab run         | A controlled synthetic navigation                                                        | Reproduce load problems and prevent regressions     |
+| Static code inspection     | Potential issues inferred from source                                                    | Form hypotheses when no page can run                |
 
 A `PerformanceObserver` result injected into one browser page is a **single-session lab observation**, not field data. It becomes RUM only when measurements from actual users are reported and aggregated.
 
@@ -32,11 +32,11 @@ Chrome DevTools MCP's Lighthouse navigation mode reloads the page. Use snapshot 
 
 ### Token-efficient tool use
 
-* Start with one trace and one Lighthouse audit rather than broad DOM, network, console, and source dumps.
-* Preserve large reports or traces to temporary files when the tool supports `filePath` or `outputDirPath`; summarize only actionable failures.
-* Drill into the few insights tied to a poor field metric or a reproducible lab bottleneck.
-* Filter and paginate network or console requests. Fetch individual request details only when they support a finding.
-* Take a text snapshot before a screenshot unless visual inspection is necessary.
+- Start with one trace and one Lighthouse audit rather than broad DOM, network, console, and source dumps.
+- Preserve large reports or traces to temporary files when the tool supports `filePath` or `outputDirPath`; summarize only actionable failures.
+- Drill into the few insights tied to a poor field metric or a reproducible lab bottleneck.
+- Filter and paginate network or console requests. Fetch individual request details only when they support a finding.
+- Take a text snapshot before a screenshot unless visual inspection is necessary.
 
 ## Fallbacks when DevTools tools are unavailable
 
@@ -52,22 +52,22 @@ The PageSpeed Insights API may be called without a key for occasional use, but a
 
 ## Reading CrUX correctly
 
-* Prefer page-level data for the audited URL. If only origin data exists, label it as origin scope; it is context, not proof for that route.
-* Compare the p75 value with the Core Web Vitals threshold and include the percentage of good experiences when available.
-* Keep phone and desktop data separate. Do not combine form factors to answer a device-specific question.
-* Treat missing CrUX data as **unavailable**, never as passing. Localhost, staging, new, private, and low-traffic pages commonly have no CrUX record.
-* CrUX is aggregated and delayed. Use it to prioritize user outcomes, not to verify a change deployed minutes ago.
+- Prefer page-level data for the audited URL. If only origin data exists, label it as origin scope; it is context, not proof for that route.
+- Compare the p75 value with the Core Web Vitals threshold and include the percentage of good experiences when available.
+- Keep phone and desktop data separate. Do not combine form factors to answer a device-specific question.
+- Treat missing CrUX data as **unavailable**, never as passing. Localhost, staging, new, private, and low-traffic pages commonly have no CrUX record.
+- CrUX is aggregated and delayed. Use it to prioritize user outcomes, not to verify a change deployed minutes ago.
 
 ## Repeatable lab comparisons
 
 Record these conditions with the result:
 
-* final URL and page state
-* browser and Lighthouse/tool version
-* viewport or form factor
-* CPU and network throttling
-* cold or warm cache
-* authentication, consent, and experiment state
+- final URL and page state
+- browser and Lighthouse/tool version
+- viewport or form factor
+- CPU and network throttling
+- cold or warm cache
+- authentication, consent, and experiment state
 
 For a decision based on a headline lab metric, run at least three equivalent navigations and report the median plus range. Do not compare a single local trace directly with the CrUX p75 or claim that the two should match.
 
@@ -75,21 +75,21 @@ Use metric values as the evidence. A Lighthouse score is a diagnostic summary wh
 
 ## Reconciling lab and field
 
-| Field | Lab | Interpretation |
-|-------|-----|----------------|
-| Poor | Poor | Reproducible user problem; trace and fix the dominant bottleneck |
-| Poor | Good | Local run missed real-user conditions; segment first-party RUM or test representative devices, routes, cache states, and interactions |
-| Good | Poor | The synthetic cold/throttled case is fragile, but do not claim users are currently failing |
-| Unavailable | Any | Use lab data for diagnosis and recommend RUM if production impact matters |
+| Field       | Lab  | Interpretation                                                                                                                        |
+| ----------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Poor        | Poor | Reproducible user problem; trace and fix the dominant bottleneck                                                                      |
+| Poor        | Good | Local run missed real-user conditions; segment first-party RUM or test representative devices, routes, cache states, and interactions |
+| Good        | Poor | The synthetic cold/throttled case is fragile, but do not claim users are currently failing                                            |
+| Unavailable | Any  | Use lab data for diagnosis and recommend RUM if production impact matters                                                             |
 
 ## Compact audit output
 
 Start reports with an evidence table:
 
-| Signal | Scope and conditions | Baseline | After | Source |
-|--------|----------------------|----------|-------|--------|
-| LCP | URL, phone, p75/28 days | 3.1s | Pending field window | CrUX |
-| LCP | URL, mobile lab, cold cache, median of 3 | 3.8s | 2.6s | DevTools trace |
+| Signal | Scope and conditions                     | Baseline | After                | Source         |
+| ------ | ---------------------------------------- | -------- | -------------------- | -------------- |
+| LCP    | URL, phone, p75/28 days                  | 3.1s     | Pending field window | CrUX           |
+| LCP    | URL, mobile lab, cold cache, median of 3 | 3.8s     | 2.6s                 | DevTools trace |
 
 Then separate:
 
@@ -101,7 +101,7 @@ Then separate:
 
 ## Sources
 
-* [Chrome DevTools MCP tool reference](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md)
-* [Chrome UX Report API](https://developer.chrome.com/docs/crux/api)
-* [Getting started with measuring Web Vitals](https://web.dev/articles/vitals-measurement-getting-started)
-* [PageSpeed Insights API](https://developers.google.com/speed/docs/insights/v5/get-started)
+- [Chrome DevTools MCP tool reference](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md)
+- [Chrome UX Report API](https://developer.chrome.com/docs/crux/api)
+- [Getting started with measuring Web Vitals](https://web.dev/articles/vitals-measurement-getting-started)
+- [PageSpeed Insights API](https://developers.google.com/speed/docs/insights/v5/get-started)

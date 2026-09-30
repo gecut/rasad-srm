@@ -1,14 +1,35 @@
 [
-  { "query": "Integrate all @nexload-sdk/payload-fields factories into Payload config", "should_trigger": true },
-  { "query": "Review protected overrides across slug date and money fields", "should_trigger": true },
-  { "query": "Fix Payload Import Map resolution for package Admin components", "should_trigger": true },
-  { "query": "Separate payload-fields server exports from client Admin entrypoints", "should_trigger": true },
-  { "query": "Migrate positional Payload field helpers to options objects", "should_trigger": true },
+  {
+    "query": "Integrate all @nexload-sdk/payload-fields factories into Payload config",
+    "should_trigger": true
+  },
+  {
+    "query": "Review protected overrides across slug date and money fields",
+    "should_trigger": true
+  },
+  {
+    "query": "Fix Payload Import Map resolution for package Admin components",
+    "should_trigger": true
+  },
+  {
+    "query": "Separate payload-fields server exports from client Admin entrypoints",
+    "should_trigger": true
+  },
+  {
+    "query": "Migrate positional Payload field helpers to options objects",
+    "should_trigger": true
+  },
   { "query": "Decide whether payloadFieldsPlugin is required", "should_trigger": true },
   { "query": "Audit hook composition across semantic field factories", "should_trigger": true },
-  { "query": "Validate package exports bundler entries and Import Map paths", "should_trigger": true },
+  {
+    "query": "Validate package exports bundler entries and Import Map paths",
+    "should_trigger": true
+  },
   { "query": "Plan a package-wide payload-fields major migration", "should_trigger": true },
-  { "query": "Why does an Admin component compile but fail to resolve in Payload?", "should_trigger": true },
+  {
+    "query": "Why does an Admin component compile but fail to resolve in Payload?",
+    "should_trigger": true
+  },
   { "query": "Implement locked slug regeneration on title change", "should_trigger": false },
   { "query": "Fix Jalali month-only first-day persistence", "should_trigger": false },
   { "query": "Validate negative money and safe integer bounds", "should_trigger": false },

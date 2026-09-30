@@ -2,24 +2,24 @@
 
 ## Ownership
 
-| Concern | Owner |
-|---|---|
-| intrinsic type, constraints, same-type normalization, nullability | entity field |
-| static default validation | entity field |
-| required presence, persistence, hooks, access, drafts, localization, layout | Payload collection |
-| cross-field, request, database, workflow, authorization | application or Payload lifecycle |
-| stored document types | Payload-generated types |
-| populated response validation | explicit application output schema |
+| Concern                                                                     | Owner                              |
+| --------------------------------------------------------------------------- | ---------------------------------- |
+| intrinsic type, constraints, same-type normalization, nullability           | entity field                       |
+| static default validation                                                   | entity field                       |
+| required presence, persistence, hooks, access, drafts, localization, layout | Payload collection                 |
+| cross-field, request, database, workflow, authorization                     | application or Payload lifecycle   |
+| stored document types                                                       | Payload-generated types            |
+| populated response validation                                               | explicit application output schema |
 
 Do not move collection lifecycle to an entity during migration.
 
 ## Public facade
 
 ```ts
-import { defineEntity, field } from "@nexload-sdk/payload-schema"
+import { defineEntity, field } from '@nexload-sdk/payload-schema'
 
 const product = defineEntity({
-  name: "Product",
+  name: 'Product',
   fields: {
     title: field.text({ required: true, trim: true }),
     inventory: field.number({
@@ -30,9 +30,9 @@ const product = defineEntity({
   },
 })
 
-const fields = product.payload.pick(["title", "inventory"])
+const fields = product.payload.pick(['title', 'inventory'])
 const createSchema = product.schema(({ pick }) =>
-  pick(["title", "inventory"], { optional: ["inventory"] }),
+  pick(['title', 'inventory'], { optional: ['inventory'] }),
 )
 ```
 
@@ -42,13 +42,13 @@ const createSchema = product.schema(({ pick }) =>
 
 ## Defaults
 
-| Configuration | Result |
-|---|---|
-| `defaultValue` only | parsed once at `defineEntity`; canonical result goes to Payload |
-| `dynamicDefaultValue` only | native function forwarded opaquely |
-| both | `CONFLICTING_DEFAULT_CONFIGURATION`, phase `definition` |
-| `payload.defaultValue` | `RESERVED_PAYLOAD_OPTION` |
-| static default without canonical schema | `INVALID_FIELD_CONFIGURATION` |
+| Configuration                           | Result                                                          |
+| --------------------------------------- | --------------------------------------------------------------- |
+| `defaultValue` only                     | parsed once at `defineEntity`; canonical result goes to Payload |
+| `dynamicDefaultValue` only              | native function forwarded opaquely                              |
+| both                                    | `CONFLICTING_DEFAULT_CONFIGURATION`, phase `definition`         |
+| `payload.defaultValue`                  | `RESERVED_PAYLOAD_OPTION`                                       |
+| static default without canonical schema | `INVALID_FIELD_CONFIGURATION`                                   |
 
 Neither default mode adds Zod `.default()`.
 

@@ -81,15 +81,15 @@ normal `200`; errors and non-GET/HEAD responses use `Cache-Control: no-store`.
 
 ## Symptom guide
 
-| Symptom | Likely cause | Check / fix |
-| --- | --- | --- |
-| startup says shell missing | volume hides image content, wrong build folder, custom URI mismatch, unreadable file | `ls -l` at the resolved shell path; align `/data` and `NGINX_SPA_INDEX_URI` |
-| deep link is `404` | URI contains a dot, custom template replaced SPA regex, ingress rewrite mismatch | inspect request path and `nginx -T` |
-| missing JS returns `200 text/html` | consumer added a broad fallback location or request never reached this origin | inspect response server/path and rendered locations |
-| deep response caches for one hour | fallback internally redirects to an extensionless shell URI, which selects unversioned-static policy | use an `.html` shell plus complete cache-map override if deep-route policy must change; verify edge behavior |
-| duplicate `Cache-Control` | custom location/header added another authority | retain one complete cache map/header owner |
-| CORS absent on asset | asset regex does not include root CORS snippet | use a reviewed broader customization; test exact asset and error locations |
-| all users share rate-limit bucket | proxy CIDRs not trusted, so peer is the load balancer | configure exact controlled CIDRs and verify logged remote address |
-| canonical redirect loops | ingress host/scheme/forwarding conflicts | compare client Host, origin Host, `NGINX_FORCE_DOMAIN`, and ingress rewrite |
-| deny-all robots fails on read-only root | entrypoint needs to replace bundled/default robots file | ship desired robots file or keep feature off |
-| correct locally, wrong through CDN | stale edge object or CDN ignores origin cache/Vary | bypass edge, purge safely, and compare origin/edge headers |
+| Symptom                                 | Likely cause                                                                                         | Check / fix                                                                                                  |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| startup says shell missing              | volume hides image content, wrong build folder, custom URI mismatch, unreadable file                 | `ls -l` at the resolved shell path; align `/data` and `NGINX_SPA_INDEX_URI`                                  |
+| deep link is `404`                      | URI contains a dot, custom template replaced SPA regex, ingress rewrite mismatch                     | inspect request path and `nginx -T`                                                                          |
+| missing JS returns `200 text/html`      | consumer added a broad fallback location or request never reached this origin                        | inspect response server/path and rendered locations                                                          |
+| deep response caches for one hour       | fallback internally redirects to an extensionless shell URI, which selects unversioned-static policy | use an `.html` shell plus complete cache-map override if deep-route policy must change; verify edge behavior |
+| duplicate `Cache-Control`               | custom location/header added another authority                                                       | retain one complete cache map/header owner                                                                   |
+| CORS absent on asset                    | asset regex does not include root CORS snippet                                                       | use a reviewed broader customization; test exact asset and error locations                                   |
+| all users share rate-limit bucket       | proxy CIDRs not trusted, so peer is the load balancer                                                | configure exact controlled CIDRs and verify logged remote address                                            |
+| canonical redirect loops                | ingress host/scheme/forwarding conflicts                                                             | compare client Host, origin Host, `NGINX_FORCE_DOMAIN`, and ingress rewrite                                  |
+| deny-all robots fails on read-only root | entrypoint needs to replace bundled/default robots file                                              | ship desired robots file or keep feature off                                                                 |
+| correct locally, wrong through CDN      | stale edge object or CDN ignores origin cache/Vary                                                   | bypass edge, purge safely, and compare origin/edge headers                                                   |

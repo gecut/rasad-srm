@@ -10,7 +10,7 @@ payload.find({
   limit: options.limit ?? 1,
   depth: options.depth ?? 0,
   where: options.where,
-});
+})
 ```
 
 Keep the query deterministic and cheap. Prefer a stable collection, `limit: 1`, `depth: 0`, and a narrow indexed filter only when the integration needs it. Do not fetch relationship graphs or run business reports.

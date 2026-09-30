@@ -4,9 +4,9 @@ description: Deploy, customize, verify, and troubleshoot static single-page appl
 license: AGPL-3.0-only
 compatibility: Requires a container runtime for deployment and curl for the bundled verifier. Examples target ghcr.io/gecut/nginx/spa:1.0.0.
 metadata:
-  image: "ghcr.io/gecut/nginx/spa:1.0.0"
-  audience: "static SPA consumers"
-  scope: "deployment customization verification troubleshooting"
+  image: 'ghcr.io/gecut/nginx/spa:1.0.0'
+  audience: 'static SPA consumers'
+  scope: 'deployment customization verification troubleshooting'
 ---
 
 # NGINX SPA consumer workflow

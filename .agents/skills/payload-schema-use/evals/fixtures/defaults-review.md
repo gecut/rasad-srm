@@ -9,13 +9,13 @@ field.number({
 })
 
 field.text({
-  defaultValue: " draft ",
+  defaultValue: ' draft ',
   trim: true,
-  payload: { defaultValue: "fallback" },
+  payload: { defaultValue: 'fallback' },
 })
 
 field.native({
-  payload: { type: "json" },
+  payload: { type: 'json' },
   defaultValue: {},
 })
 ```

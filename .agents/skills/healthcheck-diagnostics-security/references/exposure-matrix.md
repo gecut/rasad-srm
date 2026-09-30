@@ -1,11 +1,11 @@
 # Exposure matrix
 
-| Endpoint class | Typical content | Details/errors | Protection | HTTP/cache |
-|---|---|---|---|---|
-| Public liveness | summary or minimal JSON | never | platform/network as needed | status policy, no-store |
-| Public readiness/startup | minimal status/summary | never | platform/network as needed | default or strict policy, no-store |
-| Private diagnostics | JSON with explicitly required details | sanitized opt-in only | app auth plus private network/IP policy where possible | no-store |
-| Private metrics | Prometheus/OpenMetrics/JSON | no check details | scraper auth/network/IP policy | HTTP 200 by adapter, no-store |
+| Endpoint class           | Typical content                       | Details/errors        | Protection                                             | HTTP/cache                         |
+| ------------------------ | ------------------------------------- | --------------------- | ------------------------------------------------------ | ---------------------------------- |
+| Public liveness          | summary or minimal JSON               | never                 | platform/network as needed                             | status policy, no-store            |
+| Public readiness/startup | minimal status/summary                | never                 | platform/network as needed                             | default or strict policy, no-store |
+| Private diagnostics      | JSON with explicitly required details | sanitized opt-in only | app auth plus private network/IP policy where possible | no-store                           |
+| Private metrics          | Prometheus/OpenMetrics/JSON           | no check details      | scraper auth/network/IP policy                         | HTTP 200 by adapter, no-store      |
 
 Public probes should answer orchestration questions, not disclose dependency names, runtime versions, regions, instance IDs, URLs, resource topology, or error context unless those fields are explicitly accepted.
 

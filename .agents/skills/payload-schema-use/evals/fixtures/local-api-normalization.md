@@ -4,8 +4,8 @@ The application parses an HTTP body with `z.string().trim()`, but this direct Pa
 
 ```ts
 await payload.create({
-  collection: "posts",
-  data: { title: "  Draft  " },
+  collection: 'posts',
+  data: { title: '  Draft  ' },
 })
 ```
 

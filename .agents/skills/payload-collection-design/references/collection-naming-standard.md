@@ -35,4 +35,3 @@ SQL identifier:    organization_memberships
 Payload collection slugs are API-facing resource identifiers. Treat renaming them as a breaking schema and API change.
 
 ---
-

@@ -169,4 +169,3 @@ Do not use a polymorphic relationship.
 Polymorphism is justified only when all target collections fulfill the same domain role.
 
 ---
-

@@ -41,12 +41,12 @@ Example behind a known proxy and canonical host:
 environment:
   NGINX_FORCE_DOMAIN: app.example.com
   NGINX_CANONICAL_SCHEME: https
-  NGINX_FORCE_DOMAIN_STATUS: "308"
+  NGINX_FORCE_DOMAIN_STATUS: '308'
   NGINX_TRUSTED_PROXY_CIDRS: 10.20.0.0/16,2001:db8:1234::/48
   NGINX_REAL_IP_HEADER: X-Forwarded-For
-  NGINX_ENABLE_GLOBAL_LIMIT_REQ: "on"
-  NGINX_LIMIT_REQ_RATE: "200"
-  NGINX_LIMIT_REQ_BURST: "1000"
+  NGINX_ENABLE_GLOBAL_LIMIT_REQ: 'on'
+  NGINX_LIMIT_REQ_RATE: '200'
+  NGINX_LIMIT_REQ_BURST: '1000'
 ```
 
 Quote YAML booleans and integers so environment values remain strings. Trust

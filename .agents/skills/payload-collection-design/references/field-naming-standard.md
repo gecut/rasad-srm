@@ -166,4 +166,3 @@ Choose one based on semantics:
 - `priority`: relative importance, not presentation order.
 
 ---
-

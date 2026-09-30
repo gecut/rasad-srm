@@ -18,13 +18,13 @@ Do not use P3. Do not inflate priority because a convention is written strongly;
 
 ## Verdict contract
 
-| Verdict | Required state |
-| --- | --- |
-| `Approved` | No material issue remains; no P0/P1/P2 is required. |
-| `Approved with minor issues` | Only a small number of admitted P2 issues remain. |
-| `Needs revision` | At least one P1 remains and no P0 requires rejection. |
-| `Rejected` | A P0 or fundamentally wrong direction remains. |
-| `Withheld` | Decisive evidence is absent and the missing fact can genuinely reverse approval; use only with `Score: Not assessable`. |
+| Verdict                      | Required state                                                                                                          |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `Approved`                   | No material issue remains; no P0/P1/P2 is required.                                                                     |
+| `Approved with minor issues` | Only a small number of admitted P2 issues remain.                                                                       |
+| `Needs revision`             | At least one P1 remains and no P0 requires rejection.                                                                   |
+| `Rejected`                   | A P0 or fundamentally wrong direction remains.                                                                          |
+| `Withheld`                   | Decisive evidence is absent and the missing fact can genuinely reverse approval; use only with `Score: Not assessable`. |
 
 ## Score calibration
 

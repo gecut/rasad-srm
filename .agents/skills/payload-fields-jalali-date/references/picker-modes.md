@@ -1,11 +1,11 @@
 # Picker modes
 
-| Mode | Calendar | Time controls | Current normalization |
-|---|---:|---:|---|
-| `dayOnly` | yes | no | selected local day at exact noon |
-| `monthOnly` | yes | no | Jalali first day of selected month at exact noon |
-| `dayAndTime` | yes | yes | selected DayPicker Date or edited local hours/minutes |
-| `timeOnly` | no | yes | edits existing date, or current date when empty |
+| Mode         | Calendar | Time controls | Current normalization                                 |
+| ------------ | -------: | ------------: | ----------------------------------------------------- |
+| `dayOnly`    |      yes |            no | selected local day at exact noon                      |
+| `monthOnly`  |      yes |            no | Jalali first day of selected month at exact noon      |
+| `dayAndTime` |      yes |           yes | selected DayPicker Date or edited local hours/minutes |
+| `timeOnly`   |       no |           yes | edits existing date, or current date when empty       |
 
 ## Day only
 

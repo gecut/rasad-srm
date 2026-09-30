@@ -24,10 +24,10 @@ Return an error object for known failures:
 
 ```ts
 return {
-  status: "unhealthy",
+  status: 'unhealthy',
   metrics: { latencyMs },
-  error: { code: "DATABASE_UNAVAILABLE", message: "Database check failed." },
-};
+  error: { code: 'DATABASE_UNAVAILABLE', message: 'Database check failed.' },
+}
 ```
 
 Keep `code` machine-stable and `message` generic. Do not attach raw SQL, connection strings, response bodies, or credentials. A thrown value is normalized to `CHECK_THROWN`; custom metrics and domain error context are lost.

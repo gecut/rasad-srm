@@ -9,7 +9,10 @@
   { "query": "Why does dayAndTime lose the selected time?", "should_trigger": true },
   { "query": "Make timeOnly input deterministic and accessible", "should_trigger": true },
   { "query": "Format Jalali dates with Persian or Latin digits", "should_trigger": true },
-  { "query": "Fix protected overrides across all payload-fields factories", "should_trigger": false },
+  {
+    "query": "Fix protected overrides across all payload-fields factories",
+    "should_trigger": false
+  },
   { "query": "Parse Persian money into minor units", "should_trigger": false },
   { "query": "Regenerate a localized slug when title changes", "should_trigger": false },
   { "query": "Secure a server-side slug generator", "should_trigger": false },

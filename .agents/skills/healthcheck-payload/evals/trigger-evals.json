@@ -1,8 +1,14 @@
 [
   { "query": "Add a Payload CMS readiness health check", "should_trigger": true },
-  { "query": "Use payloadHealthCheck with a small deterministic find query", "should_trigger": true },
+  {
+    "query": "Use payloadHealthCheck with a small deterministic find query",
+    "should_trigger": true
+  },
   { "query": "Should an empty Payload collection fail readiness?", "should_trigger": true },
-  { "query": "Configure expectedMinDocuments for a required settings record", "should_trigger": true },
+  {
+    "query": "Configure expectedMinDocuments for a required settings record",
+    "should_trigger": true
+  },
   { "query": "Test Payload health query timeout normalization", "should_trigger": true },
   { "query": "Why does Payload timeout return CHECK_TIMEOUT?", "should_trigger": true },
   { "query": "Keep a Payload dependency out of liveness", "should_trigger": true },
