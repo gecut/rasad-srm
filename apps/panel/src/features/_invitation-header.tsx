@@ -10,7 +10,7 @@ export interface InvitationHeaderProps {
   busy: boolean
   hasClaim: boolean
   onClaim: () => void
-  activeSession?: SessionSummary
+  activeSession?: SessionSummary | null
 }
 
 export function InvitationHeader({

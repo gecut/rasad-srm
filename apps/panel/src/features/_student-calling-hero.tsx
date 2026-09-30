@@ -19,7 +19,7 @@ export interface StudentCallingHeroProps {
     session: SessionSummary
     expiresAt: string
   }
-  selectedSession: SessionSummary | undefined
+  selectedSession: SessionSummary | null | undefined
   onOpenSessionSelect: () => void
   onOpenDossier: () => void
   onOpenNote: () => void
@@ -81,7 +81,7 @@ export function StudentCallingHero({
             {/* Clickable Dossier Chip */}
             <Chip
               size="sm"
-              variant="outline"
+              variant={recentCheckinCount > 0 ? 'secondary' : 'soft'}
               color={recentCheckinCount > 0 ? 'accent' : 'default'}
               className="cursor-pointer hover:bg-surface-secondary transition-colors"
               onClick={onOpenDossier}
@@ -172,8 +172,7 @@ export function StudentCallingHero({
 
           <div className="flex items-center gap-2">
             <Button
-              variant={note ? 'soft' : 'outline'}
-              color={note ? 'accent' : 'default'}
+              variant={note ? 'secondary' : 'outline'}
               size="sm"
               onPress={onOpenNote}
               className="text-xs py-1 px-2.5 h-auto flex items-center gap-1.5"
