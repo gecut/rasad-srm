@@ -64,16 +64,6 @@ async function cards(
   const { payload, req, sessionId } = input
   const ids = students.map((student) => student.id)
 
-  const ceremonySessions = await payload.find({
-    collection: 'sessions',
-    where: { ceremony: { equals: ceremonyId } },
-    pagination: false,
-    depth: 0,
-    overrideAccess: true,
-    req,
-  })
-  const ceremonySessionIds = ceremonySessions.docs.map((s) => s.id)
-
   const [invitations, currentCheckins, otherCheckins, neighborhoods] = await Promise.all([
     payload.find({
       collection: 'invitations',
@@ -102,7 +92,7 @@ async function cards(
       where: {
         and: [
           { student: { in: ids } },
-          { session: { in: ceremonySessionIds } },
+          { ceremony: { equals: ceremonyId } },
           { session: { not_equals: sessionId } },
         ],
       },
@@ -249,6 +239,7 @@ async function record(
     data: {
       student: studentId,
       session: sessionId,
+      ceremony: ceremonyId,
       checkedInBy: user.id,
       checkedInAt: new Date().toISOString(),
       source: invitation ? 'invited' : 'walk_in',
@@ -287,21 +278,12 @@ export async function checkInStudent(
 
       // Multi-attendance enforcement for ceremonies with 'single' attendance policy
       if (ceremony.attendancePolicy === 'single' && !input.forceOverride) {
-        const ceremonySessions = await input.payload.find({
-          collection: 'sessions',
-          where: { ceremony: { equals: ceremony.id } },
-          pagination: false,
-          depth: 0,
-          overrideAccess: true,
-          req,
-        })
-        const sessionIds = ceremonySessions.docs.map((s) => s.id)
         const previousCheckin = await input.payload.find({
           collection: 'session-checkins',
           where: {
             and: [
               { student: { equals: input.studentId } },
-              { session: { in: sessionIds } },
+              { ceremony: { equals: ceremony.id } },
               { session: { not_equals: input.sessionId } },
             ],
           },
@@ -465,8 +447,7 @@ export async function updateReceptionStudent(
         updateData.fatherMobile = input.fatherMobile?.trim()
           ? normalizePhone(input.fatherMobile)
           : null
-      if (input.landline !== undefined)
-        updateData.landline = input.landline?.trim() || null
+      if (input.landline !== undefined) updateData.landline = input.landline?.trim() || null
       if (input.neighborhoodId !== undefined) updateData.neighborhood = input.neighborhoodId
       if (input.address !== undefined) updateData.address = input.address?.trim() || null
       if (input.referrer !== undefined) updateData.referrer = input.referrer?.trim() || null
