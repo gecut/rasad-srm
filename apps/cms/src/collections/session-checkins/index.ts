@@ -1,12 +1,22 @@
 import type { CollectionConfig } from 'payload'
 import { isStaff } from '../../access/roles'
+import { populateCeremonyFromSession } from './session-checkins.hooks'
 
 export const SessionCheckins: CollectionConfig = {
   slug: 'session-checkins',
   labels: { singular: 'پذیرش', plural: 'پذیرش‌ها' },
-  admin: { group: 'رویدادها', defaultColumns: ['student', 'session', 'checkedInAt', 'source'] },
+  admin: {
+    group: 'رویدادها',
+    defaultColumns: ['student', 'ceremony', 'session', 'checkedInAt', 'source'],
+  },
   access: { read: isStaff, create: () => false, update: () => false, delete: () => false },
-  indexes: [{ fields: ['student', 'session'], unique: true }],
+  indexes: [
+    { fields: ['student', 'session'], unique: true },
+    { fields: ['student', 'ceremony'] },
+  ],
+  hooks: {
+    beforeValidate: [populateCeremonyFromSession],
+  },
   fields: [
     {
       name: 'student',
@@ -15,6 +25,15 @@ export const SessionCheckins: CollectionConfig = {
       relationTo: 'students',
       required: true,
       index: true,
+    },
+    {
+      name: 'ceremony',
+      label: 'مراسم',
+      type: 'relationship',
+      relationTo: 'ceremonies',
+      required: true,
+      index: true,
+      admin: { readOnly: true },
     },
     {
       name: 'session',

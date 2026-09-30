@@ -27,8 +27,12 @@ if (!process.env.PAYLOAD_SECRET) {
 }
 
 // Each serial suite owns fresh disposable fixtures; never truncate a non-test database.
-import { beforeAll } from 'vitest'
+import { beforeAll, expect } from 'vitest'
 beforeAll(async () => {
+  const currentTestFile = expect.getState().testPath || ''
+  if (currentTestFile.includes('/tests/unit/')) {
+    return
+  }
   const { getPayload } = await import('payload')
   const { sql } = await import('@payloadcms/db-postgres')
   const { default: config } = await import('./src/payload.config')
@@ -37,3 +41,4 @@ beforeAll(async () => {
     sql`TRUNCATE users, teachers, classes, students, follow_ups, ceremonies, sessions, invitations, invitation_claims, session_checkins, exports, imports, payload_jobs, payload_locked_documents, payload_preferences RESTART IDENTITY CASCADE`,
   )
 }, 30000)
+
