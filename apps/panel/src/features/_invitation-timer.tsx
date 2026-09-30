@@ -36,10 +36,14 @@ export function InvitationTimer({
   const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 
   const isExpired = remaining <= 0
-  const isDanger = remaining > 0 && remaining <= 45
-  const isWarning = remaining > 45 && remaining <= 120
+  const isDanger = remaining > 0 && remaining <= 10
+  const isWarning = remaining > 10 && remaining <= 60
 
-  const color = isExpired ? 'danger' : isDanger ? 'danger' : isWarning ? 'warning' : 'default'
+  const color: 'accent' | 'warning' | 'danger' = isExpired || isDanger
+    ? 'danger'
+    : isWarning
+      ? 'warning'
+      : 'accent'
   const pulseClass = isDanger ? 'animate-pulse' : ''
 
   return (

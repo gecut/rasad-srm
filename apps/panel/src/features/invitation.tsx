@@ -414,10 +414,11 @@ export function Invitation() {
                     ? Math.round(((s.acceptedCount || 0) / s.capacity) * 100)
                     : null
                   return (
-                    <div
+                    <Card
                       key={s.id}
                       role="button"
                       tabIndex={0}
+                      aria-pressed={isSelected}
                       onClick={() => setSelectedSessionId(s.id)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -425,49 +426,51 @@ export function Invitation() {
                           setSelectedSessionId(s.id)
                         }
                       }}
-                      className={`flex flex-col p-3.5 rounded-xl border text-right transition-all cursor-pointer select-none ${
+                      className={`transition-all border text-right cursor-pointer select-none ${
                         isSelected
                           ? 'border-accent bg-accent/10 ring-2 ring-accent'
-                          : 'border-border bg-surface hover:bg-muted/15'
+                          : 'border-border bg-surface hover:bg-surface-secondary/40'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <strong className="text-sm font-bold text-foreground">
-                          {s.title || 'سانس'}
-                        </strong>
-                        {s.status === 'filling' && (
-                          <Chip size="sm" variant="soft" color="accent">
-                            پیش‌فرض
-                          </Chip>
-                        )}
-                      </div>
+                      <Card.Content className="p-3.5 flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-1">
+                          <strong className="text-sm font-bold text-foreground">
+                            {s.title || 'سانس'}
+                          </strong>
+                          {s.status === 'filling' && (
+                            <Chip size="sm" variant="soft" color="accent">
+                              پیش‌فرض
+                            </Chip>
+                          )}
+                        </div>
 
-                      <div className="flex items-center gap-1.5 text-xs text-muted">
-                        <CalendarIcon className="size-3.5 text-muted shrink-0" />
-                        <span>{formatDate(s.startsAt)}</span>
-                      </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted">
+                          <CalendarIcon className="size-3.5 text-muted shrink-0" />
+                          <span>{formatDate(s.startsAt)}</span>
+                        </div>
 
-                      <div className="mt-2.5 pt-2 border-t border-border/60 flex items-center justify-between text-xs">
-                        <span className="text-muted">ظرفیت:</span>
-                        {s.capacity ? (
-                          <span
-                            className={`font-semibold ${
-                              fillRatio! >= 100
-                                ? 'text-danger'
-                                : fillRatio! >= 80
-                                  ? 'text-warning'
-                                  : 'text-foreground'
-                            }`}
-                          >
-                            {s.acceptedCount || 0} از {s.capacity} نفر ({fillRatio}٪)
-                          </span>
-                        ) : (
-                          <span className="font-semibold text-foreground">
-                            {s.acceptedCount || 0} نفر پذیرفته‌شده
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                        <div className="mt-1 pt-2 border-t border-border/60 flex items-center justify-between text-xs">
+                          <span className="text-muted">ظرفیت:</span>
+                          {s.capacity ? (
+                            <span
+                              className={`font-semibold ${
+                                fillRatio! >= 100
+                                  ? 'text-danger'
+                                  : fillRatio! >= 80
+                                    ? 'text-warning'
+                                    : 'text-foreground'
+                              }`}
+                            >
+                              {s.acceptedCount || 0} از {s.capacity} نفر ({fillRatio}٪)
+                            </span>
+                          ) : (
+                            <span className="font-semibold text-foreground">
+                              {s.acceptedCount || 0} نفر پذیرفته‌شده
+                            </span>
+                          )}
+                        </div>
+                      </Card.Content>
+                    </Card>
                   )
                 })}
               </div>
@@ -504,7 +507,7 @@ export function Invitation() {
                     size="lg"
                     isDisabled={busy || isClaimExpired}
                     onPress={() => submitOutcome(outcomeKey)}
-                    className="justify-between h-auto py-3 px-4"
+                    className="justify-between"
                   >
                     <div className="flex items-center gap-2.5">
                       <config.icon className="size-5 shrink-0" />
