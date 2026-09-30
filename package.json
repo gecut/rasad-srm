@@ -23,6 +23,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "migrate": "pnpm --filter @rasad/cms migrate",
+    "seed": "pnpm --filter @rasad/cms seed",
     "seed:dev": "pnpm --filter @rasad/cms seed:dev"
   },
   "devDependencies": {

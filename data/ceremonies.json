@@ -1,0 +1,42 @@
+[
+  {
+    "key": "نیمه1402",
+    "title": "جشن نیمه شعبان ۱۴۰۲",
+    "date": "2024-02-25T08:00:00.000Z",
+    "status": "completed",
+    "attendancePolicy": "single",
+    "description": "ثبت آرشیوی مراسم جشن نیمه شعبان ۱۴۰۲"
+  },
+  {
+    "key": "غدیر1403",
+    "title": "جشن غدیر ۱۴۰۳",
+    "date": "2024-06-25T08:00:00.000Z",
+    "status": "completed",
+    "attendancePolicy": "single",
+    "description": "ثبت آرشیوی مراسم جشن غدیر ۱۴۰۳"
+  },
+  {
+    "key": "نیمه1403",
+    "title": "جشن نیمه شعبان ۱۴۰۳",
+    "date": "2025-02-14T08:00:00.000Z",
+    "status": "completed",
+    "attendancePolicy": "single",
+    "description": "ثبت آرشیوی مراسم جشن نیمه شعبان ۱۴۰۳"
+  },
+  {
+    "key": "غدیر1404",
+    "title": "جشن غدیر ۱۴۰۴",
+    "date": "2025-06-15T08:00:00.000Z",
+    "status": "completed",
+    "attendancePolicy": "single",
+    "description": "ثبت آرشیوی مراسم جشن غدیر ۱۴۰۴"
+  },
+  {
+    "key": "نیمه1404",
+    "title": "جشن نیمه شعبان ۱۴۰۴",
+    "date": "2026-02-04T08:00:00.000Z",
+    "status": "completed",
+    "attendancePolicy": "single",
+    "description": "ثبت آرشیوی مراسم جشن نیمه شعبان ۱۴۰۴"
+  }
+]
