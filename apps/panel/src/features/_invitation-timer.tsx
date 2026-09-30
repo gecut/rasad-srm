@@ -51,10 +51,11 @@ export function InvitationTimer({
       size="sm"
       color={color}
       variant="soft"
-      className={`font-mono text-xs flex items-center gap-1 ${pulseClass}`}
+      className={`tabular-nums tracking-wider text-xs flex items-center gap-1 font-medium ${pulseClass}`}
     >
       <StopwatchIcon className="size-3.5 inline-block ml-1" />
       <span>{isExpired ? 'مهلت منقضی شد' : formatted}</span>
     </Chip>
   )
 }
+
