@@ -1,4 +1,4 @@
-import { Button, Chip } from '@heroui/react'
+import { Button, Card, Chip } from '@heroui/react'
 import type { TeacherRoster } from '@rasad/contracts'
 import { CheckSquareIcon, NotesIcon, PhoneIcon, TrashIcon } from '../components/icons'
 
@@ -26,116 +26,101 @@ export function TeacherStudentRow({
   onRemove: (student: TeacherStudent) => void
   onViewDetails: (student: TeacherStudent) => void
 }) {
-  const phones: { label: string; number: string }[] = []
-  if (student.mobile) phones.push({ label: 'دانش‌آموز', number: student.mobile })
-  if (student.fatherMobile && student.fatherMobile !== student.mobile)
-    phones.push({ label: 'پدر', number: student.fatherMobile })
-  if (
-    student.motherMobile &&
-    student.motherMobile !== student.mobile &&
-    student.motherMobile !== student.fatherMobile
-  )
-    phones.push({ label: 'مادر', number: student.motherMobile })
-  if (student.landline) phones.push({ label: 'ثابت', number: student.landline })
-
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-lg border border-border bg-surface hover:bg-surface-secondary/40 transition-colors min-h-[56px]">
-      <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <strong className="text-foreground text-sm font-bold truncate">
-            {student.firstName} {student.lastName}
-          </strong>
+    <Card className="transition-colors hover:bg-surface-secondary/40 border border-border bg-surface">
+      <Card.Content className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 sm:p-4">
+        {/* Student identity, chips, and primary contact */}
+        <div className="flex flex-col gap-2 flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <strong className="text-foreground text-sm font-bold truncate">
+              {student.firstName} {student.lastName}
+            </strong>
 
-          {student.grade ? (
-            <Chip size="sm" variant="soft" color="default">
-              پایه {student.grade}
+            {student.grade ? (
+              <Chip size="sm" variant="soft" color="default">
+                پایه {student.grade}
+              </Chip>
+            ) : (
+              <Chip size="sm" variant="soft" color="default">
+                پایه نامشخص
+              </Chip>
+            )}
+
+            {student.neighborhood && (
+              <Chip size="sm" variant="soft" color="default">
+                {student.neighborhood.name}
+              </Chip>
+            )}
+
+            <Chip
+              size="sm"
+              color={
+                student.lifecycleStatus === 'absorbed'
+                  ? 'success'
+                  : student.lifecycleStatus === 'referred_to_teacher'
+                    ? 'accent'
+                    : 'default'
+              }
+              variant="soft"
+            >
+              {STATUS_LABELS[student.lifecycleStatus] || student.lifecycleStatus}
             </Chip>
-          ) : (
-            <Chip size="sm" variant="soft" color="default" className="text-muted">
-              پایه نامشخص
-            </Chip>
-          )}
+          </div>
 
-          {student.neighborhood && (
-            <Chip size="sm" variant="soft" color="default" className="text-muted">
-              {student.neighborhood.name}
-            </Chip>
-          )}
-
-          <Chip
-            size="sm"
-            color={
-              student.lifecycleStatus === 'absorbed'
-                ? 'success'
-                : student.lifecycleStatus === 'referred_to_teacher'
-                  ? 'accent'
-                  : 'default'
-            }
-            variant="soft"
-          >
-            {STATUS_LABELS[student.lifecycleStatus] || student.lifecycleStatus}
-          </Chip>
-        </div>
-
-        {/* Contact phones */}
-        {phones.length > 0 && (
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
-            {phones.map((p, i) => (
+          {/* Primary mobile phone only on card row (per grill-me decision) */}
+          {student.mobile ? (
+            <div className="flex items-center text-xs text-muted">
               <a
-                key={i}
-                href={`tel:${p.number}`}
-                className="inline-flex items-center gap-1 font-mono hover:text-foreground transition-colors"
+                href={`tel:${student.mobile}`}
+                className="inline-flex items-center gap-1.5 font-mono text-foreground/85 hover:text-accent transition-colors"
                 dir="ltr"
               >
-                <PhoneIcon className="size-3 text-accent shrink-0" />
-                <bdi>{p.number}</bdi>
-                <span className="text-[10px] text-muted font-sans font-medium" dir="rtl">
-                  ({p.label})
-                </span>
+                <PhoneIcon className="size-3.5 text-accent shrink-0" />
+                <bdi>{student.mobile}</bdi>
               </a>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ) : (
+            <span className="text-xs text-muted/70 italic">شماره موبایل ثبت نشده</span>
+          )}
+        </div>
 
-      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-        <Button
-          variant="outline"
-          size="sm"
-          isDisabled={busy}
-          onPress={() => onViewDetails(student)}
-          className="text-xs py-1.5 h-auto flex items-center gap-1"
-        >
-          <NotesIcon className="size-3.5 text-accent" />
-          <span>پرونده</span>
-        </Button>
-
-        {student.lifecycleStatus === 'referred_to_teacher' && (
-          <Button
-            variant="primary"
-            size="sm"
-            isDisabled={busy}
-            onPress={() => onAbsorb(student)}
-            className="text-xs py-1.5 h-auto flex items-center gap-1.5"
-          >
-            <CheckSquareIcon className="size-4" />
-            <span>تأیید جذب</span>
-          </Button>
-        )}
-
-        {['referred_to_teacher', 'absorbed'].includes(student.lifecycleStatus) && (
+        {/* Action buttons (bottom row on mobile, end-aligned on desktop) */}
+        <div className="flex items-center justify-end gap-2 pt-2.5 border-t border-border/40 sm:border-0 sm:pt-0 shrink-0">
           <Button
             variant="outline"
             size="sm"
             isDisabled={busy}
-            onPress={() => onRemove(student)}
-            className="text-xs py-1.5 h-auto flex items-center gap-1.5"
+            onPress={() => onViewDetails(student)}
           >
-            <TrashIcon className="size-4 text-danger" />
-            <span>حذف از روند</span>
+            <NotesIcon className="size-4 text-accent" />
+            <span>پرونده</span>
           </Button>
-        )}
-      </div>
-    </div>
+
+          {student.lifecycleStatus === 'referred_to_teacher' && (
+            <Button
+              variant="primary"
+              size="sm"
+              isDisabled={busy}
+              onPress={() => onAbsorb(student)}
+            >
+              <CheckSquareIcon className="size-4" />
+              <span>تأیید جذب</span>
+            </Button>
+          )}
+
+          {['referred_to_teacher', 'absorbed'].includes(student.lifecycleStatus) && (
+            <Button
+              variant="danger-soft"
+              size="sm"
+              isDisabled={busy}
+              onPress={() => onRemove(student)}
+            >
+              <TrashIcon className="size-4" />
+              <span>حذف از روند</span>
+            </Button>
+          )}
+        </div>
+      </Card.Content>
+    </Card>
   )
 }
