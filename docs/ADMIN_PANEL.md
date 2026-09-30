@@ -31,6 +31,7 @@ Default list columns:
 - full name (`lastName`, `firstName`);
 - grade when known (`grade`);
 - neighborhood (`neighborhood`);
+- attended ceremonies (`attendedCeremonies`);
 - lifecycle status (`lifecycleStatus`);
 - readiness status (`readinessStatus`);
 - current Class (`currentClass`);
@@ -54,8 +55,9 @@ Edit form tabs structure:
     - Row 2: `address` (100%, detailed home address)
   - **گروه یادداشت‌ها و ملاحظات پرونده**:
     - `notes` (100%, case notes and important context)
-  - **گروه سوابق پذیرش در مراسم‌ها**:
-    - `checkins` (join on `session-checkins.student` showing session, source, arrival time, and check-in user)
+  - **گروه سوابق پذیرش و حضور در مراسم‌ها**:
+    - `attendedCeremonies` (read-only multi-relationship to `ceremonies`, auto-synchronized from check-ins)
+    - `checkins` (join on `session-checkins.student` showing ceremony, session, source, arrival time, and check-in user)
 - **Tab 2: حلقه حیات و کلاس (Lifecycle & Class)**:
   - **گروه وضعیت پذیرش و انتساب کلاس**:
     - Row 1: `readinessStatus` (50%), `currentClass` (50%)
@@ -63,8 +65,6 @@ Edit form tabs structure:
     - Row 1: `lifecycleStatus` (50%), `removedReason` (50%, conditional on removed)
   - **گروه گاه‌شمار و نقاط عطف چرخه عمر**:
     - Row 1: `referredAt` (33%, read-only via `JalaliDateField`), `absorbedAt` (33%, editable via `JalaliDateField` with local noon default), `stabilizedAt` (34%, read-only via `JalaliDateField`)
-  - **گروه سوابق دعوت به مراسم‌ها**:
-    - `invitations` (join on `invitations.student` showing ceremony, assigned session, outcome, and processed time)
 
 Product label is `دانش‌آموزان`; do not expose `Contacts` in new UI copy.
 

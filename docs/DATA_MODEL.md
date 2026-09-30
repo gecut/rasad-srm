@@ -31,10 +31,10 @@ Auth configuration uses username login with email login allowed for Admin-side u
 | `neighborhood`    | relationship → neighborhoods | max one                                                       |
 | `address`         | textarea                     | optional home address                                         |
 | `referrer`        | text                         | optional referrer name/source                                 |
-| `notes`           | textarea                     | optional dossier notes                                        |
-| `checkins`        | join → session-checkins      | reverse navigation to all attended ceremonies/sessions        |
-| `invitations`     | join → invitations           | reverse navigation to all ceremony invitation outcomes        |
-| `lifecycleStatus` | select                       | see STATUS_MODEL                                              |
+| `notes`              | textarea                     | optional dossier notes                                        |
+| `attendedCeremonies` | relationship → ceremonies    | `hasMany: true`, read-only; auto-synced from checkins         |
+| `checkins`           | join → session-checkins      | reverse navigation to all attended ceremonies/sessions        |
+| `lifecycleStatus`    | select                       | see STATUS_MODEL                                              |
 | `readinessStatus` | select                       | `normal`, `waitlisted`                                        |
 | `currentClass`    | relationship → classes       | max one                                                       |
 | `referredAt`      | date-time                    | nullable                                                      |
@@ -129,20 +129,22 @@ Unique business constraint: one Invitation document per Student + Ceremony. Repr
 
 ## 10. `session-checkins`
 
-| Field         | Type                    | Notes                |
-| ------------- | ----------------------- | -------------------- |
-| `student`     | relationship → students | required             |
-| `session`     | relationship → sessions | required             |
-| `checkedInBy` | relationship → users    | receptionist/admin   |
-| `checkedInAt` | date-time               | required             |
-| `source`      | select                  | `invited`, `walk_in` |
-| `note`        | textarea                | optional             |
+| Field         | Type                      | Notes                                                  |
+| ------------- | ------------------------- | ------------------------------------------------------ |
+| `student`     | relationship → students   | required, indexed                                      |
+| `ceremony`    | relationship → ceremonies | required, indexed; auto-populated from session via hook |
+| `session`     | relationship → sessions   | required, indexed                                      |
+| `checkedInBy` | relationship → users      | receptionist/admin                                     |
+| `checkedInAt` | date-time                 | required                                               |
+| `source`      | select                    | `invited`, `walk_in`                                   |
+| `note`        | textarea                  | optional                                               |
+
+Compound index: `(student, ceremony)` for $O(1)$ single-attendance verification.
+Unique constraint: `(student, session)` prevents duplicate check-in per session.
+
+`ceremony` is denormalized and indexed directly on `session-checkins` to eliminate multi-table joins during high-throughput door check-ins and ceremony-level reporting.
 
 ## 11. `invitation-claims`
-
-Unique constraint: one Student + Session check-in.
-
-Ceremony is derived from `session.ceremony` and should not be duplicated unless profiling/reporting later proves it necessary.
 
 ## 10. No persistent invitation queue collection
 

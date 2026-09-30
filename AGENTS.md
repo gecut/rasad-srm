@@ -49,7 +49,7 @@ Then read the relevant specs:
 - Sessions have no school-grade targeting. Sessions have an optional nominal capacity field for operational telemetry.
 - Sessions inside a Ceremony are filled sequentially. Exactly one Session may be in `filling` state at a time (enforced via PostgreSQL partial unique index).
 - Moving from one filling Session to the next or reopening a session is an explicit authorized action guided by live telemetry.
-- Reception attendance is a separate record and does not require a prior invitation.
+- Reception attendance is a separate record and does not require a prior invitation. Ceremony attendance is tracked via indexed session check-ins, auto-synchronized to the student's attended ceremonies for instant filtering.
 - Server-side authorization and invariants are authoritative.
 
 ## Documentation maintenance

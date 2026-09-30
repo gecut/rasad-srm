@@ -188,3 +188,25 @@ Deploy `apps/panel` on `ghcr.io/gecut/nginx/spa:1.0.0` as a pure static SPA with
 3. **Teacher Panel Read-Only Student Dossier:** Teachers have access to the complete student dossier (grade, student/parent/landline phones with `tel:` links, neighborhood, address, referrer, notes) via a dedicated modal, maintaining the principle that teachers hold read-only dossier access while operational mutations remain confined to lifecycle transitions (`absorbed` / `removed`).
 4. **Extensible Pattern-based SMS Architecture:** An extensible pattern SMS contract (`ISmsProvider.sendPatternSms(SendPatternParams)`) decouples background SMS dispatch from telecom vendors (Kavenegar/FarazSMS). The `SimulatedSmsProvider` captures and logs token interpolations in-memory for zero-friction testing and dev environments, ready for drop-in production vendor configuration without domain changes.
 5. **Single Consolidated Migration Baseline:** All fragmented migrations are replaced with a single, comprehensive baseline migration (`20260929_130513_baseline.ts`) covering all collections, foreign keys, and PostgreSQL partial unique indexes (`sessions_single_filling_idx` and `students_has_callable_phone_idx`).
+
+## D039 — Relational Student Ceremony Attendance, Fast Check-in Indexes, and Dossier De-cluttering
+
+1. **Denormalization of Ceremony on Session Check-ins:**
+   - Add explicit `ceremony` relationship (`ceremonies`) directly on `session-checkins`, automatically populated from `session.ceremony` via a `beforeValidate` hook.
+   - Establish compound B-tree index on `(student, ceremony)` (`session_checkins_student_ceremony_idx`).
+   - Replaces multi-step session-to-ceremony lookups during reception door check-ins with an ultra-fast, single $O(1)$ query for single-attendance policy validation.
+2. **Synchronized Ceremony Attendance on Student Entity:**
+   - Add `attendedCeremonies` (`relationship` to `ceremonies`, `hasMany: true`, read-only in Admin) on `students`.
+   - Maintain consistency via transactional `afterChange` and `afterDelete` hooks on `session-checkins`, which recompute distinct ceremony IDs from `session-checkins` and update the student.
+   - Enables native Payload Admin filtering by ceremony (e.g. `attendedCeremonies in [ceremonyId]`) with zero query overhead.
+3. **De-cluttering Student Dossier:**
+   - Remove `invitations` join from `Student` collection and Payload Admin edit view Tab 2. An outbound tele-calling log is not physical attendance and should not pollute the student profile.
+   - Relabel `checkins` join to `'سوابق حضور در مراسم‌ها'` and position it in Tab 1 alongside `attendedCeremonies` with ceremony-first columns (`ceremony`, `session`, `source`, `checkedInAt`, `checkedInBy`).
+4. **Teacher Panel Dossier Ceremony Badges:**
+   - Expose `attendedCeremonies?: { id: number; title: string }[]` on `StudentCard` and `TeacherRoster`.
+   - Batch-resolve ceremony titles in `getTeacherRoster` with zero N+1 queries.
+   - Render ceremony attendance badges in the teacher student dossier modal.
+5. **Consolidated Migration Baseline and Seed Overhaul:**
+   - Consolidate all database migrations into a clean baseline (`20260930_133000_baseline.ts` & `.json`) including `students_rels` junction table and check-in compound indexes.
+   - Overhaul historical production seed (`seed.ts`) and dev seed (`fixtures.ts`) to natively populate `ceremony` on check-ins and `attendedCeremonies` on students.
+
