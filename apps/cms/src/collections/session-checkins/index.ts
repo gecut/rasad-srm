@@ -1,6 +1,10 @@
 import type { CollectionConfig } from 'payload'
 import { isStaff } from '../../access/roles'
-import { populateCeremonyFromSession } from './session-checkins.hooks'
+import {
+  populateCeremonyFromSession,
+  syncStudentAttendedCeremoniesAfterChange,
+  syncStudentAttendedCeremoniesAfterDelete,
+} from './session-checkins.hooks'
 
 export const SessionCheckins: CollectionConfig = {
   slug: 'session-checkins',
@@ -16,6 +20,8 @@ export const SessionCheckins: CollectionConfig = {
   ],
   hooks: {
     beforeValidate: [populateCeremonyFromSession],
+    afterChange: [syncStudentAttendedCeremoniesAfterChange],
+    afterDelete: [syncStudentAttendedCeremoniesAfterDelete],
   },
   fields: [
     {
