@@ -1,9 +1,26 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Card, Chip, Modal, Tabs } from '@heroui/react'
+import {
+  Alert,
+  Button,
+  Card,
+  Chip,
+  Label,
+  Modal,
+  SearchField,
+  Tabs,
+  TextArea,
+  TextField,
+} from '@heroui/react'
 import type { TeacherRoster } from '@rasad/contracts'
 import { errorMessage, request } from '../lib/api'
-import { ErrorNotice, SuccessNotice, TextareaField } from '../components/ui'
-import { CheckCircleIcon, CheckSquareIcon, MagnifierIcon, PhoneIcon, StopwatchIcon, TrashIcon } from '../components/icons'
+import { ErrorNotice, SuccessNotice } from '../components/ui'
+import {
+  CheckCircleIcon,
+  CheckSquareIcon,
+  PhoneIcon,
+  StopwatchIcon,
+  TrashIcon,
+} from '../components/icons'
 import { TeacherStudentRow } from './_teacher-student-row'
 import { PanelSelect } from '../components/panel-select'
 
@@ -122,13 +139,13 @@ export function Teacher() {
 
           {selectedClass && (
             <div className="flex flex-wrap items-center gap-2">
-              <Chip color="accent" variant="soft">
+              <Chip color="accent" variant="soft" size="sm">
                 در انتظار: {pendingCount}
               </Chip>
-              <Chip color="success" variant="soft">
+              <Chip color="success" variant="soft" size="sm">
                 جذب شده: {absorbedCount}
               </Chip>
-              <Chip color="default" variant="soft">
+              <Chip color="default" variant="soft" size="sm">
                 حذف شده: {removedCount}
               </Chip>
             </div>
@@ -179,36 +196,78 @@ export function Teacher() {
       {selectedClass && (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <Tabs selectedKey={filter} onSelectionChange={(key) => setFilter(String(key))}>
-              <Tabs.ListContainer>
-                <Tabs.List aria-label="فیلتر وضعیت دانش‌آموزان">
-                  <Tabs.Tab id="referred_to_teacher">
-                    <span className="flex items-center gap-1.5">
-                      <StopwatchIcon className="size-4" />
-                      <span>به مدرس معرفی شده</span>
-                      {pendingCount > 0 && (
-                        <Chip color="accent" size="sm" variant="soft">
-                          {pendingCount}
-                        </Chip>
-                      )}
+            <Tabs
+              className="w-full sm:w-auto"
+              selectedKey={filter}
+              onSelectionChange={(key) => setFilter(String(key))}
+            >
+              <Tabs.ListContainer className="w-full sm:w-auto">
+                <Tabs.List
+                  className="w-full flex sm:w-auto"
+                  aria-label="فیلتر وضعیت دانش‌آموزان"
+                >
+                  <Tabs.Tab
+                    id="referred_to_teacher"
+                    className="flex-1 sm:flex-none px-2 sm:px-3.5 min-h-[38px] sm:min-h-[32px] text-xs sm:text-sm"
+                  >
+                    <span className="flex items-center justify-center gap-1.5 whitespace-nowrap min-w-0">
+                      <StopwatchIcon className="size-3.5 sm:size-4 shrink-0 text-accent" />
+                      <span className="font-medium">
+                        <span className="inline sm:hidden">معرفی‌شده</span>
+                        <span className="hidden sm:inline">به مدرس معرفی شده</span>
+                      </span>
+                      <Chip
+                        size="sm"
+                        variant="soft"
+                        color={pendingCount > 0 ? 'accent' : 'default'}
+                        className="h-5 min-w-5 px-1.5 text-[11px] font-semibold tabular-nums shrink-0"
+                      >
+                        {pendingCount}
+                      </Chip>
                     </span>
                     <Tabs.Indicator />
                   </Tabs.Tab>
 
-                  <Tabs.Tab id="absorbed">
-                    <span className="flex items-center gap-1.5">
-                      <CheckCircleIcon className="size-4 text-success" />
-                      <span>جذب شده</span>
-                      <span className="text-xs text-muted">({absorbedCount})</span>
+                  <Tabs.Tab
+                    id="absorbed"
+                    className="flex-1 sm:flex-none px-2 sm:px-3.5 min-h-[38px] sm:min-h-[32px] text-xs sm:text-sm"
+                  >
+                    <span className="flex items-center justify-center gap-1.5 whitespace-nowrap min-w-0">
+                      <CheckCircleIcon className="size-3.5 sm:size-4 shrink-0 text-success" />
+                      <span className="font-medium">
+                        <span className="inline sm:hidden">جذب‌شده</span>
+                        <span className="hidden sm:inline">جذب شده</span>
+                      </span>
+                      <Chip
+                        size="sm"
+                        variant="soft"
+                        color={absorbedCount > 0 ? 'success' : 'default'}
+                        className="h-5 min-w-5 px-1.5 text-[11px] font-semibold tabular-nums shrink-0"
+                      >
+                        {absorbedCount}
+                      </Chip>
                     </span>
                     <Tabs.Indicator />
                   </Tabs.Tab>
 
-                  <Tabs.Tab id="removed">
-                    <span className="flex items-center gap-1.5">
-                      <TrashIcon className="size-4 text-danger" />
-                      <span>حذف شده</span>
-                      <span className="text-xs text-muted">({removedCount})</span>
+                  <Tabs.Tab
+                    id="removed"
+                    className="flex-1 sm:flex-none px-2 sm:px-3.5 min-h-[38px] sm:min-h-[32px] text-xs sm:text-sm"
+                  >
+                    <span className="flex items-center justify-center gap-1.5 whitespace-nowrap min-w-0">
+                      <TrashIcon className="size-3.5 sm:size-4 shrink-0 text-danger" />
+                      <span className="font-medium">
+                        <span className="inline sm:hidden">حذف‌شده</span>
+                        <span className="hidden sm:inline">حذف شده</span>
+                      </span>
+                      <Chip
+                        size="sm"
+                        variant="soft"
+                        color="default"
+                        className="h-5 min-w-5 px-1.5 text-[11px] font-semibold tabular-nums shrink-0"
+                      >
+                        {removedCount}
+                      </Chip>
                     </span>
                     <Tabs.Indicator />
                   </Tabs.Tab>
@@ -216,19 +275,19 @@ export function Teacher() {
               </Tabs.ListContainer>
             </Tabs>
 
-            {/* Live Client Filter Input */}
-            <div className="relative flex items-center w-full sm:w-64">
-              <div className="absolute right-3 pointer-events-none flex items-center text-muted">
-                <MagnifierIcon className="size-4" />
-              </div>
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="جست‌وجوی نام یا موبایل..."
-                className="w-full rounded-lg border border-border bg-surface pr-9 pl-3 py-1.5 text-sm text-foreground focus:outline-2 focus:outline-accent"
-              />
-            </div>
+            {/* Native HeroUI v3 SearchField */}
+            <SearchField
+              value={searchQuery}
+              onChange={setSearchQuery}
+              className="w-full sm:w-64"
+              aria-label="جست‌وجوی دانش‌آموز"
+            >
+              <SearchField.Group>
+                <SearchField.SearchIcon />
+                <SearchField.Input placeholder="جست‌وجوی نام یا موبایل..." />
+                <SearchField.ClearButton />
+              </SearchField.Group>
+            </SearchField>
           </div>
 
           {/* Student Roster List */}
@@ -304,14 +363,18 @@ export function Teacher() {
                     حذف دانش‌آموز <strong>«{pending?.name}»</strong> به معنای پایان روند حضور او در
                     این کلاس است. لطفاً علت حذف را ذکر کنید.
                   </p>
-                  <TextareaField
-                    required
-                    label="دلیل حذف (الزامی)"
-                    placeholder="علت انصراف یا عدم امکان ادامه حضور دانش‌آموز..."
+                  <TextField
+                    isRequired
                     value={reason}
                     onChange={setReason}
-                    rows={3}
-                  />
+                    className="w-full"
+                  >
+                    <Label className="text-sm font-medium">دلیل حذف (الزامی)</Label>
+                    <TextArea
+                      rows={3}
+                      placeholder="علت انصراف یا عدم امکان ادامه حضور دانش‌آموز..."
+                    />
+                  </TextField>
                 </div>
               )}
             </Modal.Body>
@@ -319,6 +382,7 @@ export function Teacher() {
             <Modal.Footer className="flex items-center justify-end gap-2">
               <Button
                 variant="outline"
+                size="sm"
                 isDisabled={busy}
                 onPress={() => {
                   setPending(null)
@@ -330,6 +394,7 @@ export function Teacher() {
 
               <Button
                 variant={pending?.status === 'absorbed' ? 'primary' : 'danger'}
+                size="sm"
                 isDisabled={busy || (pending?.status === 'removed' && !reason.trim())}
                 onPress={save}
               >
@@ -385,7 +450,7 @@ export function Teacher() {
             </Modal.Header>
 
             <Modal.Body className="flex flex-col gap-4 text-sm">
-              {/* Contact numbers */}
+              {/* Complete contact numbers (per grill-me decision) */}
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-semibold text-muted">شماره‌های تماس:</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -403,7 +468,10 @@ export function Teacher() {
                         dir="ltr"
                       >
                         <bdi className="font-semibold text-sm">{phone}</bdi>
-                        <div className="flex items-center gap-1.5 text-xs text-muted font-sans" dir="rtl">
+                        <div
+                          className="flex items-center gap-1.5 text-xs text-muted font-sans"
+                          dir="rtl"
+                        >
                           <PhoneIcon className="size-3.5 text-accent" />
                           <span>{label}</span>
                         </div>
@@ -471,9 +539,8 @@ export function Teacher() {
                         name: `${st.firstName} ${st.lastName}`,
                       })
                     }}
-                    className="flex items-center gap-1"
                   >
-                    <CheckSquareIcon className="size-3.5" />
+                    <CheckSquareIcon className="size-4" />
                     <span>تأیید جذب</span>
                   </Button>
                 )}
@@ -481,7 +548,7 @@ export function Teacher() {
                   viewingStudent?.lifecycleStatus || '',
                 ) && (
                   <Button
-                    variant="outline"
+                    variant="danger-soft"
                     size="sm"
                     onPress={() => {
                       const st = viewingStudent!
@@ -492,9 +559,8 @@ export function Teacher() {
                         name: `${st.firstName} ${st.lastName}`,
                       })
                     }}
-                    className="text-danger flex items-center gap-1"
                   >
-                    <TrashIcon className="size-3.5" />
+                    <TrashIcon className="size-4" />
                     <span>حذف از روند</span>
                   </Button>
                 )}
