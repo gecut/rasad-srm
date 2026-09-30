@@ -56,6 +56,7 @@ export interface StudentCard {
   referrer?: string | null
   notes?: string | null
   recentCheckins?: StudentCheckinSummary[]
+  attendedCeremonies?: { id: number; title: string }[]
 }
 
 export interface InvitationQueue {

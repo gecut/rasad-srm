@@ -61,6 +61,27 @@ export async function getTeacherRoster(input: Input): Promise<TeacherRoster> {
     : { docs: [] }
   const neighborhoodMap = new Map(neighborhoods.docs.map((n) => [n.id, n.name]))
 
+  const ceremonyIds = Array.from(
+    new Set(
+      students.docs
+        .flatMap((s) => s.attendedCeremonies || [])
+        .map((c) => relationID(c))
+        .filter((id): id is number => Boolean(id)),
+    ),
+  )
+
+  const ceremonies = ceremonyIds.length
+    ? await payload.find({
+        collection: 'ceremonies',
+        where: { id: { in: ceremonyIds } },
+        pagination: false,
+        depth: 0,
+        overrideAccess: true,
+        req,
+      })
+    : { docs: [] }
+  const ceremonyMap = new Map(ceremonies.docs.map((c) => [c.id, c.title]))
+
   return {
     classes: classes.docs.map((item) => ({
       id: item.id,
@@ -70,6 +91,14 @@ export async function getTeacherRoster(input: Input): Promise<TeacherRoster> {
         .map((student) => {
           const nId = student.neighborhood ? relationID(student.neighborhood) : null
           const nName = nId ? neighborhoodMap.get(nId) || null : null
+          const attended = (student.attendedCeremonies || [])
+            .map((c) => {
+              const cId = relationID(c)
+              const title = ceremonyMap.get(cId)
+              return title ? { id: cId, title } : null
+            })
+            .filter((c): c is { id: number; title: string } => Boolean(c))
+
           return {
             id: student.id,
             firstName: student.firstName,
@@ -83,6 +112,7 @@ export async function getTeacherRoster(input: Input): Promise<TeacherRoster> {
             address: student.address,
             referrer: student.referrer,
             notes: student.notes,
+            attendedCeremonies: attended,
             lifecycleStatus: student.lifecycleStatus,
           }
         }),

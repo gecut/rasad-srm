@@ -522,6 +522,29 @@ export function Teacher() {
                   )}
                 </div>
               )}
+
+              {/* Ceremony Attendance History */}
+              <div className="flex flex-col gap-2 p-3 rounded-lg border border-border/80 bg-surface-secondary/20 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted font-semibold">سوابق حضور در مراسم‌ها:</span>
+                  <span className="text-xs text-muted">
+                    {viewingStudent?.attendedCeremonies?.length
+                      ? `${viewingStudent.attendedCeremonies.length} مراسم`
+                      : 'بدون سابقه'}
+                  </span>
+                </div>
+                {viewingStudent?.attendedCeremonies && viewingStudent.attendedCeremonies.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {viewingStudent.attendedCeremonies.map((c) => (
+                      <Chip key={c.id} size="sm" variant="soft" color="accent">
+                        {c.title}
+                      </Chip>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted italic">دانش‌آموز تاکنون در هیچ مراسمی پذیرش نشده است.</span>
+                )}
+              </div>
             </Modal.Body>
 
             <Modal.Footer className="flex items-center justify-between gap-2">
