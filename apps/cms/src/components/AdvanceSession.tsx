@@ -67,12 +67,39 @@ const statusLabels: Record<string, { label: string; bg: string; color: string; b
   },
 }
 
+interface Attendee {
+  id: number
+  student: {
+    id: number
+    firstName: string
+    lastName: string
+    grade?: number | null
+    mobile?: string | null
+    fatherMobile?: string | null
+    motherMobile?: string | null
+    neighborhoodName?: string | null
+  }
+  session: {
+    id: number
+    title?: string | null
+  }
+  source: 'invited' | 'walk_in'
+  checkedInAt: string
+  checkedInBy?: string | null
+  note?: string | null
+}
+
 export function AdvanceSession() {
   const { id } = useDocumentInfo()
   const [ceremony, setCeremony] = useState<CeremonyTelemetry | null>(null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  const [viewingSession, setViewingSession] = useState<{ id: number; title: string } | null>(null)
+  const [attendees, setAttendees] = useState<Attendee[]>([])
+  const [loadingAttendees, setLoadingAttendees] = useState(false)
+  const [attendeeSearch, setAttendeeSearch] = useState('')
 
   const loadData = useCallback(async () => {
     if (!id) return
@@ -105,6 +132,41 @@ export function AdvanceSession() {
       ignore = true
     }
   }, [id])
+
+  useEffect(() => {
+    if (!viewingSession) {
+      setAttendees([])
+      setAttendeeSearch('')
+      return
+    }
+    let ignore = false
+    setLoadingAttendees(true)
+    fetch(`/api/panel/ceremony/attendees?sessionId=${viewingSession.id}`, {
+      credentials: 'include',
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('دریافت لیست حاضرین انجام نشد.')
+        return res.json()
+      })
+      .then((data: { attendees: Attendee[] }) => {
+        if (!ignore) {
+          setAttendees(data.attendees || [])
+        }
+      })
+      .catch((err) => {
+        if (!ignore) {
+          setError(err instanceof Error ? err.message : 'خطا در بارگذاری حاضرین.')
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoadingAttendees(false)
+        }
+      })
+    return () => {
+      ignore = true
+    }
+  }, [viewingSession])
 
   async function handleAdvance(expectedSessionId: number | null) {
     if (!id || busy) return
@@ -468,7 +530,39 @@ export function AdvanceSession() {
               </div>
 
               {/* Card Actions */}
-              <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #f3f4f6' }}>
+              <div
+                style={{
+                  marginTop: 'auto',
+                  paddingTop: '8px',
+                  borderTop: '1px solid #f3f4f6',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setViewingSession({
+                      id: session.id,
+                      title: session.title || `سانس #${session.id}`,
+                    })
+                  }
+                  style={{
+                    width: '100%',
+                    fontSize: '0.75rem',
+                    padding: '6px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #d1d5db',
+                    backgroundColor: '#ffffff',
+                    color: '#374151',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  مشاهده حاضرین سانس ({session.checkedInCount ?? 0} نفر)
+                </button>
+
                 {session.status === 'sealed' && (
                   <button
                     type="button"
@@ -522,6 +616,249 @@ export function AdvanceSession() {
         >
           هنوز سانسی برای این مراسم ایجاد نشده است یا وضعیت مراسم پیش‌نویس است.
         </p>
+      )}
+
+      {/* Attendees Modal */}
+      {viewingSession && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '16px',
+          }}
+          onClick={() => setViewingSession(null)}
+        >
+          <div
+            dir="rtl"
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '900px',
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              overflow: 'hidden',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid #e5e7eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#f9fafb',
+              }}
+            >
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#111827' }}>
+                  حاضرین سانس: {viewingSession.title}
+                </h4>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#6b7280' }}>
+                  تعداد کل حاضرین: {attendees.length} نفر (
+                  {attendees.filter((a) => a.source === 'invited').length} دعوت‌شده،{' '}
+                  {attendees.filter((a) => a.source === 'walk_in').length} مراجعه حضوری)
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setViewingSession(null)}
+                style={{
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  cursor: 'pointer',
+                  fontSize: '1.25rem',
+                  color: '#9ca3af',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Search */}
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #f3f4f6' }}>
+              <input
+                type="text"
+                placeholder="جست‌وجوی نام دانش‌آموز یا شماره موبایل..."
+                value={attendeeSearch}
+                onChange={(e) => setAttendeeSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #d1d5db',
+                  fontSize: '0.85rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* Modal Content / Table */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+              {loadingAttendees ? (
+                <p style={{ textAlign: 'center', color: '#6b7280', padding: '32px 0' }}>
+                  در حال بارگذاری لیست حاضرین…
+                </p>
+              ) : attendees.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#6b7280', padding: '32px 0' }}>
+                  هیچ حضوری برای این سانس ثبت نشده است.
+                </p>
+              ) : (
+                (() => {
+                  const filtered = attendees.filter((att) => {
+                    if (!attendeeSearch.trim()) return true
+                    const q = attendeeSearch.trim().toLowerCase()
+                    const fullName = `${att.student.firstName} ${att.student.lastName}`.toLowerCase()
+                    const mobile = att.student.mobile || ''
+                    return fullName.includes(q) || mobile.includes(q)
+                  })
+
+                  if (filtered.length === 0) {
+                    return (
+                      <p style={{ textAlign: 'center', color: '#6b7280', padding: '32px 0' }}>
+                        موردی با این مشخصات یافت نشد.
+                      </p>
+                    )
+                  }
+
+                  return (
+                    <table
+                      style={{
+                        width: '100%',
+                        borderCollapse: 'collapse',
+                        fontSize: '0.82rem',
+                        textAlign: 'right',
+                      }}
+                    >
+                      <thead>
+                        <tr
+                          style={{
+                            borderBottom: '2px solid #e5e7eb',
+                            color: '#4b5563',
+                            backgroundColor: '#f9fafb',
+                          }}
+                        >
+                          <th style={{ padding: '8px 10px', width: '35px' }}>#</th>
+                          <th style={{ padding: '8px 10px' }}>دانش‌آموز</th>
+                          <th style={{ padding: '8px 10px' }}>پایه</th>
+                          <th style={{ padding: '8px 10px' }}>شماره همراه</th>
+                          <th style={{ padding: '8px 10px' }}>ناحیه</th>
+                          <th style={{ padding: '8px 10px' }}>نوع حضور</th>
+                          <th style={{ padding: '8px 10px' }}>ساعت ورود</th>
+                          <th style={{ padding: '8px 10px' }}>پذیرش‌کننده</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.map((att, idx) => {
+                          const timeParts = jalaliParts(att.checkedInAt)
+                          return (
+                            <tr
+                              key={att.id}
+                              style={{
+                                borderBottom: '1px solid #f3f4f6',
+                                transition: 'background-color 0.15s ease',
+                              }}
+                            >
+                              <td style={{ padding: '10px 10px', color: '#9ca3af' }}>{idx + 1}</td>
+                              <td style={{ padding: '10px 10px', fontWeight: 600 }}>
+                                <a
+                                  href={`/admin/collections/students/${att.student.id}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{
+                                    color: '#2563eb',
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                  }}
+                                >
+                                  {att.student.firstName} {att.student.lastName}
+                                </a>
+                              </td>
+                              <td style={{ padding: '10px 10px', color: '#6b7280' }}>
+                                {att.student.grade ? `پایه ${att.student.grade}` : '—'}
+                              </td>
+                              <td style={{ padding: '10px 10px', direction: 'ltr', textAlign: 'right' }}>
+                                {att.student.mobile || att.student.fatherMobile || att.student.motherMobile || '—'}
+                              </td>
+                              <td style={{ padding: '10px 10px', color: '#6b7280' }}>
+                                {att.student.neighborhoodName || '—'}
+                              </td>
+                              <td style={{ padding: '10px 10px' }}>
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    padding: '2px 8px',
+                                    borderRadius: '9999px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 600,
+                                    backgroundColor: att.source === 'invited' ? '#ecfdf5' : '#eff6ff',
+                                    color: att.source === 'invited' ? '#065f46' : '#1e40af',
+                                    border: `1px solid ${att.source === 'invited' ? '#a7f3d0' : '#bfdbfe'}`,
+                                  }}
+                                >
+                                  {att.source === 'invited' ? 'دعوت‌شده' : 'مراجعه حضوری'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 10px', color: '#374151' }}>
+                                {timeParts.time}
+                              </td>
+                              <td style={{ padding: '10px 10px', color: '#6b7280', fontSize: '0.75rem' }}>
+                                {att.checkedInBy || '—'}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  )
+                })()
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              style={{
+                padding: '12px 20px',
+                borderTop: '1px solid #e5e7eb',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                backgroundColor: '#f9fafb',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setViewingSession(null)}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: '6px',
+                  border: '1px solid #d1d5db',
+                  backgroundColor: '#ffffff',
+                  color: '#374151',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 500,
+                }}
+              >
+                بستن
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

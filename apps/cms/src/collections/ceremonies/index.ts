@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isEmployeeOrAdmin, isStaff } from '../../access/roles'
+import { isAdmin, isStaff } from '../../access/roles'
 
 export const Ceremonies: CollectionConfig = {
   slug: 'ceremonies',
@@ -8,15 +8,15 @@ export const Ceremonies: CollectionConfig = {
     plural: 'مراسم‌ها',
   },
   admin: {
-    group: 'رویدادها',
+    group: 'رویدادها و پذیرش',
     useAsTitle: 'title',
     defaultColumns: ['title', 'status', 'createdAt'],
   },
   access: {
     read: isStaff,
-    create: isEmployeeOrAdmin,
-    update: isEmployeeOrAdmin,
-    delete: isEmployeeOrAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   fields: [
     {

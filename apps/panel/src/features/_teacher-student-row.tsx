@@ -1,6 +1,6 @@
 import { Button, Card, Chip } from '@heroui/react'
 import type { TeacherRoster } from '@rasad/contracts'
-import { CheckSquareIcon, NotesIcon, PhoneIcon, TrashIcon } from '../components/icons'
+import { CheckSquareIcon, EditIcon, NotesIcon, PhoneIcon, TrashIcon } from '../components/icons'
 
 type TeacherStudent = TeacherRoster['classes'][number]['students'][number]
 
@@ -19,13 +19,16 @@ export function TeacherStudentRow({
   onAbsorb,
   onRemove,
   onViewDetails,
+  onEdit,
 }: {
   student: TeacherStudent
   busy: boolean
   onAbsorb: (student: TeacherStudent) => void
   onRemove: (student: TeacherStudent) => void
   onViewDetails: (student: TeacherStudent) => void
+  onEdit: (student: TeacherStudent) => void
 }) {
+  const currentStatus = (student as any).status || student.lifecycleStatus
   return (
     <Card className="transition-colors hover:bg-surface-secondary/40 border border-border bg-surface">
       <Card.Content className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 sm:p-4">
@@ -55,15 +58,15 @@ export function TeacherStudentRow({
             <Chip
               size="sm"
               color={
-                student.lifecycleStatus === 'absorbed'
+                currentStatus === 'absorbed'
                   ? 'success'
-                  : student.lifecycleStatus === 'referred_to_teacher'
+                  : currentStatus === 'referred_to_teacher'
                     ? 'accent'
                     : 'default'
               }
               variant="soft"
             >
-              {STATUS_LABELS[student.lifecycleStatus] || student.lifecycleStatus}
+              {STATUS_LABELS[currentStatus] || currentStatus}
             </Chip>
           </div>
 
@@ -90,13 +93,23 @@ export function TeacherStudentRow({
             variant="outline"
             size="sm"
             isDisabled={busy}
+            onPress={() => onEdit(student)}
+          >
+            <EditIcon className="size-4 text-muted" />
+            <span>ویرایش</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            isDisabled={busy}
             onPress={() => onViewDetails(student)}
           >
             <NotesIcon className="size-4 text-accent" />
             <span>پرونده</span>
           </Button>
 
-          {student.lifecycleStatus === 'referred_to_teacher' && (
+          {currentStatus === 'referred_to_teacher' && (
             <Button
               variant="primary"
               size="sm"
@@ -108,7 +121,7 @@ export function TeacherStudentRow({
             </Button>
           )}
 
-          {['referred_to_teacher', 'absorbed'].includes(student.lifecycleStatus) && (
+          {['referred_to_teacher', 'absorbed'].includes(currentStatus) && (
             <Button
               variant="danger-soft"
               size="sm"

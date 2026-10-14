@@ -69,8 +69,48 @@ export interface TeacherRoster {
   classes: {
     id: number
     title: string
-    students: (StudentCard & { lifecycleStatus: Student['lifecycleStatus'] })[]
+    students: (StudentCard & {
+      status: Student['status']
+      lifecycleStatus?: Student['status']
+    })[]
   }[]
+}
+
+export interface SessionAttendee {
+  id: number
+  student: {
+    id: number
+    firstName: string
+    lastName: string
+    grade?: number | null
+    mobile?: string | null
+    fatherMobile?: string | null
+    motherMobile?: string | null
+    neighborhoodName?: string | null
+  }
+  session: {
+    id: number
+    title?: string | null
+  }
+  source: 'invited' | 'walk_in'
+  checkedInAt: string
+  checkedInBy?: string | null
+  note?: string | null
+}
+
+export interface TeacherStudentUpdateInput {
+  studentId: number
+  firstName?: string
+  lastName?: string
+  grade?: number | null
+  mobile?: string | null
+  fatherMobile?: string | null
+  motherMobile?: string | null
+  landline?: string | null
+  neighborhoodId?: number | null
+  address?: string | null
+  referrer?: string | null
+  notes?: string | null
 }
 
 export interface ReceptionStudent {

@@ -27,8 +27,8 @@ describe('Ceremony invitations', () => {
     })
     expect(result.assignedSession).toBe(f.first.id)
     expect(
-      (await payload.findByID({ collection: 'students', id: before.id })).lifecycleStatus,
-    ).toBe(before.lifecycleStatus)
+      (await payload.findByID({ collection: 'students', id: before.id })).status,
+    ).toBe(before.status)
     await expect(
       submitInvitationOutcome({
         ...input,

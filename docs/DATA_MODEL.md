@@ -6,52 +6,55 @@ Conceptual Payload collection model. Persian UI labels may differ from code iden
 
 Auth-enabled Payload collection for all authenticated identities.
 
-| Field            | Type                    | Notes                                                                             |
-| ---------------- | ----------------------- | --------------------------------------------------------------------------------- |
-| `name`           | text                    | display name                                                                      |
-| `email`          | auth/email              | optional depending on role                                                        |
-| `username`       | auth username           | normalized phone for custom-panel users                                           |
-| `role`           | select                  | `admin`, `employee`, `follow_up_specialist`, `inviter`, `teacher`, `receptionist` |
-| `teacherProfile` | relationship → teachers | required only for role `teacher`                                                  |
-| `status`         | select                  | `active`, `inactive`                                                              |
+| Field            | Type                    | Notes                                                               |
+| ---------------- | ----------------------- | ------------------------------------------------------------------- |
+| `name`           | text                    | display name                                                        |
+| `email`          | auth/email              | optional depending on role                                          |
+| `username`       | auth username           | normalized phone for custom-panel users                             |
+| `role`           | select                  | `admin`, `employee`, `inviter`, `teacher`, `receptionist`           |
+| `teacherProfile` | relationship → teachers | required only for role `teacher`                                    |
+| `status`         | select                  | `active`, `inactive`                                                |
 
 Auth configuration uses username login with email login allowed for Admin-side users and email not globally required.
 
 ## 2. `students`
 
-| Field             | Type                         | Notes                                                         |
-| ----------------- | ---------------------------- | ------------------------------------------------------------- |
-| `firstName`       | text                         | required                                                      |
-| `lastName`        | text                         | required                                                      |
-| `grade`           | select/number                | optional descriptive data, 1–6 when present                   |
-| `mobile`          | text                         | optional                                                      |
-| `motherMobile`    | text                         | optional                                                      |
-| `fatherMobile`    | text                         | optional                                                      |
-| `landline`        | text                         | optional home landline phone                                  |
-| `neighborhood`    | relationship → neighborhoods | max one                                                       |
-| `address`         | textarea                     | optional home address                                         |
-| `referrer`        | text                         | optional referrer name/source                                 |
+| Field                | Type                         | Notes                                                         |
+| -------------------- | ---------------------------- | ------------------------------------------------------------- |
+| `firstName`          | text                         | required                                                      |
+| `lastName`           | text                         | required                                                      |
+| `grade`              | select/number                | optional descriptive data, 1–6 when present                   |
+| `mobile`             | text                         | optional                                                      |
+| `motherMobile`       | text                         | optional                                                      |
+| `fatherMobile`       | text                         | optional                                                      |
+| `landline`           | text                         | optional home landline phone                                  |
+| `neighborhood`       | relationship → neighborhoods | max one ("ناحیه شهری")                                        |
+| `address`            | textarea                     | optional home address                                         |
+| `referrer`           | text                         | optional referrer name/source                                 |
 | `notes`              | textarea                     | optional dossier notes                                        |
-| `attendedCeremonies` | relationship → ceremonies    | `hasMany: true`, read-only; auto-synced from checkins         |
+| `attendedCeremonies` | relationship → ceremonies    | `hasMany: true`, hidden in Admin (rendered in dedicated UI)   |
 | `checkins`           | join → session-checkins      | reverse navigation to all attended ceremonies/sessions        |
-| `lifecycleStatus`    | select                       | see STATUS_MODEL                                              |
-| `readinessStatus` | select                       | `normal`, `waitlisted`                                        |
-| `currentClass`    | relationship → classes       | max one                                                       |
-| `referredAt`      | date-time                    | nullable                                                      |
-| `absorbedAt`      | date-time                    | nullable                                                      |
-| `stabilizedAt`    | date-time                    | nullable                                                      |
-| `removedReason`   | text/select                  | nullable; required by relevant workflow                       |
-| `origin`          | select                       | `admin`, `reception_walk_in`, `import`, other approved source |
+| `status`             | select                       | single unified enum (see STATUS_MODEL)                        |
+| `currentClass`       | relationship → classes       | max one                                                       |
+| `referredAt`         | date-time                    | nullable; auto-stamped on class assignment                    |
+| `absorbedAt`         | date-time                    | nullable; auto-stamped on teacher confirmation                |
+| `stabilizedAt`       | date-time                    | nullable; auto-stamped on 6-month stabilization               |
+| `removedReason`      | text/select                  | nullable; required when `status === 'removed'`                |
+| `origin`             | select                       | `admin`, `reception_walk_in`, `import`, other approved source |
 
 At least one phone is required for invitation eligibility, but not for walk-in creation.
 
 ## 3. `neighborhoods`
+
+Persian Admin label: "ناحیه شهری / نواحی شهری".
 
 | Field          | Type                        | Notes                                                             |
 | -------------- | --------------------------- | ----------------------------------------------------------------- |
 | `name`         | text                        | required, unique, indexed neighborhood name (e.g. وکیل‌آباد)      |
 | `description`  | textarea                    | optional description of the area                                  |
 | `subDistricts` | array of `{ name: string }` | sub-areas, quarters, streets for fast lookup (e.g. هفت تیر، حافظ) |
+
+Admin detail view displays `DistrictClasses` and `DistrictStudents` custom components showing all classes and students belonging to this urban district.
 
 ## 4. `teachers`
 
@@ -66,15 +69,16 @@ The auth account is linked from `users.teacherProfile`; do not duplicate passwor
 
 ## 5. `classes`
 
-| Field               | Type                             |
-| ------------------- | -------------------------------- |
-| `title`             | text                             |
-| `primaryTeacher`    | relationship → teachers          |
-| `assistantTeachers` | has-many relationship → teachers |
+| Field               | Type                             | Notes                                               |
+| ------------------- | -------------------------------- | --------------------------------------------------- |
+| `title`             | text                             | required class title                                |
+| `primaryTeacher`    | relationship → teachers          | required primary teacher                            |
+| `assistantTeachers` | has-many relationship → teachers | optional assistant teachers                         |
+| `neighborhood`      | relationship → neighborhoods     | optional urban district relation ("ناحیه شهری")     |
 | `capacity`          | number                           | informational only, if already useful to operations |
 | `status`            | select                           | see STATUS_MODEL                                    |
 
-Class capacity remains informational. This is unrelated to removed Session capacity.
+Admin detail view renders the `ClassStudents` custom component listing all enrolled students with contact details and quick status badges.
 
 ## 6. `follow-ups`
 

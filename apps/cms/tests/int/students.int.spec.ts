@@ -8,7 +8,6 @@ let payload: Payload
 describe('Milestone 2 — Students Domain', () => {
   let adminUser: User
   let employeeUser: User
-  let specialistUser: User
   let inviterUser: User
 
   beforeAll(async () => {
@@ -44,18 +43,6 @@ describe('Milestone 2 — Students Domain', () => {
       overrideAccess: true,
     })
 
-    specialistUser = await payload.create({
-      collection: 'users',
-      data: {
-        email: 'm2-specialist@example.com',
-        name: 'M2 Specialist',
-        password: 'Password123!',
-        role: 'follow_up_specialist',
-        status: 'active',
-      },
-      overrideAccess: true,
-    })
-
     inviterUser = await payload.create({
       collection: 'users',
       data: {
@@ -79,7 +66,7 @@ describe('Milestone 2 — Students Domain', () => {
   // Student Creation & Defaults
   // ---------------------------------------------------------------------------
   describe('Creation and Defaults', () => {
-    it('creates student with default lifecycle=unknown and readiness=normal', async () => {
+    it('creates student with default status=unknown', async () => {
       const student = await payload.create({
         collection: 'students',
         data: {
@@ -91,15 +78,14 @@ describe('Milestone 2 — Students Domain', () => {
           fatherMobile: '09123333333',
         } as unknown as Student,
         overrideAccess: false,
-        user: employeeUser,
+        user: adminUser,
       })
 
       expect(student.id).toBeDefined()
       expect(student.firstName).toBe('مهدی')
       expect(student.lastName).toBe('رضایی')
       expect(student.grade).toBe(4)
-      expect(student.lifecycleStatus).toBe('unknown')
-      expect(student.readinessStatus).toBe('normal')
+      expect(student.status).toBe('unknown')
       expect(student.currentClass).toBeFalsy()
     })
   })
@@ -116,8 +102,7 @@ describe('Milestone 2 — Students Domain', () => {
             firstName: `دانش‌آموز`,
             lastName: `پایه ${grade}`,
             grade,
-            lifecycleStatus: 'unknown',
-            readinessStatus: 'normal',
+            status: 'unknown',
             origin: 'admin',
           },
           overrideAccess: false,
@@ -135,8 +120,7 @@ describe('Milestone 2 — Students Domain', () => {
             firstName: 'نامعتبر',
             lastName: 'پایه صفر',
             grade: 0,
-            lifecycleStatus: 'unknown',
-            readinessStatus: 'normal',
+            status: 'unknown',
             origin: 'admin',
           },
           overrideAccess: false,
@@ -153,8 +137,7 @@ describe('Milestone 2 — Students Domain', () => {
             firstName: 'نامعتبر',
             lastName: 'پایه هفت',
             grade: 7,
-            lifecycleStatus: 'unknown',
-            readinessStatus: 'normal',
+            status: 'unknown',
             origin: 'admin',
           },
           overrideAccess: false,
@@ -171,8 +154,7 @@ describe('Milestone 2 — Students Domain', () => {
             firstName: 'نامعتبر',
             lastName: 'پایه اعشاری',
             grade: 3.5,
-            lifecycleStatus: 'unknown',
-            readinessStatus: 'normal',
+            status: 'unknown',
             origin: 'admin',
           },
           overrideAccess: false,
@@ -183,26 +165,37 @@ describe('Milestone 2 — Students Domain', () => {
   })
 
   // ---------------------------------------------------------------------------
-  // Readiness vs Lifecycle Independence
+  // Grade-based Status Assignment
   // ---------------------------------------------------------------------------
-  describe('Readiness & Lifecycle Independence', () => {
-    it('allows student to be both class_seeker and waitlisted (پشت‌خطی)', async () => {
-      const student = await payload.create({
+  describe('Grade-based Status Assignment', () => {
+    it('allows student to be waitlisted (grades 1-3 seeking class) or class_seeker (grades 4-6 seeking class)', async () => {
+      const waitlistedStudent = await payload.create({
         collection: 'students',
         data: {
           firstName: 'سجاد',
           lastName: 'حسینی',
           grade: 3,
-          lifecycleStatus: 'class_seeker',
-          readinessStatus: 'waitlisted',
+          status: 'waitlisted',
           origin: 'admin',
         },
         overrideAccess: false,
-        user: employeeUser,
+        user: adminUser,
       })
+      expect(waitlistedStudent.status).toBe('waitlisted')
 
-      expect(student.lifecycleStatus).toBe('class_seeker')
-      expect(student.readinessStatus).toBe('waitlisted')
+      const classSeekerStudent = await payload.create({
+        collection: 'students',
+        data: {
+          firstName: 'رضا',
+          lastName: 'حسینی',
+          grade: 5,
+          status: 'class_seeker',
+          origin: 'admin',
+        },
+        overrideAccess: false,
+        user: adminUser,
+      })
+      expect(classSeekerStudent.status).toBe('class_seeker')
     })
   })
 
@@ -210,7 +203,7 @@ describe('Milestone 2 — Students Domain', () => {
   // Stop Reason Invariant
   // ---------------------------------------------------------------------------
   describe('Stop Reason Validation', () => {
-    it('rejects removed lifecycle if removedReason is missing or empty', async () => {
+    it('rejects removed status if removedReason is missing or empty', async () => {
       await expect(
         payload.create({
           collection: 'students',
@@ -218,8 +211,7 @@ describe('Milestone 2 — Students Domain', () => {
             firstName: 'امیر',
             lastName: 'صادقی',
             grade: 2,
-            lifecycleStatus: 'removed',
-            readinessStatus: 'normal',
+            status: 'removed',
             origin: 'admin',
           },
           overrideAccess: false,
@@ -234,8 +226,7 @@ describe('Milestone 2 — Students Domain', () => {
             firstName: 'امیر',
             lastName: 'صادقی',
             grade: 2,
-            lifecycleStatus: 'removed',
-            readinessStatus: 'normal',
+            status: 'removed',
             origin: 'admin',
             removedReason: '   ',
           },
@@ -245,15 +236,14 @@ describe('Milestone 2 — Students Domain', () => {
       ).rejects.toThrow()
     })
 
-    it('accepts removed lifecycle when removedReason is provided', async () => {
+    it('accepts removed status when removedReason is provided', async () => {
       const student = await payload.create({
         collection: 'students',
         data: {
           firstName: 'امیر',
           lastName: 'صادقی',
           grade: 2,
-          lifecycleStatus: 'removed',
-          readinessStatus: 'normal',
+          status: 'removed',
           origin: 'admin',
           removedReason: 'تغییر محل سکونت به شهر دیگر',
         },
@@ -261,7 +251,7 @@ describe('Milestone 2 — Students Domain', () => {
         user: adminUser,
       })
 
-      expect(student.lifecycleStatus).toBe('removed')
+      expect(student.status).toBe('removed')
       expect(student.removedReason).toBe('تغییر محل سکونت به شهر دیگر')
     })
   })
@@ -270,7 +260,7 @@ describe('Milestone 2 — Students Domain', () => {
   // Stabilization Invariant
   // ---------------------------------------------------------------------------
   describe('Stabilization Invariant', () => {
-    it('rejects stabilized lifecycle if absorbedAt is missing', async () => {
+    it('rejects stabilized status if absorbedAt is missing', async () => {
       await expect(
         payload.create({
           collection: 'students',
@@ -278,8 +268,7 @@ describe('Milestone 2 — Students Domain', () => {
             firstName: 'تثبیت',
             lastName: 'ناقص',
             grade: 5,
-            lifecycleStatus: 'stabilized',
-            readinessStatus: 'normal',
+            status: 'stabilized',
             origin: 'admin',
           },
           overrideAccess: false,
@@ -288,7 +277,7 @@ describe('Milestone 2 — Students Domain', () => {
       ).rejects.toThrow()
     })
 
-    it('rejects stabilized lifecycle if less than 6 months have elapsed since absorbedAt', async () => {
+    it('rejects stabilized status if less than 6 months have elapsed since absorbedAt', async () => {
       // 1 month ago
       const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -300,8 +289,7 @@ describe('Milestone 2 — Students Domain', () => {
             lastName: 'زودرس',
             grade: 5,
             absorbedAt: oneMonthAgo,
-            lifecycleStatus: 'stabilized',
-            readinessStatus: 'normal',
+            status: 'stabilized',
             origin: 'admin',
           },
           overrideAccess: false,
@@ -310,7 +298,7 @@ describe('Milestone 2 — Students Domain', () => {
       ).rejects.toThrow()
     })
 
-    it('allows stabilized lifecycle if at least 6 months have elapsed since absorbedAt', async () => {
+    it('allows stabilized status if at least 6 months have elapsed since absorbedAt', async () => {
       // 7 months ago (approx 210 days)
       const sevenMonthsAgo = new Date(Date.now() - 210 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -321,15 +309,14 @@ describe('Milestone 2 — Students Domain', () => {
           lastName: 'موفق',
           grade: 5,
           absorbedAt: sevenMonthsAgo,
-          lifecycleStatus: 'stabilized',
-          readinessStatus: 'normal',
+          status: 'stabilized',
           origin: 'admin',
         },
         overrideAccess: false,
         user: adminUser,
       })
 
-      expect(student.lifecycleStatus).toBe('stabilized')
+      expect(student.status).toBe('stabilized')
       expect(student.stabilizedAt).toBeDefined()
     })
   })
@@ -347,59 +334,52 @@ describe('Milestone 2 — Students Domain', () => {
           firstName: 'سینا',
           lastName: 'نادری',
           grade: 1,
-          lifecycleStatus: 'unknown',
-          readinessStatus: 'normal',
+          status: 'unknown',
           origin: 'admin',
         },
         overrideAccess: false,
-        user: employeeUser,
+        user: adminUser,
       })
     })
 
-    it('allows follow-up specialist to read students', async () => {
+    it('allows employee to read students', async () => {
       const res = await payload.find({
         collection: 'students',
         where: { id: { equals: testStudent.id } },
         overrideAccess: false,
-        user: specialistUser,
+        user: employeeUser,
       })
       expect(res.docs.length).toBe(1)
       expect(res.docs[0].id).toBe(testStudent.id)
     })
 
-    it('allows follow-up specialist to update lifecycle status to removed with reason', async () => {
+    it('denies employee from updating students', async () => {
+      await expect(
+        payload.update({
+          collection: 'students',
+          id: testStudent.id,
+          data: {
+            status: 'removed',
+            removedReason: 'تلاش کارمند غیرمجاز',
+          },
+          overrideAccess: false,
+          user: employeeUser,
+        }),
+      ).rejects.toThrow()
+    })
+
+    it('allows admin to update status to removed with reason', async () => {
       const updated = await payload.update({
         collection: 'students',
         id: testStudent.id,
         data: {
-          lifecycleStatus: 'removed',
+          status: 'removed',
           removedReason: 'عدم پاسخگویی در چندین تماس',
         },
         overrideAccess: false,
-        user: specialistUser,
+        user: adminUser,
       })
-      expect(updated.lifecycleStatus).toBe('removed')
-    })
-
-    it('prevents follow-up specialist from modifying identity fields', async () => {
-      const result = await payload.update({
-        collection: 'students',
-        id: testStudent.id,
-        data: {
-          firstName: 'نام جدید غیرمجاز',
-        },
-        overrideAccess: false,
-        user: specialistUser,
-      })
-      // Field-level access protection ensures unauthorized field is stripped and original value is preserved
-      expect(result.firstName).toBe('سینا')
-
-      const fresh = await payload.findByID({
-        collection: 'students',
-        id: testStudent.id,
-        overrideAccess: true,
-      })
-      expect(fresh.firstName).toBe('سینا')
+      expect(updated.status).toBe('removed')
     })
 
     it('denies inviter from browsing students directly', async () => {
@@ -455,7 +435,7 @@ describe('Milestone 2 — Students Domain', () => {
         overrideAccess: true,
       })
 
-      expect(student.lifecycleStatus).toBe('unknown')
+      expect(student.status).toBe('unknown')
       expect(student.currentClass).toBeFalsy()
 
       const updated = await payload.update({
@@ -467,7 +447,7 @@ describe('Milestone 2 — Students Domain', () => {
         overrideAccess: true,
       })
 
-      expect(updated.lifecycleStatus).toBe('referred_to_teacher')
+      expect(updated.status).toBe('referred_to_teacher')
       expect(updated.referredAt).toBeDefined()
       const updatedClassId =
         typeof updated.currentClass === 'object' && updated.currentClass !== null
@@ -476,7 +456,7 @@ describe('Milestone 2 — Students Domain', () => {
       expect(updatedClassId).toBe(activeClassId)
     })
 
-    it('gracefully transitions referred_to_teacher to class_seeker when class is unassigned', async () => {
+    it('gracefully transitions referred_to_teacher to class_seeker when class is unassigned (grade 5)', async () => {
       const student = await payload.create({
         collection: 'students',
         draft: false,
@@ -490,7 +470,7 @@ describe('Milestone 2 — Students Domain', () => {
         overrideAccess: true,
       })
 
-      expect(student.lifecycleStatus).toBe('referred_to_teacher')
+      expect(student.status).toBe('referred_to_teacher')
 
       const updated = await payload.update({
         collection: 'students',
@@ -501,7 +481,37 @@ describe('Milestone 2 — Students Domain', () => {
         overrideAccess: true,
       })
 
-      expect(updated.lifecycleStatus).toBe('class_seeker')
+      expect(updated.status).toBe('class_seeker')
+      expect(updated.referredAt).toBeNull()
+      expect(updated.currentClass).toBeNull()
+    })
+
+    it('gracefully transitions referred_to_teacher to waitlisted when class is unassigned (grade 2)', async () => {
+      const student = await payload.create({
+        collection: 'students',
+        draft: false,
+        data: {
+          firstName: 'سهراب',
+          lastName: 'کوچک',
+          grade: 2,
+          currentClass: activeClassId,
+          origin: 'admin',
+        } as unknown as Student,
+        overrideAccess: true,
+      })
+
+      expect(student.status).toBe('referred_to_teacher')
+
+      const updated = await payload.update({
+        collection: 'students',
+        id: student.id,
+        data: {
+          currentClass: null,
+        },
+        overrideAccess: true,
+      })
+
+      expect(updated.status).toBe('waitlisted')
       expect(updated.referredAt).toBeNull()
       expect(updated.currentClass).toBeNull()
     })
@@ -514,7 +524,7 @@ describe('Milestone 2 — Students Domain', () => {
           firstName: 'نیما',
           lastName: 'یوشیج',
           grade: 6,
-          lifecycleStatus: 'class_seeker',
+          status: 'class_seeker',
           origin: 'admin',
         } as unknown as Student,
         overrideAccess: true,
@@ -529,7 +539,7 @@ describe('Milestone 2 — Students Domain', () => {
         overrideAccess: true,
       })
 
-      expect(updated.lifecycleStatus).toBe('referred_to_teacher')
+      expect(updated.status).toBe('referred_to_teacher')
       expect(updated.referredAt).toBeDefined()
     })
 
@@ -544,13 +554,13 @@ describe('Milestone 2 — Students Domain', () => {
           grade: 6,
           currentClass: activeClassId,
           absorbedAt: absorbedTime,
-          lifecycleStatus: 'absorbed',
+          status: 'absorbed',
           origin: 'admin',
         } as unknown as Student,
         overrideAccess: true,
       })
 
-      expect(student.lifecycleStatus).toBe('absorbed')
+      expect(student.status).toBe('absorbed')
 
       const updated = await payload.update({
         collection: 'students',
@@ -562,7 +572,7 @@ describe('Milestone 2 — Students Domain', () => {
         overrideAccess: true,
       })
 
-      expect(updated.lifecycleStatus).toBe('absorbed')
+      expect(updated.status).toBe('absorbed')
       expect(updated.absorbedAt).toBe(absorbedTime)
       expect(updated.notes).toBe('دانش‌آموز کوشا و پیگیر')
     })
@@ -575,26 +585,26 @@ describe('Milestone 2 — Students Domain', () => {
           firstName: 'سعدی',
           lastName: 'شیرازی',
           grade: 3,
-          lifecycleStatus: 'removed',
+          status: 'removed',
           removedReason: 'عدم پاسخگویی',
           origin: 'admin',
         } as unknown as Student,
         overrideAccess: true,
       })
 
-      expect(student.lifecycleStatus).toBe('removed')
+      expect(student.status).toBe('removed')
       expect(student.removedReason).toBe('عدم پاسخگویی')
 
       const reactivated = await payload.update({
         collection: 'students',
         id: student.id,
         data: {
-          lifecycleStatus: 'class_seeker',
+          status: 'class_seeker',
         },
         overrideAccess: true,
       })
 
-      expect(reactivated.lifecycleStatus).toBe('class_seeker')
+      expect(reactivated.status).toBe('class_seeker')
       expect(reactivated.removedReason).toBeNull()
     })
 

@@ -50,8 +50,7 @@ await p.create({
     lastName: 'آزمون',
     mobile: '09123334455',
     currentClass: classroom.id,
-    lifecycleStatus: 'referred_to_teacher',
-    readinessStatus: 'normal',
+    status: 'referred_to_teacher',
     origin: 'admin',
   },
 })

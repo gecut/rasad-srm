@@ -9,7 +9,11 @@ import {
   reopenCeremonySession,
   getSessionTelemetry,
 } from '../domain/ceremonies/session-service'
-import { getTeacherRoster, updateTeacherStudent } from '../domain/teacher/teacher-service'
+import {
+  getTeacherRoster,
+  updateTeacherStudent,
+  updateTeacherStudentInfo,
+} from '../domain/teacher/teacher-service'
 import {
   searchReceptionStudents,
   checkInStudent,
@@ -102,7 +106,12 @@ function endpoint(
 }
 export const panelEndpoints: Endpoint[] = [
   endpoint('/panel/context', 'get', async (req) => {
-    await authorize(req.payload, req.user, ['admin', 'employee', 'inviter', 'receptionist'], req)
+    await authorize(
+      req.payload,
+      req.user,
+      ['admin', 'employee', 'inviter', 'receptionist', 'teacher'],
+      req,
+    )
     const [ceremonies, neighborhoods] = await Promise.all([
       req.payload.find({
         collection: 'ceremonies',
@@ -232,6 +241,100 @@ export const panelEndpoints: Endpoint[] = [
       reason: text(b.reason),
       req,
     })
+  }),
+  endpoint('/panel/teacher/student/update', 'post', (req, b) =>
+    updateTeacherStudentInfo({
+      payload: req.payload,
+      user: req.user,
+      studentId: id(b.studentId),
+      firstName: text(b.firstName, false, 100),
+      lastName: text(b.lastName, false, 100),
+      grade: b.grade === null ? null : b.grade === undefined ? undefined : id(b.grade),
+      mobile: b.mobile === null ? null : text(b.mobile, false, 30),
+      motherMobile: b.motherMobile === null ? null : text(b.motherMobile, false, 30),
+      fatherMobile: b.fatherMobile === null ? null : text(b.fatherMobile, false, 30),
+      landline: b.landline === null ? null : text(b.landline, false, 30),
+      neighborhoodId:
+        b.neighborhoodId === null ? null : b.neighborhoodId === undefined ? undefined : id(b.neighborhoodId),
+      address: b.address === null ? null : text(b.address, false, 500),
+      referrer: b.referrer === null ? null : text(b.referrer, false, 100),
+      notes: b.notes === null ? null : text(b.notes, false, 1000),
+      req,
+    }),
+  ),
+  endpoint('/panel/ceremony/attendees', 'get', async (req) => {
+    await authorize(req.payload, req.user, ['admin', 'employee', 'receptionist'], req)
+    const params = new URL(req.url!).searchParams
+    const ceremonyId = params.get('ceremonyId') ? id(params.get('ceremonyId')) : null
+    const sessionId = params.get('sessionId') ? id(params.get('sessionId')) : null
+
+    if (!ceremonyId && !sessionId) {
+      throw new DomainError('شناسه مراسم یا سانس الزامی است.')
+    }
+
+    const whereClause: Record<string, unknown> = {}
+    if (sessionId) {
+      whereClause.session = { equals: sessionId }
+    } else if (ceremonyId) {
+      whereClause.ceremony = { equals: ceremonyId }
+    }
+
+    const checkins = await req.payload.find({
+      collection: 'session-checkins',
+      where: whereClause as any,
+      limit: 1000,
+      pagination: false,
+      sort: '-checkedInAt',
+      depth: 2,
+      overrideAccess: true,
+      req,
+    })
+
+    return {
+      attendees: checkins.docs.map((item) => {
+        const student =
+          typeof item.student === 'object' && item.student !== null
+            ? (item.student as Record<string, any>)
+            : null
+        const session =
+          typeof item.session === 'object' && item.session !== null
+            ? (item.session as Record<string, any>)
+            : null
+        const checkedInBy =
+          typeof item.checkedInBy === 'object' && item.checkedInBy !== null
+            ? (item.checkedInBy as Record<string, any>)
+            : null
+        const neighborhood =
+          student?.neighborhood && typeof student.neighborhood === 'object'
+            ? student.neighborhood
+            : null
+
+        return {
+          id: item.id,
+          student: {
+            id: student?.id || item.student,
+            firstName: student?.firstName || '',
+            lastName: student?.lastName || '',
+            grade: student?.grade ?? null,
+            mobile: student?.mobile ?? null,
+            fatherMobile: student?.fatherMobile ?? null,
+            motherMobile: student?.motherMobile ?? null,
+            neighborhoodName: neighborhood?.name ?? null,
+          },
+          session: {
+            id: session?.id || item.session,
+            title: session?.title ?? null,
+          },
+          source: item.source,
+          checkedInAt: item.checkedInAt,
+          checkedInBy: checkedInBy
+            ? `${checkedInBy.firstName || ''} ${checkedInBy.lastName || ''}`.trim() ||
+              checkedInBy.username
+            : null,
+          note: item.note ?? null,
+        }
+      }),
+    }
   }),
   endpoint('/panel/reception/search', 'get', (req) => {
     const params = new URL(req.url!).searchParams

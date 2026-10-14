@@ -14,13 +14,13 @@ export interface DomainActionResult {
  * Authorize that user is an admin or employee.
  */
 function assertStaffAuthorized(user: User, actionName: string) {
-  if (!user || !['admin', 'employee', 'follow_up_specialist'].includes(user.role)) {
+  if (!user || !['admin', 'employee'].includes(user.role)) {
     throw new Error(`کاربر مجاز به اجرای عملیات '${actionName}' نیست.`)
   }
 }
 
 /**
- * Authorize that user is an admin or employee (excluding follow-up specialist).
+ * Authorize that user is an admin or employee.
  */
 function assertAdminOrEmployee(user: User, actionName: string) {
   if (!user || !['admin', 'employee'].includes(user.role)) {
@@ -59,7 +59,7 @@ export async function markStudentClassSeeker({
     collection: 'students',
     id: studentId,
     data: {
-      lifecycleStatus: 'class_seeker',
+      status: 'class_seeker',
     },
     req,
   })
@@ -124,7 +124,7 @@ export async function referStudentToClass({
     data: {
       currentClass: classId,
       referredAt: now,
-      lifecycleStatus: 'referred_to_teacher',
+      status: 'referred_to_teacher',
       removedReason: null,
     },
     req,
@@ -154,7 +154,7 @@ export async function markStudentAbsorbed({
   payload: Payload
   req?: PayloadRequest
 }): Promise<DomainActionResult> {
-  await authorize(payload, user, ['admin', 'employee', 'follow_up_specialist'], req)
+  await authorize(payload, user, ['admin', 'employee'], req)
   assertStaffAuthorized(user, 'markStudentAbsorbed')
 
   const student = await payload.findByID({
@@ -178,7 +178,7 @@ export async function markStudentAbsorbed({
     id: studentId,
     data: {
       absorbedAt: attendanceTimestamp,
-      lifecycleStatus: 'absorbed',
+      status: 'absorbed',
     },
     req,
   })
@@ -208,7 +208,7 @@ export async function confirmStabilization({
   payload: Payload
   req?: PayloadRequest
 }): Promise<DomainActionResult> {
-  await authorize(payload, user, ['admin', 'follow_up_specialist'], req)
+  await authorize(payload, user, ['admin'], req)
 
   const student = await payload.findByID({
     collection: 'students',
@@ -239,7 +239,7 @@ export async function confirmStabilization({
     id: studentId,
     data: {
       stabilizedAt: new Date().toISOString(),
-      lifecycleStatus: 'stabilized',
+      status: 'stabilized',
     },
     req,
   })
@@ -268,7 +268,7 @@ export async function removeStudentFromLifecycle({
   payload: Payload
   req?: PayloadRequest
 }): Promise<DomainActionResult> {
-  await authorize(payload, user, ['admin', 'employee', 'follow_up_specialist'], req)
+  await authorize(payload, user, ['admin', 'employee'], req)
   assertStaffAuthorized(user, 'removeStudentFromLifecycle')
 
   if (!removedReason || removedReason.trim() === '') {
@@ -289,7 +289,7 @@ export async function removeStudentFromLifecycle({
     collection: 'students',
     id: studentId,
     data: {
-      lifecycleStatus: 'removed',
+      status: 'removed',
       removedReason: removedReason.trim(),
     },
     req,
@@ -338,7 +338,7 @@ export async function reenterStudentLifecycle({
     collection: 'students',
     id: studentId,
     data: {
-      lifecycleStatus: targetStatus,
+      status: targetStatus,
       removedReason: null,
       referredAt: null,
       absorbedAt: null,

@@ -16,7 +16,7 @@ const roles: User['role'][] = ['inviter', 'admin', 'employee']
 const leaseMs = 5 * 60 * 1000
 
 const callable = (s: Student) =>
-  s.lifecycleStatus !== 'removed' &&
+  s.status !== 'removed' &&
   [s.mobile, s.motherMobile, s.fatherMobile].some((v) => v && /^09\d{9}$/.test(v))
 
 async function buildStudentCard(
@@ -216,7 +216,7 @@ export async function getNextCeremonyInvite(input: Input): Promise<InvitationQue
       const candidates = await db.execute(sql`
         SELECT s.id FROM students s
         LEFT JOIN invitations i ON i.student_id = s.id AND i.ceremony_id = ${ceremonyId}
-        WHERE s.lifecycle_status <> 'removed'
+        WHERE s.status <> 'removed'
           AND (s.mobile ~ '^09[0-9]{9}$' OR s.mother_mobile ~ '^09[0-9]{9}$' OR s.father_mobile ~ '^09[0-9]{9}$')
           AND NOT EXISTS (
             SELECT 1 FROM invitation_claims c

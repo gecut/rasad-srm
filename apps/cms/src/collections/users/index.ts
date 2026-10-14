@@ -8,7 +8,7 @@ export const Users: CollectionConfig = {
   slug: 'users',
   labels: { singular: 'کاربر', plural: 'کاربران' },
   admin: {
-    group: 'سیستم',
+    group: 'سیستم و دسترسی',
     useAsTitle: 'name',
     defaultColumns: ['name', 'username', 'role', 'status'],
   },
@@ -68,7 +68,6 @@ export const Users: CollectionConfig = {
       options: [
         { label: 'مدیر', value: 'admin' },
         { label: 'کارمند', value: 'employee' },
-        { label: 'کارشناس پیگیری', value: 'follow_up_specialist' },
         { label: 'دعوت‌کننده', value: 'inviter' },
         { label: 'مدرس', value: 'teacher' },
         { label: 'پذیرش', value: 'receptionist' },

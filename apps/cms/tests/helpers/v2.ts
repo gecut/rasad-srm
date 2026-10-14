@@ -60,8 +60,7 @@ export async function fixture(payload: Payload) {
       lastName: suffix,
       mobile: '09121112233',
       origin: 'admin',
-      readinessStatus: 'normal',
-      lifecycleStatus: 'unknown',
+      status: 'unknown',
     },
   })
   return { admin, inviter, ceremony, first, second, student }

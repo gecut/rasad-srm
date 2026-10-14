@@ -10,7 +10,6 @@ let payload: Payload
 describe('Phase 0 Auth & Access Control', () => {
   let adminUser: User
   let employeeUser: User
-  let followUpUser: User
   let inviterUser: User
 
   beforeAll(async () => {
@@ -124,19 +123,6 @@ describe('Phase 0 Auth & Access Control', () => {
         user: adminUser,
       })
 
-      followUpUser = await payload.create({
-        collection: 'users',
-        data: {
-          email: 'followup@example.com',
-          name: 'Follow-up User',
-          password: 'FollowUpPassword123!',
-          role: 'follow_up_specialist',
-          status: 'active',
-        },
-        overrideAccess: false,
-        user: adminUser,
-      })
-
       inviterUser = await payload.create({
         collection: 'users',
         data: {
@@ -162,13 +148,6 @@ describe('Phase 0 Auth & Access Control', () => {
     it('employee -> allowed access to Admin Panel', () => {
       const allowed = Users.access?.admin?.({
         req: { user: employeeUser } as unknown as PayloadRequest,
-      })
-      expect(allowed).toBe(true)
-    })
-
-    it('follow_up_specialist -> allowed access to Admin Panel', () => {
-      const allowed = Users.access?.admin?.({
-        req: { user: followUpUser } as unknown as PayloadRequest,
       })
       expect(allowed).toBe(true)
     })
@@ -306,14 +285,14 @@ describe('Phase 0 Auth & Access Control', () => {
         id: newUser.id,
         data: {
           name: 'Updated Temp Staff',
-          role: 'follow_up_specialist',
+          role: 'employee',
           status: 'active',
         },
         overrideAccess: false,
         user: adminUser,
       })
       expect(updatedUser.name).toBe('Updated Temp Staff')
-      expect(updatedUser.role).toBe('follow_up_specialist')
+      expect(updatedUser.role).toBe('employee')
 
       // 4. Delete
       const deletedUser = await payload.delete({

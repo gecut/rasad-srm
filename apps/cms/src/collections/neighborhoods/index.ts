@@ -1,27 +1,27 @@
 import type { CollectionConfig } from 'payload'
-import { isEmployeeOrAdmin, isStaff } from '../../access/roles'
+import { isAdmin, isStaff } from '../../access/roles'
 
 export const Neighborhoods: CollectionConfig = {
   slug: 'neighborhoods',
   labels: {
-    singular: 'محدوده منزل',
-    plural: 'محدوده‌های منزل',
+    singular: 'ناحیه شهری',
+    plural: 'نواحی شهری',
   },
   admin: {
-    group: 'افراد',
+    group: 'مدیریت دانش‌آموزان و آموزش',
     useAsTitle: 'name',
     defaultColumns: ['name', 'createdAt'],
   },
   access: {
     read: isStaff,
-    create: isEmployeeOrAdmin,
-    update: isEmployeeOrAdmin,
-    delete: isEmployeeOrAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   fields: [
     {
       name: 'name',
-      label: 'نام محدوده',
+      label: 'نام ناحیه شهری',
       type: 'text',
       required: true,
       unique: true,
@@ -42,7 +42,7 @@ export const Neighborhoods: CollectionConfig = {
       },
       admin: {
         description:
-          'لیست محله‌ها، خیابان‌ها و نقاط شاخص این محدوده جهت جستجو و دسته‌بندی سریع (مانند: هفت تیر، حافظ، صدف)',
+          'لیست محله‌ها، خیابان‌ها و نقاط شاخص این ناحیه جهت جستجو و دسته‌بندی سریع (مانند: هفت تیر، حافظ، صدف)',
       },
       fields: [
         {
@@ -53,5 +53,24 @@ export const Neighborhoods: CollectionConfig = {
         },
       ],
     },
+    {
+      name: 'districtClasses',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/components/DistrictClasses#DistrictClasses',
+        },
+      },
+    },
+    {
+      name: 'districtStudents',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/components/DistrictStudents#DistrictStudents',
+        },
+      },
+    },
   ],
 }
+

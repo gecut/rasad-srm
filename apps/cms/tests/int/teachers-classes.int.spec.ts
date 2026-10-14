@@ -47,18 +47,6 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
       overrideAccess: true,
     })
 
-    specialistUser = await payload.create({
-      collection: 'users',
-      data: {
-        email: 'm1-specialist@example.com',
-        name: 'M1 Specialist',
-        password: 'Password123!',
-        role: 'follow_up_specialist',
-        status: 'active',
-      },
-      overrideAccess: true,
-    })
-
     inviterUser = await payload.create({
       collection: 'users',
       data: {
@@ -83,7 +71,7 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
   // Teachers Collection Tests
   // ---------------------------------------------------------------------------
   describe('Teachers Collection', () => {
-    it('allows employee to create an active teacher', async () => {
+    it('allows admin to create an active teacher', async () => {
       createdTeacher = await payload.create({
         collection: 'teachers',
         data: {
@@ -93,7 +81,7 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
           status: 'active',
         },
         overrideAccess: false,
-        user: employeeUser,
+        user: adminUser,
       })
 
       expect(createdTeacher.id).toBeDefined()
@@ -102,19 +90,19 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
       expect(createdTeacher.status).toBe('active')
     })
 
-    it('allows follow-up specialist to read teachers', async () => {
+    it('allows employee to read teachers', async () => {
       const result = await payload.find({
         collection: 'teachers',
         where: { id: { equals: createdTeacher.id } },
         overrideAccess: false,
-        user: specialistUser,
+        user: employeeUser,
       })
 
       expect(result.docs.length).toBe(1)
       expect(result.docs[0].id).toBe(createdTeacher.id)
     })
 
-    it('denies follow-up specialist from creating or updating teachers', async () => {
+    it('denies employee from creating or updating teachers', async () => {
       await expect(
         payload.create({
           collection: 'teachers',
@@ -124,7 +112,7 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
             status: 'active',
           },
           overrideAccess: false,
-          user: specialistUser,
+          user: employeeUser,
         }),
       ).rejects.toThrow()
 
@@ -136,7 +124,7 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
             status: 'inactive',
           },
           overrideAccess: false,
-          user: specialistUser,
+          user: employeeUser,
         }),
       ).rejects.toThrow()
     })
@@ -187,7 +175,7 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
       })
     })
 
-    it('allows employee to create a class with primary and assistant teachers', async () => {
+    it('allows admin to create a class with primary and assistant teachers', async () => {
       createdClass = await payload.create({
         collection: 'classes',
         data: {
@@ -198,7 +186,7 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
           status: 'planned',
         },
         overrideAccess: false,
-        user: employeeUser,
+        user: adminUser,
       })
 
       expect(createdClass.id).toBeDefined()
@@ -207,19 +195,19 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
       expect(createdClass.status).toBe('planned')
     })
 
-    it('allows follow-up specialist to read classes', async () => {
+    it('allows employee to read classes', async () => {
       const result = await payload.find({
         collection: 'classes',
         where: { id: { equals: createdClass.id } },
         overrideAccess: false,
-        user: specialistUser,
+        user: employeeUser,
       })
 
       expect(result.docs.length).toBe(1)
       expect(result.docs[0].id).toBe(createdClass.id)
     })
 
-    it('denies follow-up specialist from creating or updating classes', async () => {
+    it('denies employee from creating or updating classes', async () => {
       await expect(
         payload.create({
           collection: 'classes',
@@ -229,7 +217,7 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
             status: 'active',
           },
           overrideAccess: false,
-          user: specialistUser,
+          user: employeeUser,
         }),
       ).rejects.toThrow()
 
@@ -241,7 +229,7 @@ describe('Milestone 1 — Teachers and Classes Domain', () => {
             status: 'active',
           },
           overrideAccess: false,
-          user: specialistUser,
+          user: employeeUser,
         }),
       ).rejects.toThrow()
     })

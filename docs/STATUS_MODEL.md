@@ -2,39 +2,27 @@
 
 Statuses are separated by domain concern.
 
-## 1. Student lifecycle
+## 1. Student Status
 
-| Value                 | Persian           | Meaning                                                                                   |
-| --------------------- | ----------------- | ----------------------------------------------------------------------------------------- |
-| `unknown`             | نامعلوم           | not yet classified                                                                        |
-| `class_seeker`        | خواهان کلاس       | wants/needs a Class, but no active Teacher referral yet                                   |
-| `referred_to_teacher` | به مدرس معرفی شده | current Class selected and Student handed to its primary Teacher                          |
-| `absorbed`            | جذب شده           | Teacher/authorized operator confirms the Student has effectively entered the Class        |
-| `stabilized`          | تثبیت‌شده         | longer-term stable participation confirmed under the stabilization rule                   |
-| `removed`             | حذف شده           | current lifecycle intentionally ended; this is a business state, not physical DB deletion |
+The student status is a single unified lifecycle model representing the student's current stage and eligibility:
 
-Primary path:
+| Value                 | Persian           | Meaning                                                                                              |
+| --------------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
+| `unknown`             | نامعلوم           | Grades 1-6 students not currently seeking class membership                                           |
+| `waitlisted`          | پشت‌خطی           | Grades 1-3 students requesting class membership (holding for older grade admission)                  |
+| `class_seeker`        | خواهان کلاس       | Grades 4-6 students actively requesting class membership and awaiting assignment                     |
+| `referred_to_teacher` | به مدرس معرفی شده | Student introduced to a Class and its primary Teacher                                                |
+| `absorbed`            | جذب شده           | Teacher confirmed attendance and active participation in the Class                                   |
+| `stabilized`          | تثبیت‌شده         | Absorbed student maintaining uninterrupted participation after 6 months                              |
+| `removed`             | حذف شده           | Student exited from the cycle at any stage (requires mandatory `removedReason`); not physical DB deletion |
 
-```text
-unknown
-  ↓
-class_seeker
-  ↓ [manual class referral]
-referred_to_teacher
-  ↓ [teacher/authorized confirmation]
-absorbed
-  ↓ [>= 6 months + authorized human confirmation]
-stabilized
-```
+### Lifecycle Transitions and Automations
 
-`removed` may be selected from active stages with a reason where required.
-
-## 2. Student readiness
-
-- `normal` — عادی
-- `waitlisted` — پشت‌خطی
-
-Readiness remains orthogonal to lifecycle.
+- **Class Assignment Automation**: When a student with status `unknown`, `waitlisted`, or `class_seeker` is assigned a `currentClass`, the status automatically transitions to `referred_to_teacher`, and `referredAt` is stamped with the current timestamp.
+- **Class Unassignment Automation**: When `currentClass` is cleared from a student in `referred_to_teacher`, the status automatically reverts to `waitlisted` for grades 1-3, or `class_seeker` for grades 4-6 (or remains `unknown` if grade is null), and `referredAt` is cleared.
+- **Teacher Confirmation**: When a teacher confirms attendance, status moves to `absorbed` and `absorbedAt` is stamped automatically.
+- **Stabilization Rule**: Transition to `stabilized` requires at least 6 months to have elapsed since `absorbedAt`, stamping `stabilizedAt`.
+- **Exit and Reactivation**: Transition to `removed` requires a non-empty `removedReason`. Re-activating a removed student to a class-seeking state automatically clears `removedReason`.
 
 ## 3. Teacher status
 

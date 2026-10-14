@@ -9,12 +9,12 @@ export const FollowUps: CollectionConfig = {
     plural: 'پیگیری‌ها',
   },
   admin: {
-    group: 'افراد',
+    group: 'سیستم و دسترسی',
     defaultColumns: ['student', 'specialist', 'createdAt', 'note'],
   },
   access: {
     read: isStaff,
-    create: isStaff,
+    create: isAdmin,
     update: isAdmin,
     delete: isAdmin,
   },

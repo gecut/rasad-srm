@@ -22,24 +22,28 @@ For those Classes, show Students where:
 
 ## 4. Main UI
 
-Recommended structure:
+Structure:
 
 - Class selector/cards if Teacher has multiple Classes;
-- tabs/filters: `به مدرس معرفی شده`, `جذب شده`, optionally `حذف شده`;
-- compact Student rows/cards;
-- status action with confirmation.
+- tabs/filters: `به مدرس معرفی شده`, `جذب شده`, `حذف شده`;
+- compact Student rows/cards with status badges;
+- quick status transition actions (`جذب دانش‌آموز`, `حذف از کلاس`);
+- Student Profile Edit modal ("ویرایش اطلاعات دانش‌آموز"): allows teachers to view, correct, and complete all student contact, address, urban district (neighborhood), and notes fields directly.
 
-## 5. Teacher-permitted transitions
+## 5. Teacher-permitted mutations
 
-MVP recommendation:
+1. **Student Profile Updates** (`/api/panel/teacher/student/update`):
+   - First name, last name, grade (1-6);
+   - Student mobile, father mobile, mother mobile, landline;
+   - Address, neighborhood, notes;
+   - `currentClass` is read-only and strictly locked (cannot be reassigned or cleared by teachers).
 
-- `referred_to_teacher → absorbed`
-- `referred_to_teacher → removed`
-- `absorbed → removed` when operationally required
+2. **Status Transitions** (`/api/panel/teacher/student`):
+   - `referred_to_teacher → absorbed` (auto-stamps `absorbedAt`)
+   - `referred_to_teacher → removed` (requires mandatory reason)
+   - `absorbed → removed` (requires mandatory reason)
 
-Teacher does not confirm `stabilized`; that remains an authorized follow-up/admin action under the six-month rule.
-
-On `absorbed`, set `absorbedAt` if empty.
+Teacher does not confirm `stabilized`; that remains an authorized staff/admin action under the six-month rule.
 
 ## 6. Security
 
@@ -47,8 +51,8 @@ Every query and mutation is server-scoped to the Teacher's primary Classes. Neve
 
 ## 7. Do not add
 
-- generic Student editing;
+- changing or reassigning `currentClass`;
 - cross-Teacher roster browsing;
-- Class management;
+- Class creation or class management;
 - invitation or reception functions;
-- academic grading/attendance features.
+- academic grading/attendance tracking features.

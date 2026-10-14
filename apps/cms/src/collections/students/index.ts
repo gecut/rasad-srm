@@ -1,8 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import {
+  isAdmin,
   isAdminField,
-  isEmployeeOrAdmin,
-  isEmployeeOrAdminField,
   isStaff,
 } from '../../access/roles'
 import { lockTransaction } from '../../domain/shared/core'
@@ -16,16 +15,14 @@ export const Students: CollectionConfig = {
     plural: 'دانش‌آموزان',
   },
   admin: {
-    group: 'افراد',
+    group: 'مدیریت دانش‌آموزان و آموزش',
     useAsTitle: 'lastName',
     defaultColumns: [
       'lastName',
       'firstName',
       'grade',
-      'attendedCeremonies',
       'neighborhood',
-      'lifecycleStatus',
-      'readinessStatus',
+      'status',
       'currentClass',
       'updatedAt',
     ],
@@ -41,9 +38,9 @@ export const Students: CollectionConfig = {
   },
   access: {
     read: isStaff,
-    create: isEmployeeOrAdmin,
-    update: isStaff,
-    delete: isEmployeeOrAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   hooks: {
     beforeChange: [
@@ -104,7 +101,7 @@ export const Students: CollectionConfig = {
                       required: true,
                       admin: { width: '50%' },
                       access: {
-                        update: isEmployeeOrAdminField,
+                        update: isAdminField,
                       },
                     },
                     {
@@ -114,7 +111,7 @@ export const Students: CollectionConfig = {
                       required: true,
                       admin: { width: '50%' },
                       access: {
-                        update: isEmployeeOrAdminField,
+                        update: isAdminField,
                       },
                     },
                   ],
@@ -146,7 +143,7 @@ export const Students: CollectionConfig = {
                         return true
                       },
                       access: {
-                        update: isEmployeeOrAdminField,
+                        update: isAdminField,
                       },
                     },
                     {
@@ -183,7 +180,7 @@ export const Students: CollectionConfig = {
                       type: 'text',
                       admin: { width: '50%' },
                       access: {
-                        update: isEmployeeOrAdminField,
+                        update: isAdminField,
                       },
                     },
                     {
@@ -192,7 +189,7 @@ export const Students: CollectionConfig = {
                       type: 'text',
                       admin: { width: '50%' },
                       access: {
-                        update: isEmployeeOrAdminField,
+                        update: isAdminField,
                       },
                     },
                   ],
@@ -206,7 +203,7 @@ export const Students: CollectionConfig = {
                       type: 'text',
                       admin: { width: '50%' },
                       access: {
-                        update: isEmployeeOrAdminField,
+                        update: isAdminField,
                       },
                     },
                     {
@@ -215,7 +212,7 @@ export const Students: CollectionConfig = {
                       type: 'text',
                       admin: { width: '50%' },
                       access: {
-                        update: isEmployeeOrAdminField,
+                        update: isAdminField,
                       },
                     },
                   ],
@@ -234,14 +231,14 @@ export const Students: CollectionConfig = {
                   fields: [
                     {
                       name: 'neighborhood',
-                      label: 'محدوده منزل',
+                      label: 'ناحیه شهری',
                       type: 'relationship',
                       relationTo: 'neighborhoods',
                       hasMany: false,
                       index: true,
-                      admin: { width: '50%' },
+                      admin: { width: '50%', description: 'ناحیه شهری محل سکونت دانش‌آموز' },
                       access: {
-                        update: isEmployeeOrAdminField,
+                        update: isAdminField,
                       },
                     },
                     {
@@ -250,7 +247,7 @@ export const Students: CollectionConfig = {
                       type: 'text',
                       admin: { width: '50%' },
                       access: {
-                        update: isEmployeeOrAdminField,
+                        update: isAdminField,
                       },
                     },
                   ],
@@ -260,7 +257,7 @@ export const Students: CollectionConfig = {
                   label: 'نشانی دقیق منزل',
                   type: 'textarea',
                   access: {
-                    update: isEmployeeOrAdminField,
+                    update: isAdminField,
                   },
                 },
               ],
@@ -286,9 +283,7 @@ export const Students: CollectionConfig = {
               type: 'collapsible',
               label: 'مراسم‌های حضور یافته',
               admin: {
-                initCollapsed: false,
-                description:
-                  'لیست تمام مراسم‌هایی که دانش‌آموز بر اساس ثبت پذیرش قطعی در آن‌ها حضور داشته است (محاسبه خودکار از پذیرش).',
+                hidden: true,
               },
               fields: [
                 {
@@ -298,9 +293,8 @@ export const Students: CollectionConfig = {
                   relationTo: 'ceremonies',
                   hasMany: true,
                   admin: {
+                    hidden: true,
                     readOnly: true,
-                    description:
-                      'این فیلد به صورت خودکار از روی پذیرش‌های ثبت‌شده دانش‌آموز همگام‌سازی می‌شود.',
                   },
                 },
               ],
@@ -335,7 +329,7 @@ export const Students: CollectionConfig = {
           fields: [
             {
               type: 'collapsible',
-              label: 'وضعیت پذیرش و انتساب کلاس',
+              label: 'وضعیت و انتساب کلاس دانش‌آموز',
               admin: {
                 initCollapsed: false,
               },
@@ -344,23 +338,28 @@ export const Students: CollectionConfig = {
                   type: 'row',
                   fields: [
                     {
-                      name: 'readinessStatus',
-                      label: 'وضعیت پذیرش/آمادگی',
+                      name: 'status',
+                      label: 'وضعیت دانش‌آموز',
                       type: 'select',
                       required: true,
-                      defaultValue: 'normal',
+                      defaultValue: 'unknown',
                       index: true,
                       admin: {
                         width: '50%',
-                        description: 'پشت‌خطی بعدی مستقل از چرخه عمر است.',
+                        description: 'وضعیت چرخه حیات و آمادگی دانش‌آموز در سامانه',
+                      },
+                      access: {
+                        update: isAdminField,
                       },
                       options: [
-                        { label: 'عادی (Normal)', value: 'normal' },
-                        { label: 'پشت‌خطی (Waitlisted)', value: 'waitlisted' },
+                        { label: 'نامعلوم (Unknown)', value: 'unknown' },
+                        { label: 'پشت خطی (Waitlisted)', value: 'waitlisted' },
+                        { label: 'خواهان کلاس (Class Seeker)', value: 'class_seeker' },
+                        { label: 'به مدرس معرفی شده (Referred)', value: 'referred_to_teacher' },
+                        { label: 'جذب شده (Absorbed)', value: 'absorbed' },
+                        { label: 'تثبیت‌شده (Stabilized)', value: 'stabilized' },
+                        { label: 'حذف شده (Removed)', value: 'removed' },
                       ],
-                      access: {
-                        update: isEmployeeOrAdminField,
-                      },
                     },
                     {
                       name: 'currentClass',
@@ -379,51 +378,22 @@ export const Students: CollectionConfig = {
                         description: 'هر دانش‌آموز حداکثر در یک کلاس عضویت دارد.',
                       },
                       access: {
-                        update: isEmployeeOrAdminField,
+                        update: isAdminField,
                       },
                     },
                   ],
                 },
-              ],
-            },
-            {
-              type: 'collapsible',
-              label: 'مراحل چرخه عمر دانش‌آموز',
-              admin: {
-                initCollapsed: false,
-              },
-              fields: [
                 {
-                  type: 'row',
-                  fields: [
-                    {
-                      name: 'lifecycleStatus',
-                      label: 'وضعیت چرخه عمر',
-                      type: 'select',
-                      required: true,
-                      defaultValue: 'unknown',
-                      index: true,
-                      admin: { width: '50%' },
-                      options: [
-                        { label: 'نامعلوم (Unknown)', value: 'unknown' },
-                        { label: 'خواهان کلاس', value: 'class_seeker' },
-                        { label: 'به مدرس معرفی شده', value: 'referred_to_teacher' },
-                        { label: 'جذب شده', value: 'absorbed' },
-                        { label: 'تثبیت‌شده (Stabilized)', value: 'stabilized' },
-                        { label: 'حذف شده', value: 'removed' },
-                      ],
-                    },
-                    {
-                      name: 'removedReason',
-                      label: 'دلیل حذف از چرخه',
-                      type: 'text',
-                      admin: {
-                        width: '50%',
-                        description: 'در صورت انتخاب وضعیت حذف‌شده، ذکر دلیل الزامی است.',
-                        condition: (data) => data?.lifecycleStatus === 'removed',
-                      },
-                    },
-                  ],
+                  name: 'removedReason',
+                  label: 'دلیل حذف از چرخه',
+                  type: 'text',
+                  admin: {
+                    description: 'در صورت انتخاب وضعیت حذف‌شده، ذکر دلیل الزامی است.',
+                    condition: (data) => data?.status === 'removed',
+                  },
+                  access: {
+                    update: isAdminField,
+                  },
                 },
               ],
             },

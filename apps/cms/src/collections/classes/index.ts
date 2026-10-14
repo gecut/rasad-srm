@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isEmployeeOrAdmin, isStaff } from '../../access/roles'
+import { isAdmin, isStaff } from '../../access/roles'
 import { lockClassBeforeChange } from './classes.hooks'
 
 export const Classes: CollectionConfig = {
@@ -9,15 +9,15 @@ export const Classes: CollectionConfig = {
     plural: 'کلاس‌ها',
   },
   admin: {
-    group: 'آموزش',
+    group: 'مدیریت دانش‌آموزان و آموزش',
     useAsTitle: 'title',
-    defaultColumns: ['title', 'primaryTeacher', 'capacity', 'status'],
+    defaultColumns: ['title', 'primaryTeacher', 'neighborhood', 'capacity', 'status'],
   },
   access: {
     read: isStaff,
-    create: isEmployeeOrAdmin,
-    update: isEmployeeOrAdmin,
-    delete: isEmployeeOrAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   hooks: {
     beforeChange: [lockClassBeforeChange],
@@ -28,6 +28,18 @@ export const Classes: CollectionConfig = {
       label: 'عنوان کلاس',
       type: 'text',
       required: true,
+    },
+    {
+      name: 'neighborhood',
+      label: 'ناحیه شهری',
+      type: 'relationship',
+      relationTo: 'neighborhoods',
+      required: false,
+      hasMany: false,
+      index: true,
+      admin: {
+        description: 'محدوده و ناحیه شهری محل برگزاری کلاس',
+      },
     },
     {
       name: 'primaryTeacher',
@@ -72,5 +84,15 @@ export const Classes: CollectionConfig = {
         { label: 'لغوشده (Cancelled)', value: 'cancelled' },
       ],
     },
+    {
+      name: 'classStudents',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/components/ClassStudents#ClassStudents',
+        },
+      },
+    },
   ],
 }
+

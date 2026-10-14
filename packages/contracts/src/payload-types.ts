@@ -174,7 +174,7 @@ export interface User {
   name: string;
   status: 'active' | 'inactive';
   teacherProfile?: (number | null) | Teacher;
-  role: 'admin' | 'employee' | 'follow_up_specialist' | 'inviter' | 'teacher' | 'receptionist';
+  role: 'admin' | 'employee' | 'inviter' | 'teacher' | 'receptionist';
   updatedAt: string;
   createdAt: string;
   email?: string | null;
@@ -216,6 +216,10 @@ export interface Class {
   id: number;
   title: string;
   /**
+   * محدوده و ناحیه شهری محل برگزاری کلاس
+   */
+  neighborhood?: (number | null) | Neighborhood;
+  /**
    * هر کلاس در حال اجرا نیازمند یک مدرس اصلی است.
    */
   primaryTeacher: number | Teacher;
@@ -226,6 +230,26 @@ export interface Class {
   capacity?: number | null;
   status:
     'planned' | 'active' | 'transition_to_preliminaries' | 'admissions_paused' | 'suspended' | 'ended' | 'cancelled';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "neighborhoods".
+ */
+export interface Neighborhood {
+  id: number;
+  name: string;
+  description?: string | null;
+  /**
+   * لیست محله‌ها، خیابان‌ها و نقاط شاخص این ناحیه جهت جستجو و دسته‌بندی سریع (مانند: هفت تیر، حافظ، صدف)
+   */
+  subDistricts?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -247,6 +271,9 @@ export interface Student {
   landline?: string | null;
   fatherMobile?: string | null;
   motherMobile?: string | null;
+  /**
+   * ناحیه شهری محل سکونت دانش‌آموز
+   */
   neighborhood?: (number | null) | Neighborhood;
   referrer?: string | null;
   address?: string | null;
@@ -254,9 +281,6 @@ export interface Student {
    * توضیحات تکمیلی و نکات مهم درباره وضعیت دانش‌آموز
    */
   notes?: string | null;
-  /**
-   * این فیلد به صورت خودکار از روی پذیرش‌های ثبت‌شده دانش‌آموز همگام‌سازی می‌شود.
-   */
   attendedCeremonies?: (number | Ceremony)[] | null;
   checkins?: {
     docs?: (number | SessionCheckin)[];
@@ -264,14 +288,13 @@ export interface Student {
     totalDocs?: number;
   };
   /**
-   * پشت‌خطی بعدی مستقل از چرخه عمر است.
+   * وضعیت چرخه حیات و آمادگی دانش‌آموز در سامانه
    */
-  readinessStatus: 'normal' | 'waitlisted';
+  status: 'unknown' | 'waitlisted' | 'class_seeker' | 'referred_to_teacher' | 'absorbed' | 'stabilized' | 'removed';
   /**
    * هر دانش‌آموز حداکثر در یک کلاس عضویت دارد.
    */
   currentClass?: (number | null) | Class;
-  lifecycleStatus: 'unknown' | 'class_seeker' | 'referred_to_teacher' | 'absorbed' | 'stabilized' | 'removed';
   /**
    * در صورت انتخاب وضعیت حذف‌شده، ذکر دلیل الزامی است.
    */
@@ -288,26 +311,6 @@ export interface Student {
    * توسط سیستم پس از تایید تثبیت ثبت می‌شود.
    */
   stabilizedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "neighborhoods".
- */
-export interface Neighborhood {
-  id: number;
-  name: string;
-  description?: string | null;
-  /**
-   * لیست محله‌ها، خیابان‌ها و نقاط شاخص این محدوده جهت جستجو و دسته‌بندی سریع (مانند: هفت تیر، حافظ، صدف)
-   */
-  subDistricts?:
-    | {
-        name: string;
-        id?: string | null;
-      }[]
-    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -742,6 +745,7 @@ export interface TeachersSelect<T extends boolean = true> {
  */
 export interface ClassesSelect<T extends boolean = true> {
   title?: T;
+  neighborhood?: T;
   primaryTeacher?: T;
   assistantTeachers?: T;
   capacity?: T;
@@ -769,9 +773,8 @@ export interface StudentsSelect<T extends boolean = true> {
   notes?: T;
   attendedCeremonies?: T;
   checkins?: T;
-  readinessStatus?: T;
+  status?: T;
   currentClass?: T;
-  lifecycleStatus?: T;
   removedReason?: T;
   referredAt?: T;
   absorbedAt?: T;

@@ -9,23 +9,20 @@ export const isAdminField: FieldAccess = ({ req }) => {
 }
 
 export const isEmployeeOrAdmin: Access = ({ req }) => {
-  return Boolean(req.user?.status === 'active' && ['admin', 'employee'].includes(req.user.role))
+  return Boolean(req.user?.status === 'active' && req.user?.role === 'admin')
 }
 
 export const isEmployeeOrAdminField: FieldAccess = ({ req }) => {
-  return Boolean(
-    req.user?.status === 'active' && req.user && ['admin', 'employee'].includes(req.user.role),
-  )
+  return Boolean(req.user?.status === 'active' && req.user?.role === 'admin')
 }
 
 export const isStaff: Access = ({ req }) => {
   if (!req.user || req.user.status !== 'active') return false
-  return ['admin', 'employee', 'follow_up_specialist'].includes(req.user.role)
+  return ['admin', 'employee'].includes(req.user.role)
 }
 
 export const isSpecialistOrAdmin: Access = ({ req }) => {
-  if (!req.user || req.user.status !== 'active') return false
-  return req.user.role === 'admin' || req.user.role === 'follow_up_specialist'
+  return Boolean(req.user?.status === 'active' && req.user?.role === 'admin')
 }
 
 export const isInviter: Access = ({ req }) => {

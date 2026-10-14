@@ -103,8 +103,7 @@ describe('Teacher and reception server boundaries', () => {
         firstName: 'دانش‌آموز',
         lastName: randomUUID(),
         currentClass: classId,
-        lifecycleStatus: 'referred_to_teacher',
-        readinessStatus: 'normal',
+        status: 'referred_to_teacher',
         origin: 'admin',
       },
     })
@@ -132,7 +131,7 @@ describe('Teacher and reception server boundaries', () => {
         studentId: target.id,
         status: 'absorbed',
       }),
-    ).toMatchObject({ lifecycleStatus: 'absorbed' })
+    ).toMatchObject({ status: 'absorbed' })
     const updated = await payload.findByID({ collection: 'students', id: target.id })
     expect(updated.absorbedAt).toBeTruthy()
     await expect(
@@ -156,7 +155,7 @@ describe('Teacher and reception server boundaries', () => {
     await payload.update({
       collection: 'students',
       id: target.id,
-      data: { currentClass: null, lifecycleStatus: 'unknown' },
+      data: { currentClass: null, status: 'unknown' },
     })
     await expect(
       updateTeacherStudent({ payload, user: teacher, studentId: target.id, status: 'absorbed' }),

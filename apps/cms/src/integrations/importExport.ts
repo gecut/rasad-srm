@@ -2,7 +2,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { importExportPlugin } from '@payloadcms/plugin-import-export'
 import type { Plugin } from 'payload'
-import { isAdmin, isEmployeeOrAdmin } from '../access/roles'
+import { isAdmin, isStaff } from '../access/roles'
 import { normalizePhone } from '../domain/shared/core'
 import { jalaliInstant } from '../lib/jalali'
 
@@ -178,8 +178,8 @@ export const configuredImportExportPlugin: Plugin = importExportPlugin({
         group: 'مدیریت داده',
       },
       access: {
-        read: isEmployeeOrAdmin,
-        create: isEmployeeOrAdmin,
+        read: isStaff,
+        create: isAdmin,
         update: () => false,
         delete: isAdmin,
       },

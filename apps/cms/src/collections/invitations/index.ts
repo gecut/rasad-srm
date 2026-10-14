@@ -5,7 +5,7 @@ export const Invitations: CollectionConfig = {
   slug: 'invitations',
   labels: { singular: 'دعوت', plural: 'دعوت‌ها' },
   admin: {
-    group: 'رویدادها',
+    group: 'رویدادها و پذیرش',
     defaultColumns: [
       'student',
       'ceremony',

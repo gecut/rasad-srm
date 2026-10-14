@@ -46,20 +46,20 @@ describe('studentHooks', () => {
 
     it('auto-transitions unknown to referred_to_teacher and sets referredAt when currentClass is assigned', () => {
       const data: Partial<Student> = { currentClass: 10 }
-      const originalDoc = { id: 1, lifecycleStatus: 'unknown' } as Student
+      const originalDoc = { id: 1, status: 'unknown' } as Student
       applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })
 
-      expect(data.lifecycleStatus).toBe('referred_to_teacher')
+      expect(data.status).toBe('referred_to_teacher')
       expect(data.referredAt).toBeDefined()
       expect(data.removedReason).toBeNull()
     })
 
     it('auto-transitions class_seeker to referred_to_teacher and sets referredAt when currentClass is assigned', () => {
       const data: Partial<Student> = { currentClass: 15 }
-      const originalDoc = { id: 2, lifecycleStatus: 'class_seeker' } as Student
+      const originalDoc = { id: 2, status: 'class_seeker' } as Student
       applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })
 
-      expect(data.lifecycleStatus).toBe('referred_to_teacher')
+      expect(data.status).toBe('referred_to_teacher')
       expect(data.referredAt).toBeDefined()
     })
 
@@ -67,13 +67,13 @@ describe('studentHooks', () => {
       const data: Partial<Student> = { notes: 'یادداشت جدید' }
       const originalDoc = {
         id: 3,
-        lifecycleStatus: 'referred_to_teacher',
+        status: 'referred_to_teacher',
         currentClass: 10,
         referredAt: '2026-01-01T12:00:00.000Z',
       } as Student
       applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })
 
-      expect(data.lifecycleStatus).toBeUndefined()
+      expect(data.status).toBeUndefined()
       expect(data.referredAt).toBeUndefined()
     })
 
@@ -81,13 +81,13 @@ describe('studentHooks', () => {
       const data: Partial<Student> = { currentClass: 20 }
       const originalDoc = {
         id: 4,
-        lifecycleStatus: 'absorbed',
+        status: 'absorbed',
         currentClass: 10,
         absorbedAt: '2026-02-01T12:00:00.000Z',
       } as Student
       applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })
 
-      expect(data.lifecycleStatus).toBeUndefined()
+      expect(data.status).toBeUndefined()
       expect(data.absorbedAt).toBeUndefined()
     })
 
@@ -95,14 +95,14 @@ describe('studentHooks', () => {
       const data: Partial<Student> = { address: 'آدرس جدید' }
       const originalDoc = {
         id: 5,
-        lifecycleStatus: 'stabilized',
+        status: 'stabilized',
         currentClass: 10,
         absorbedAt: '2025-01-01T12:00:00.000Z',
         stabilizedAt: '2025-08-01T12:00:00.000Z',
       } as Student
       applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })
 
-      expect(data.lifecycleStatus).toBeUndefined()
+      expect(data.status).toBeUndefined()
       expect(data.stabilizedAt).toBeUndefined()
     })
 
@@ -110,13 +110,14 @@ describe('studentHooks', () => {
       const data: Partial<Student> = { currentClass: null }
       const originalDoc = {
         id: 6,
-        lifecycleStatus: 'referred_to_teacher',
+        status: 'referred_to_teacher',
+        grade: 5,
         currentClass: 10,
         referredAt: '2026-01-01T12:00:00.000Z',
       } as Student
       applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })
 
-      expect(data.lifecycleStatus).toBe('class_seeker')
+      expect(data.status).toBe('class_seeker')
       expect(data.referredAt).toBeNull()
     })
 
@@ -124,19 +125,19 @@ describe('studentHooks', () => {
       const data: Partial<Student> = { absorbedAt: '2026-03-01T12:00:00.000Z' }
       const originalDoc = {
         id: 7,
-        lifecycleStatus: 'referred_to_teacher',
+        status: 'referred_to_teacher',
         currentClass: 10,
       } as Student
       applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })
 
-      expect(data.lifecycleStatus).toBe('absorbed')
+      expect(data.status).toBe('absorbed')
     })
 
-    it('auto-stamps absorbedAt when lifecycleStatus is set to absorbed without date', () => {
-      const data: Partial<Student> = { lifecycleStatus: 'absorbed' }
+    it('auto-stamps absorbedAt when status is set to absorbed without date', () => {
+      const data: Partial<Student> = { status: 'absorbed' }
       const originalDoc = {
         id: 8,
-        lifecycleStatus: 'referred_to_teacher',
+        status: 'referred_to_teacher',
         currentClass: 10,
       } as Student
       applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })
@@ -145,10 +146,10 @@ describe('studentHooks', () => {
     })
 
     it('clears removedReason when reactivating removed student to class_seeker', () => {
-      const data: Partial<Student> = { lifecycleStatus: 'class_seeker' }
+      const data: Partial<Student> = { status: 'class_seeker' }
       const originalDoc = {
         id: 9,
-        lifecycleStatus: 'removed',
+        status: 'removed',
         removedReason: 'انصراف',
       } as Student
       applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })
@@ -157,8 +158,8 @@ describe('studentHooks', () => {
     })
 
     it('requires non-empty removedReason when transitioning to removed', () => {
-      const data: Partial<Student> = { lifecycleStatus: 'removed', removedReason: '   ' }
-      const originalDoc = { id: 10, lifecycleStatus: 'unknown' } as Student
+      const data: Partial<Student> = { status: 'removed', removedReason: '   ' }
+      const originalDoc = { id: 10, status: 'unknown' } as Student
       expect(() => applyStudentLifecycleTransitions({ data, originalDoc, req: adminReq })).toThrow(
         'برای دانش‌آموز حذف‌شده، ثبت دلیل حذف الزامی است.',
       )

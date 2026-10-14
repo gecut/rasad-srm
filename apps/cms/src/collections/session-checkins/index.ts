@@ -10,7 +10,7 @@ export const SessionCheckins: CollectionConfig = {
   slug: 'session-checkins',
   labels: { singular: 'پذیرش', plural: 'پذیرش‌ها' },
   admin: {
-    group: 'رویدادها',
+    group: 'رویدادها و پذیرش',
     defaultColumns: ['student', 'ceremony', 'session', 'checkedInAt', 'source'],
   },
   access: { read: isStaff, create: () => false, update: () => false, delete: () => false },

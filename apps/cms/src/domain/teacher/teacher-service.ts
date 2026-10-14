@@ -1,7 +1,7 @@
 import type { Payload, PayloadRequest } from 'payload'
 import type { TeacherRoster } from '@rasad/contracts'
 import type { User } from '@/payload-types'
-import { authorize, DomainError, relationID, transaction, lockTransaction } from '../shared/core'
+import { authorize, DomainError, relationID, transaction, lockTransaction, normalizePhone } from '../shared/core'
 
 type Input = { payload: Payload; user: User | null | undefined; req?: PayloadRequest }
 
@@ -99,6 +99,7 @@ export async function getTeacherRoster(input: Input): Promise<TeacherRoster> {
             })
             .filter((c): c is { id: number; title: string } => Boolean(c))
 
+          const studentStatus = student.status
           return {
             id: student.id,
             firstName: student.firstName,
@@ -113,7 +114,8 @@ export async function getTeacherRoster(input: Input): Promise<TeacherRoster> {
             referrer: student.referrer,
             notes: student.notes,
             attendedCeremonies: attended,
-            lifecycleStatus: student.lifecycleStatus,
+            status: studentStatus,
+            lifecycleStatus: studentStatus,
           }
         }),
     })),
@@ -149,10 +151,12 @@ export async function updateTeacherStudent(
       })
       if (relationID(classroom.primaryTeacher) !== teacher.id)
         throw new DomainError('دانش‌آموز در کلاس شما نیست.', 403)
+
+      const currentStatus = student.status
       if (!(
-        (student.lifecycleStatus === 'referred_to_teacher' &&
+        (currentStatus === 'referred_to_teacher' &&
           (status === 'absorbed' || status === 'removed')) ||
-        (student.lifecycleStatus === 'absorbed' && status === 'removed')
+        (currentStatus === 'absorbed' && status === 'removed')
       ))
         throw new DomainError('این تغییر وضعیت مجاز نیست.', 409)
       if (status === 'removed' && !reason?.trim()) throw new DomainError('دلیل حذف را وارد کنید.')
@@ -160,15 +164,92 @@ export async function updateTeacherStudent(
         collection: 'students',
         id: studentId,
         data: {
-          lifecycleStatus: status,
+          status,
           ...(status === 'absorbed'
             ? { absorbedAt: student.absorbedAt || new Date().toISOString() }
             : { removedReason: reason!.trim() }),
-        },
+        } as any,
         overrideAccess: true,
         req,
       })
-      return { id: updated.id, lifecycleStatus: updated.lifecycleStatus }
+      const finalStatus = updated.status
+      return { id: updated.id, status: finalStatus, lifecycleStatus: finalStatus }
+    },
+    input.req,
+  )
+}
+
+export async function updateTeacherStudentInfo(
+  input: Input & {
+    studentId: number
+    firstName?: string
+    lastName?: string
+    grade?: number | null
+    mobile?: string | null
+    fatherMobile?: string | null
+    motherMobile?: string | null
+    landline?: string | null
+    neighborhoodId?: number | null
+    address?: string | null
+    referrer?: string | null
+    notes?: string | null
+  },
+) {
+  const { payload, studentId } = input
+  const { current } = await teacherIdentity(input)
+  return transaction(
+    payload,
+    current,
+    `student:${studentId}`,
+    async (req) => {
+      const { teacher } = await teacherIdentity({ payload, user: current, req })
+      const student = await payload.findByID({
+        collection: 'students',
+        id: studentId,
+        depth: 0,
+        overrideAccess: true,
+        req,
+      })
+      if (!student.currentClass) throw new DomainError('دانش‌آموز در کلاس شما نیست.', 403)
+      await lockTransaction(payload, req, `class:${relationID(student.currentClass)}`)
+      const classroom = await payload.findByID({
+        collection: 'classes',
+        id: relationID(student.currentClass),
+        depth: 0,
+        overrideAccess: true,
+        req,
+      })
+      if (relationID(classroom.primaryTeacher) !== teacher.id)
+        throw new DomainError('دانش‌آموز در کلاس شما نیست.', 403)
+
+      const updateData: Record<string, unknown> = {}
+      if (input.firstName !== undefined) updateData.firstName = input.firstName.trim()
+      if (input.lastName !== undefined) updateData.lastName = input.lastName.trim()
+      if (input.grade !== undefined) updateData.grade = input.grade
+      if (input.mobile !== undefined)
+        updateData.mobile = input.mobile?.trim() ? normalizePhone(input.mobile) : null
+      if (input.fatherMobile !== undefined)
+        updateData.fatherMobile = input.fatherMobile?.trim()
+          ? normalizePhone(input.fatherMobile)
+          : null
+      if (input.motherMobile !== undefined)
+        updateData.motherMobile = input.motherMobile?.trim()
+          ? normalizePhone(input.motherMobile)
+          : null
+      if (input.landline !== undefined) updateData.landline = input.landline?.trim() || null
+      if (input.neighborhoodId !== undefined) updateData.neighborhood = input.neighborhoodId
+      if (input.address !== undefined) updateData.address = input.address?.trim() || null
+      if (input.referrer !== undefined) updateData.referrer = input.referrer?.trim() || null
+      if (input.notes !== undefined) updateData.notes = input.notes?.trim() || null
+
+      const updated = await payload.update({
+        collection: 'students',
+        id: studentId,
+        data: updateData as any,
+        overrideAccess: true,
+        req,
+      })
+      return { id: updated.id }
     },
     input.req,
   )

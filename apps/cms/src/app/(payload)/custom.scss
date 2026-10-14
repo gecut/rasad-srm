@@ -292,10 +292,10 @@
     --theme-overlay: rgba(6, 10, 8, 0.52);
 
     --base-px: 20;
-    --base-body-size: 13;
+    --base-body-size: 15;
     --base: calc((var(--base-px) / var(--base-body-size)) * 1rem);
     --theme-baseline: 20px;
-    --theme-baseline-body-size: 13px;
+    --theme-baseline-body-size: 15px;
 
     --breakpoint-xs-width: 400px;
     --breakpoint-s-width: 768px;
@@ -319,7 +319,7 @@
     --spacing-view-bottom: var(--gutter-h);
     --doc-controls-height: calc(var(--base) * 2.8);
     --app-header-height: calc(var(--base) * 2.8);
-    --nav-width: 275px;
+    --nav-width: 290px;
     --nav-trans-time: 0.2s;
   }
 
@@ -631,6 +631,88 @@
       padding-left: var(--gutter-h);
       padding-right: var(--gutter-h);
     }
+  }
+
+  /* Navigation Sidebar Standardization */
+  .nav {
+    padding: 16px 12px;
+  }
+
+  .nav-group {
+    margin-bottom: 20px;
+  }
+
+  .nav-group__toggle {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 8px 10px;
+    color: var(--theme-elevation-600);
+    opacity: 0.85;
+    border-radius: var(--style-radius-s);
+  }
+
+  .nav__link {
+    font-size: 0.95rem;
+    line-height: 2.2;
+    padding: 6px 12px;
+    border-radius: var(--style-radius-s);
+    margin-bottom: 3px;
+    transition: background 0.15s ease, color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--theme-elevation-800);
+  }
+
+  .nav__link:hover {
+    background: var(--theme-elevation-100);
+    color: var(--theme-success-600);
+  }
+
+  .nav__link.active,
+  .nav__link[aria-current='page'] {
+    background: var(--theme-success-100);
+    color: var(--theme-success-700);
+    font-weight: 700;
+    border-inline-start: 3px solid var(--theme-success-500);
+  }
+
+  html[data-theme='dark'] .nav__link.active,
+  html[data-theme='dark'] .nav__link[aria-current='page'] {
+    background: var(--theme-elevation-150);
+    color: var(--theme-success-300);
+    border-inline-start: 3px solid var(--theme-success-400);
+  }
+
+  /* Table Spacing & Readability */
+  .collection-list .table table th {
+    padding: 14px 16px;
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+
+  .collection-list .table table td {
+    padding: 13px 16px;
+    font-size: 0.92rem;
+  }
+
+  /* Form & Field Spacing */
+  .field-type {
+    margin-bottom: 22px;
+  }
+
+  .field-type > label.field-label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--theme-elevation-800);
+  }
+
+  .field-description {
+    font-size: 0.82rem;
+    margin-top: 5px;
+    color: var(--theme-elevation-550);
   }
 
   @media (max-width: 768px) {

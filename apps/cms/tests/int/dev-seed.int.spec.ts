@@ -68,8 +68,7 @@ describe('Development seed safety and real workflows', () => {
       data: {
         firstName: 'پرونده',
         lastName: 'موجود مستقل',
-        lifecycleStatus: 'unknown',
-        readinessStatus: 'normal',
+        status: 'unknown',
         origin: 'admin',
       },
     })
@@ -101,7 +100,7 @@ describe('Development seed safety and real workflows', () => {
     ).toBe(false)
     const own = rosters[0].classes
       .flatMap((c) => c.students)
-      .find((s) => s.lifecycleStatus === 'referred_to_teacher')!
+      .find((s) => s.status === 'referred_to_teacher')!
     await expect(
       updateTeacherStudent({ payload, user: teachers[1], studentId: own.id, status: 'absorbed' }),
     ).rejects.toMatchObject({ status: 403 })
@@ -176,7 +175,7 @@ describe('Development seed safety and real workflows', () => {
       }),
     ).rejects.toMatchObject({ status: 409 })
     expect(await seedDevelopment(payload)).toBe('unchanged')
-    expect((await payload.findByID({ collection: 'students', id: own.id })).lifecycleStatus).toBe(
+    expect((await payload.findByID({ collection: 'students', id: own.id })).status).toBe(
       'absorbed',
     )
   }, 60000)

@@ -27,10 +27,10 @@ export const validateAndAssignSpecialist: CollectionBeforeValidateHook = async (
 
     if (
       !specialistUser ||
-      !['admin', 'employee', 'follow_up_specialist'].includes(specialistUser.role)
+      !['admin', 'employee'].includes(specialistUser.role)
     ) {
       throw new Error(
-        'کارشناس ثبت‌کننده پیگیری باید دارای نقش مجاز (admin, employee, follow_up_specialist) باشد.',
+        'کارشناس ثبت‌کننده پیگیری باید دارای نقش مجاز (admin, employee) باشد.',
       )
     }
   }

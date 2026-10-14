@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { Students } from '@/collections/students'
 
 describe('Students Collection Schema', () => {
-  it('includes attendedCeremonies in defaultColumns and fields', () => {
-    expect(Students.admin?.defaultColumns).toContain('attendedCeremonies')
+  it('hides native attendedCeremonies in admin UI', () => {
+    expect(Students.admin?.defaultColumns).not.toContain('attendedCeremonies')
 
     const tabsField = Students.fields.find((f: any) => f.type === 'tabs') as any
     expect(tabsField).toBeDefined()
@@ -18,6 +18,9 @@ describe('Students Collection Schema', () => {
       type: 'relationship',
       relationTo: 'ceremonies',
       hasMany: true,
+      admin: {
+        hidden: true,
+      },
     })
   })
 

@@ -12,11 +12,12 @@ import {
   TextField,
 } from '@heroui/react'
 import type { TeacherRoster } from '@rasad/contracts'
-import { errorMessage, request } from '../lib/api'
-import { ErrorNotice, SuccessNotice } from '../components/ui'
+import { errorMessage, normalizePhone, request } from '../lib/api'
+import { ErrorNotice, Field, SuccessNotice, TextareaField } from '../components/ui'
 import {
   CheckCircleIcon,
   CheckSquareIcon,
+  EditIcon,
   PhoneIcon,
   StopwatchIcon,
   TrashIcon,
@@ -43,6 +44,24 @@ export function Teacher() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [viewingStudent, setViewingStudent] = useState<TeacherStudent | null>(null)
+  const [editingStudent, setEditingStudent] = useState<TeacherStudent | null>(null)
+  const [editForm, setEditForm] = useState({
+    firstName: '',
+    lastName: '',
+    grade: '',
+    mobile: '',
+    fatherMobile: '',
+    motherMobile: '',
+    landline: '',
+    neighborhoodId: '',
+    address: '',
+    referrer: '',
+    notes: '',
+  })
+  const [editError, setEditError] = useState('')
+  const [editBusy, setEditBusy] = useState(false)
+  const [neighborhoods, setNeighborhoods] = useState<{ id: number; name: string }[]>([])
+
   const [pending, setPending] = useState<{
     studentId: number
     status: 'absorbed' | 'removed'
@@ -63,7 +82,96 @@ export function Teacher() {
 
   useEffect(() => {
     void load()
+    request<{ neighborhoods?: { id: number; name: string }[] }>('/panel/context')
+      .then((data) => {
+        if (data.neighborhoods) setNeighborhoods(data.neighborhoods)
+      })
+      .catch(() => {})
   }, [])
+
+  function openEditModal(student: TeacherStudent) {
+    setEditingStudent(student)
+    setEditError('')
+    setEditForm({
+      firstName: student.firstName || '',
+      lastName: student.lastName || '',
+      grade: student.grade ? String(student.grade) : '',
+      mobile: student.mobile || '',
+      fatherMobile: student.fatherMobile || '',
+      motherMobile: student.motherMobile || '',
+      landline: student.landline || '',
+      neighborhoodId: student.neighborhood ? String(student.neighborhood.id) : '',
+      address: student.address || '',
+      referrer: student.referrer || '',
+      notes: student.notes || '',
+    })
+  }
+
+  async function saveEditStudent() {
+    if (!editingStudent || editBusy) return
+    setEditBusy(true)
+    setEditError('')
+    try {
+      await request('/panel/teacher/student/update', {
+        studentId: editingStudent.id,
+        firstName: editForm.firstName.trim(),
+        lastName: editForm.lastName.trim(),
+        grade: editForm.grade ? Number(editForm.grade) : null,
+        mobile: editForm.mobile.trim() ? normalizePhone(editForm.mobile) : null,
+        fatherMobile: editForm.fatherMobile.trim() ? normalizePhone(editForm.fatherMobile) : null,
+        motherMobile: editForm.motherMobile.trim() ? normalizePhone(editForm.motherMobile) : null,
+        landline: editForm.landline.trim() || null,
+        neighborhoodId: editForm.neighborhoodId ? Number(editForm.neighborhoodId) : null,
+        address: editForm.address.trim() || null,
+        referrer: editForm.referrer.trim() || null,
+        notes: editForm.notes.trim() || null,
+      })
+
+      const targetNeighborhood = neighborhoods.find(
+        (n) => n.id === Number(editForm.neighborhoodId),
+      )
+
+      setRoster((prev) => {
+        if (!prev) return prev
+        return {
+          classes: prev.classes.map((cls) => ({
+            ...cls,
+            students: cls.students.map((st) =>
+              st.id === editingStudent.id
+                ? {
+                    ...st,
+                    firstName: editForm.firstName.trim() || st.firstName,
+                    lastName: editForm.lastName.trim() || st.lastName,
+                    grade: editForm.grade ? Number(editForm.grade) : null,
+                    mobile: editForm.mobile.trim() ? normalizePhone(editForm.mobile) : null,
+                    fatherMobile: editForm.fatherMobile.trim()
+                      ? normalizePhone(editForm.fatherMobile)
+                      : null,
+                    motherMobile: editForm.motherMobile.trim()
+                      ? normalizePhone(editForm.motherMobile)
+                      : null,
+                    landline: editForm.landline.trim() || null,
+                    neighborhood:
+                      editForm.neighborhoodId && targetNeighborhood
+                        ? { id: targetNeighborhood.id, name: targetNeighborhood.name }
+                        : null,
+                    address: editForm.address.trim() || null,
+                    referrer: editForm.referrer.trim() || null,
+                    notes: editForm.notes.trim() || null,
+                  }
+                : st,
+            ),
+          })),
+        }
+      })
+      setSuccess('مشخصات دانش‌آموز با موفقیت به‌روزرسانی شد.')
+      setEditingStudent(null)
+    } catch (err) {
+      setEditError(errorMessage(err))
+    } finally {
+      setEditBusy(false)
+    }
+  }
 
   async function save() {
     if (!pending || busy) return
@@ -79,7 +187,11 @@ export function Teacher() {
             ...item,
             students: item.students.map((student) =>
               student.id === pending.studentId
-                ? { ...student, lifecycleStatus: pending.status }
+                ? {
+                    ...student,
+                    status: pending.status as any,
+                    lifecycleStatus: pending.status as any,
+                  }
                 : student,
             ),
           })),
@@ -109,15 +221,17 @@ export function Teacher() {
 
   const selectedClass = roster?.classes.find((item) => String(item.id) === classId)
 
+  const getStatus = (s: TeacherStudent) => (s as any).status || s.lifecycleStatus
+
   const pendingCount =
-    selectedClass?.students.filter((s) => s.lifecycleStatus === 'referred_to_teacher').length || 0
+    selectedClass?.students.filter((s) => getStatus(s) === 'referred_to_teacher').length || 0
   const absorbedCount =
-    selectedClass?.students.filter((s) => s.lifecycleStatus === 'absorbed').length || 0
+    selectedClass?.students.filter((s) => getStatus(s) === 'absorbed').length || 0
   const removedCount =
-    selectedClass?.students.filter((s) => s.lifecycleStatus === 'removed').length || 0
+    selectedClass?.students.filter((s) => getStatus(s) === 'removed').length || 0
 
   const filteredStudents = (selectedClass?.students || []).filter((student) => {
-    if (student.lifecycleStatus !== filter) return false
+    if (getStatus(student) !== filter) return false
     if (!searchQuery.trim()) return true
     const q = searchQuery.trim().toLowerCase()
     const fullName = `${student.firstName} ${student.lastName}`.toLowerCase()
@@ -311,6 +425,7 @@ export function Teacher() {
                   student={student}
                   busy={busy || Boolean(pending)}
                   onViewDetails={(st) => setViewingStudent(st)}
+                  onEdit={(st) => openEditModal(st)}
                   onAbsorb={(st) =>
                     setPending({
                       studentId: st.id,
@@ -591,6 +706,164 @@ export function Teacher() {
 
               <Button variant="outline" size="sm" onPress={() => setViewingStudent(null)}>
                 بستن
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+
+      {/* Student Edit Modal */}
+      <Modal.Backdrop
+        isOpen={Boolean(editingStudent)}
+        onOpenChange={(open) => !open && setEditingStudent(null)}
+      >
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-xl">
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <div className="flex flex-col gap-1">
+                <Modal.Heading className="text-xl font-bold flex items-center gap-2">
+                  <EditIcon className="size-5 text-accent" />
+                  <span>ویرایش اطلاعات دانش‌آموز</span>
+                </Modal.Heading>
+                <p className="text-xs text-muted">
+                  اصلاح و تکمیل مشخصات هویتی، اطلاعات تماس، آدرس و یادداشت‌ها
+                </p>
+              </div>
+            </Modal.Header>
+
+            <Modal.Body className="flex flex-col gap-3">
+              {editError && <ErrorNotice message={editError} />}
+              <form
+                id="teacher-student-edit-form"
+                className="flex flex-col gap-3"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  void saveEditStudent()
+                }}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field
+                    label="نام"
+                    value={editForm.firstName}
+                    onChange={(val) => setEditForm({ ...editForm, firstName: val })}
+                    required
+                  />
+                  <Field
+                    label="نام خانوادگی"
+                    value={editForm.lastName}
+                    onChange={(val) => setEditForm({ ...editForm, lastName: val })}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <PanelSelect
+                    id="teacher-edit-grade"
+                    label="پایه تحصیلی"
+                    value={editForm.grade}
+                    placeholder="نامشخص"
+                    options={[1, 2, 3, 4, 5, 6].map((g) => ({
+                      value: String(g),
+                      label: `پایه ${g}`,
+                    }))}
+                    onChange={(val) => setEditForm({ ...editForm, grade: val })}
+                  />
+                  <PanelSelect
+                    id="teacher-edit-neighborhood"
+                    label="ناحیه شهری / محله"
+                    value={editForm.neighborhoodId}
+                    placeholder="انتخاب ناحیه شهری"
+                    options={neighborhoods.map((n) => ({
+                      value: String(n.id),
+                      label: n.name,
+                    }))}
+                    onChange={(val) => setEditForm({ ...editForm, neighborhoodId: val })}
+                  />
+                </div>
+
+                {/* Locked Current Class Notice */}
+                <div className="p-2.5 rounded-lg border border-border/80 bg-surface-secondary/20 flex items-center justify-between text-xs">
+                  <span className="text-muted">کلاس جاری دانش‌آموز:</span>
+                  <div className="flex items-center gap-2">
+                    <strong className="text-foreground">{selectedClass?.title}</strong>
+                    <Chip size="sm" variant="soft" color="default" className="text-[10px]">
+                      کلاس قفل است
+                    </Chip>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <Field
+                    type="tel"
+                    label="موبایل دانش‌آموز"
+                    value={editForm.mobile}
+                    onChange={(val) => setEditForm({ ...editForm, mobile: val })}
+                    placeholder="اختیاری"
+                  />
+                  <Field
+                    type="tel"
+                    label="موبایل پدر"
+                    value={editForm.fatherMobile}
+                    onChange={(val) => setEditForm({ ...editForm, fatherMobile: val })}
+                    placeholder="اختیاری"
+                  />
+                  <Field
+                    type="tel"
+                    label="موبایل مادر"
+                    value={editForm.motherMobile}
+                    onChange={(val) => setEditForm({ ...editForm, motherMobile: val })}
+                    placeholder="اختیاری"
+                  />
+                  <Field
+                    type="tel"
+                    label="تلفن ثابت"
+                    value={editForm.landline}
+                    onChange={(val) => setEditForm({ ...editForm, landline: val })}
+                    placeholder="اختیاری"
+                  />
+                </div>
+
+                <Field
+                  label="آدرس منزل"
+                  value={editForm.address}
+                  onChange={(val) => setEditForm({ ...editForm, address: val })}
+                  placeholder="آدرس دقیق محل سکونت..."
+                />
+
+                <Field
+                  label="معرف"
+                  value={editForm.referrer}
+                  onChange={(val) => setEditForm({ ...editForm, referrer: val })}
+                  placeholder="نام شخص یا نهاد معرف..."
+                />
+
+                <TextareaField
+                  label="یادداشت‌های پرونده"
+                  value={editForm.notes}
+                  onChange={(val) => setEditForm({ ...editForm, notes: val })}
+                  placeholder="نکات آموزشی، اخلاقی یا تربیتی در خصوص دانش‌آموز..."
+                  rows={3}
+                />
+              </form>
+            </Modal.Body>
+
+            <Modal.Footer className="flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                isDisabled={editBusy}
+                onPress={() => setEditingStudent(null)}
+              >
+                انصراف
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                isDisabled={editBusy || !editForm.firstName.trim() || !editForm.lastName.trim()}
+                onPress={saveEditStudent}
+              >
+                {editBusy ? 'در حال ذخیره…' : 'ذخیره تغییرات'}
               </Button>
             </Modal.Footer>
           </Modal.Dialog>

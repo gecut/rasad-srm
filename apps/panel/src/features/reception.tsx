@@ -8,8 +8,9 @@ import {
   Label,
   Modal,
   SearchField,
+  Tabs,
 } from '@heroui/react'
-import type { PanelContext, ReceptionSearch, ReceptionStudent } from '@rasad/contracts'
+import type { PanelContext, ReceptionSearch, ReceptionStudent, SessionAttendee } from '@rasad/contracts'
 import { APIError, errorMessage, normalizePhone, request } from '../lib/api'
 import { ErrorNotice, Field, SuccessNotice } from '../components/ui'
 import { formatDate } from '../lib/date'
@@ -79,6 +80,11 @@ export function Reception() {
   const [modalError, setModalError] = useState('')
   const [editError, setEditError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showAttendees, setShowAttendees] = useState(false)
+  const [attendeeScope, setAttendeeScope] = useState<'session' | 'ceremony'>('session')
+  const [attendees, setAttendees] = useState<SessionAttendee[]>([])
+  const [loadingAttendees, setLoadingAttendees] = useState(false)
+  const [attendeeSearchQuery, setAttendeeSearchQuery] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -95,10 +101,38 @@ export function Reception() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!showAttendees) {
+      setAttendees([])
+      setAttendeeSearchQuery('')
+      return
+    }
+    let active = true
+    setLoadingAttendees(true)
+    const queryParam =
+      attendeeScope === 'session' && sessionId
+        ? `sessionId=${sessionId}`
+        : `ceremonyId=${ceremony}`
+
+    request<{ attendees: SessionAttendee[] }>(`/panel/ceremony/attendees?${queryParam}`)
+      .then((data) => {
+        if (active) setAttendees(data.attendees || [])
+      })
+      .catch((err) => {
+        if (active) setError(errorMessage(err))
+      })
+      .finally(() => {
+        if (active) setLoadingAttendees(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [showAttendees, attendeeScope, sessionId, ceremony])
+
   // Auto-focus search input with '/' or 'F2' (guarded when modals are open or typing in form controls)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (creating || editingStudent || attendanceConflict) return
+      if (creating || editingStudent || attendanceConflict || showAttendees) return
       if (event.key === '/' || event.key === 'F2') {
         const target = event.target as HTMLElement | null
         if (
@@ -117,7 +151,7 @@ export function Reception() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [creating, editingStudent, attendanceConflict])
+  }, [creating, editingStudent, attendanceConflict, showAttendees])
 
   const sessions = context?.ceremonies.find((item) => String(item.id) === ceremony)?.sessions || []
   const activeSession = sessions.find((item) => String(item.id) === sessionId)
@@ -369,7 +403,7 @@ export function Reception() {
                 </Chip>
               </div>
 
-              <div className="flex items-center gap-1.5 mr-auto">
+              <div className="flex items-center gap-2 mr-auto">
                 <span className="text-muted">حاضرین:</span>
                 {activeSession.capacity ? (
                   <Chip
@@ -395,6 +429,19 @@ export function Reception() {
                     {activeSession.checkedInCount ?? 0} نفر
                   </Chip>
                 )}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onPress={() => {
+                    setAttendeeScope('session')
+                    setShowAttendees(true)
+                  }}
+                  className="flex items-center gap-1.5 text-xs h-7 px-2.5"
+                >
+                  <UserCheckIcon className="size-3.5 text-accent" />
+                  <span>مشاهده حاضرین</span>
+                </Button>
               </div>
             </div>
           )}
@@ -454,6 +501,17 @@ export function Reception() {
                       ? ` (از ظرفیت کل ${sessions.reduce((sum, s) => sum + (s.capacity ?? 0), 0)})`
                       : ''}
                   </Chip>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onPress={() => {
+                      setAttendeeScope('ceremony')
+                      setShowAttendees(true)
+                    }}
+                    className="text-xs h-6 px-2"
+                  >
+                    مشاهده کل
+                  </Button>
                 </div>
               </div>
 
@@ -1011,6 +1069,159 @@ export function Reception() {
               >
                 <UserPlusIcon className="size-4" />
                 <span>{busy ? 'در حال ثبت…' : 'ثبت دانش‌آموز و حضور'}</span>
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+
+      {/* Session/Ceremony Attendees Modal */}
+      <Modal.Backdrop
+        isOpen={showAttendees}
+        onOpenChange={(open) => !open && setShowAttendees(false)}
+      >
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-3xl">
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <div className="flex flex-col gap-2">
+                <Modal.Heading className="text-xl font-bold flex items-center gap-2">
+                  <UserCheckIcon className="size-5 text-accent" />
+                  <span>فهرست حاضرین مراسم</span>
+                </Modal.Heading>
+
+                {/* Tabs to switch scope */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <Tabs
+                    selectedKey={attendeeScope}
+                    onSelectionChange={(key) => setAttendeeScope(key as 'session' | 'ceremony')}
+                  >
+                    <Tabs.ListContainer>
+                      <Tabs.List aria-label="محدوده حاضرین">
+                        <Tabs.Tab id="session" isDisabled={!sessionId} className="text-xs">
+                          <span>سانس جاری ({activeSession?.title || 'سانس'})</span>
+                          <Tabs.Indicator />
+                        </Tabs.Tab>
+                        <Tabs.Tab id="ceremony" className="text-xs">
+                          <span>کل مراسم</span>
+                          <Tabs.Indicator />
+                        </Tabs.Tab>
+                      </Tabs.List>
+                    </Tabs.ListContainer>
+                  </Tabs>
+
+                  <Chip size="sm" variant="soft" color="accent">
+                    {attendees.length} نفر ثبت ورود
+                  </Chip>
+                </div>
+              </div>
+            </Modal.Header>
+
+            <Modal.Body className="flex flex-col gap-3">
+              {/* SearchField */}
+              <SearchField
+                value={attendeeSearchQuery}
+                onChange={setAttendeeSearchQuery}
+                className="w-full"
+                aria-label="جست‌وجوی حاضرین"
+              >
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input placeholder="جست‌وجوی نام دانش‌آموز یا شماره موبایل..." />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
+
+              {/* Table / List */}
+              <div className="max-h-96 overflow-y-auto border border-border rounded-lg">
+                {loadingAttendees ? (
+                  <p className="text-center text-sm text-muted py-8">در حال بارگذاری لیست حاضرین…</p>
+                ) : attendees.length === 0 ? (
+                  <p className="text-center text-sm text-muted py-8">هیچ حضوری در این محدوده ثبت نشده است.</p>
+                ) : (
+                  (() => {
+                    const filtered = attendees.filter((att) => {
+                      if (!attendeeSearchQuery.trim()) return true
+                      const q = attendeeSearchQuery.trim().toLowerCase()
+                      const fullName = `${att.student.firstName} ${att.student.lastName}`.toLowerCase()
+                      const phone = att.student.mobile || att.student.fatherMobile || att.student.motherMobile || ''
+                      return fullName.includes(q) || phone.includes(q)
+                    })
+
+                    if (filtered.length === 0) {
+                      return (
+                        <p className="text-center text-sm text-muted py-8">موردی با این مشخصات یافت نشد.</p>
+                      )
+                    }
+
+                    return (
+                      <table className="w-full text-right text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-border bg-surface-secondary/40 text-muted">
+                            <th className="p-2.5 w-8">#</th>
+                            <th className="p-2.5">دانش‌آموز</th>
+                            <th className="p-2.5">پایه</th>
+                            <th className="p-2.5">شماره تماس</th>
+                            <th className="p-2.5">ناحیه</th>
+                            <th className="p-2.5">نوع حضور</th>
+                            {attendeeScope === 'ceremony' && <th className="p-2.5">سانس</th>}
+                            <th className="p-2.5">ساعت ورود</th>
+                            <th className="p-2.5">ثبت‌کننده</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.map((att, idx) => (
+                            <tr
+                              key={att.id}
+                              className="border-b border-border/50 hover:bg-surface-secondary/30 transition-colors"
+                            >
+                              <td className="p-2.5 text-muted">{idx + 1}</td>
+                              <td className="p-2.5 font-semibold text-foreground">
+                                {att.student.firstName} {att.student.lastName}
+                              </td>
+                              <td className="p-2.5 text-muted">
+                                {att.student.grade ? `پایه ${att.student.grade}` : '—'}
+                              </td>
+                              <td className="p-2.5 text-muted font-mono" dir="ltr">
+                                {att.student.mobile || att.student.fatherMobile || att.student.motherMobile || '—'}
+                              </td>
+                              <td className="p-2.5 text-muted">
+                                {att.student.neighborhoodName || '—'}
+                              </td>
+                              <td className="p-2.5">
+                                <Chip
+                                  size="sm"
+                                  variant="soft"
+                                  color={att.source === 'invited' ? 'success' : 'accent'}
+                                  className="text-[10px]"
+                                >
+                                  {att.source === 'invited' ? 'دعوت‌شده' : 'مراجعه حضوری'}
+                                </Chip>
+                              </td>
+                              {attendeeScope === 'ceremony' && (
+                                <td className="p-2.5 text-muted font-medium">
+                                  {att.session.title || `سانس #${att.session.id}`}
+                                </td>
+                              )}
+                              <td className="p-2.5 text-foreground font-mono">
+                                {formatDate(att.checkedInAt)}
+                              </td>
+                              <td className="p-2.5 text-muted">
+                                {att.checkedInBy || '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )
+                  })()
+                )}
+              </div>
+            </Modal.Body>
+
+            <Modal.Footer className="flex items-center justify-end">
+              <Button variant="outline" size="sm" onPress={() => setShowAttendees(false)}>
+                بستن
               </Button>
             </Modal.Footer>
           </Modal.Dialog>

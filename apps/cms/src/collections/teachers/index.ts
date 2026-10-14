@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isEmployeeOrAdmin, isStaff } from '../../access/roles'
+import { isAdmin, isStaff } from '../../access/roles'
 
 export const Teachers: CollectionConfig = {
   slug: 'teachers',
@@ -8,15 +8,15 @@ export const Teachers: CollectionConfig = {
     plural: 'مدرسان',
   },
   admin: {
-    group: 'افراد',
+    group: 'مدیریت دانش‌آموزان و آموزش',
     useAsTitle: 'lastName',
     defaultColumns: ['firstName', 'lastName', 'mobile', 'status'],
   },
   access: {
     read: isStaff,
-    create: isEmployeeOrAdmin,
-    update: isEmployeeOrAdmin,
-    delete: isEmployeeOrAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   fields: [
     {

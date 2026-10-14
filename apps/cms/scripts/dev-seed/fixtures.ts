@@ -17,7 +17,7 @@ export const accounts: {
 }[] = [
   { key: 'admin', name: 'آرمان مدیر', role: 'admin', phone: '09000000001' },
   { key: 'employee', name: 'نگار هماهنگ', role: 'employee', phone: '09000000002' },
-  { key: 'followup', name: 'مریم پیگیر', role: 'follow_up_specialist', phone: '09000000003' },
+  { key: 'followup', name: 'مریم پیگیر', role: 'employee', phone: '09000000003' },
   { key: 'inviter-a', name: 'سارا دعوت', role: 'inviter', phone: '09000000004' },
   { key: 'inviter-b', name: 'رضا دعوت', role: 'inviter', phone: '09000000005' },
   { key: 'teacher-a', name: 'امیر دانا', role: 'teacher', phone: '09000000006', teacher: 0 },
@@ -36,8 +36,9 @@ export const classStatuses: Class['status'][] = [
   'ended',
   'cancelled',
 ]
-export const lifecycles: Student['lifecycleStatus'][] = [
+export const lifecycles: Student['status'][] = [
   'unknown',
+  'waitlisted',
   'class_seeker',
   'referred_to_teacher',
   'absorbed',
@@ -209,8 +210,8 @@ export async function seedDevelopment(
     }
     const students: Student[] = []
     for (let i = 0; i < 72; i++) {
-      const lifecycleStatus = lifecycles[i % 6]
-      const assigned = ['referred_to_teacher', 'absorbed', 'stabilized'].includes(lifecycleStatus)
+      const studentStatus = lifecycles[i % lifecycles.length]
+      const assigned = ['referred_to_teacher', 'absorbed', 'stabilized'].includes(studentStatus)
       // Vary ownership independently of lifecycle so each teacher has actionable referrals.
       const classroom = classes[Math.floor(i / 6) % 4]
       students.push(
@@ -223,20 +224,19 @@ export async function seedDevelopment(
             motherMobile: i % 3 === 0 ? `0900020${String(i).padStart(4, '0')}` : undefined,
             fatherMobile: i % 4 === 0 ? `0900030${String(i).padStart(4, '0')}` : undefined,
             grade: ((Math.floor(i / 6) + i) % 6) + 1,
-            lifecycleStatus,
-            readinessStatus: i % 6 === 1 ? 'waitlisted' : 'normal',
+            status: studentStatus,
             origin: i % 3 === 0 ? 'import' : 'admin',
             ...(assigned
               ? {
                   currentClass: classroom.id,
-                  referredAt: at(lifecycleStatus === 'stabilized' ? -250 : -45),
+                  referredAt: at(studentStatus === 'stabilized' ? -250 : -45),
                 }
               : {}),
-            ...(lifecycleStatus === 'absorbed' ? { absorbedAt: at(-30) } : {}),
-            ...(lifecycleStatus === 'stabilized'
+            ...(studentStatus === 'absorbed' ? { absorbedAt: at(-30) } : {}),
+            ...(studentStatus === 'stabilized'
               ? { absorbedAt: at(-240), stabilizedAt: at(-30) }
               : {}),
-            ...(lifecycleStatus === 'removed'
+            ...(studentStatus === 'removed'
               ? { removedReason: 'خانواده به شهر دیگری نقل مکان کرده‌اند.' }
               : {}),
           },
@@ -252,8 +252,7 @@ export async function seedDevelopment(
             firstName: ['آرش', 'بردیا', 'شایان'][i],
             lastName: `حضوری ${surnameTag}`,
             origin: 'reception_walk_in',
-            lifecycleStatus: 'unknown',
-            readinessStatus: 'normal',
+            status: 'unknown',
           },
           req,
         }),
@@ -552,7 +551,7 @@ export async function verifySeed(payload: Payload, req?: PayloadRequest) {
     ],
     [10, 4, 8, 75, 6, 16, 16, 8, 36],
   )
-  for (const status of lifecycles) assert(students.some((s) => s.lifecycleStatus === status))
+  for (const status of lifecycles) assert(students.some((s) => s.status === status))
   for (const status of classStatuses) assert(classes.some((c) => c.status === status))
   for (const status of ceremonyStatuses) assert(ceremonies.some((c) => c.status === status))
   for (const user of users.filter((u) => u.role === 'teacher')) {
@@ -565,22 +564,22 @@ export async function verifySeed(payload: Payload, req?: PayloadRequest) {
     assert(
       students.some(
         (s) =>
-          s.lifecycleStatus === 'referred_to_teacher' &&
+          s.status === 'referred_to_teacher' &&
           s.currentClass &&
           owned.some((c) => c.id === relationID(s.currentClass!)),
       ),
     )
   }
   for (const student of students) {
-    if (['referred_to_teacher', 'absorbed', 'stabilized'].includes(student.lifecycleStatus))
+    if (['referred_to_teacher', 'absorbed', 'stabilized'].includes(student.status))
       assert(student.currentClass && student.referredAt)
-    if (student.lifecycleStatus === 'stabilized')
+    if (student.status === 'stabilized')
       assert(
         student.absorbedAt &&
           student.stabilizedAt &&
           stabilizationAllowed(student.absorbedAt, new Date(student.stabilizedAt)),
       )
-    if (student.lifecycleStatus === 'removed') assert(student.removedReason)
+    if (student.status === 'removed') assert(student.removedReason)
   }
   for (const ceremony of ceremonies)
     assert.equal(
@@ -614,7 +613,7 @@ export async function verifySeed(payload: Payload, req?: PayloadRequest) {
   assert(
     students.filter(
       (s) =>
-        s.lifecycleStatus !== 'removed' &&
+        s.status !== 'removed' &&
         (s.mobile || s.motherMobile || s.fatherMobile) &&
         !invitations.some(
           (i) => relationID(i.ceremony) === active.id && relationID(i.student) === s.id,

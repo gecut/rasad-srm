@@ -8,7 +8,6 @@ let payload: Payload
 describe('Milestone 3 — Follow-ups Domain', () => {
   let adminUser: User
   let employeeUser: User
-  let specialistUser: User
   let inviterUser: User
   let testStudent: Student
 
@@ -46,18 +45,6 @@ describe('Milestone 3 — Follow-ups Domain', () => {
       overrideAccess: true,
     })
 
-    specialistUser = await payload.create({
-      collection: 'users',
-      data: {
-        email: 'm3-specialist@example.com',
-        name: 'M3 Specialist',
-        password: 'Password123!',
-        role: 'follow_up_specialist',
-        status: 'active',
-      },
-      overrideAccess: true,
-    })
-
     inviterUser = await payload.create({
       collection: 'users',
       data: {
@@ -77,12 +64,11 @@ describe('Milestone 3 — Follow-ups Domain', () => {
         firstName: 'رضا',
         lastName: 'قاسمی',
         grade: 2,
-        lifecycleStatus: 'unknown',
-        readinessStatus: 'normal',
+        status: 'unknown',
         origin: 'admin',
       },
       overrideAccess: false,
-      user: employeeUser,
+      user: adminUser,
     })
   })
 
@@ -96,7 +82,7 @@ describe('Milestone 3 — Follow-ups Domain', () => {
   // Creation and Multi-note Append
   // ---------------------------------------------------------------------------
   describe('Follow-up Creation & Append Pattern', () => {
-    it('allows follow-up specialist to record a note with auto-assigned specialist', async () => {
+    it('allows admin to record a note with auto-assigned specialist', async () => {
       const followUp = await payload.create({
         collection: 'follow-ups',
         data: {
@@ -104,14 +90,14 @@ describe('Milestone 3 — Follow-ups Domain', () => {
           note: 'تماس با ولی برقرار شد. اشتیاق خوبی برای شروع کلاس دارند.',
         } as unknown as FollowUp,
         overrideAccess: false,
-        user: specialistUser,
+        user: adminUser,
       })
 
       expect(followUp.id).toBeDefined()
       expect(followUp.note).toContain('تماس با ولی برقرار شد')
       expect(
         typeof followUp.specialist === 'object' ? followUp.specialist.id : followUp.specialist,
-      ).toBe(specialistUser.id)
+      ).toBe(adminUser.id)
       expect(followUp.createdAt).toBeDefined()
     })
 
@@ -123,7 +109,7 @@ describe('Milestone 3 — Follow-ups Domain', () => {
           note: 'پیگیری دوم: هماهنگی تاریخ حضور اولیه انجام شد.',
         } as unknown as FollowUp,
         overrideAccess: false,
-        user: specialistUser,
+        user: adminUser,
       })
 
       expect(secondFollowUp.id).toBeDefined()
@@ -134,7 +120,7 @@ describe('Milestone 3 — Follow-ups Domain', () => {
           student: { equals: testStudent.id },
         },
         overrideAccess: false,
-        user: specialistUser,
+        user: employeeUser,
       })
 
       expect(allFollowUps.docs.length).toBe(2)
@@ -165,16 +151,16 @@ describe('Milestone 3 — Follow-ups Domain', () => {
   // Access Control
   // ---------------------------------------------------------------------------
   describe('Access Control', () => {
-    it('allows follow-up specialist to read follow-up records', async () => {
+    it('allows employee to read follow-up records', async () => {
       const result = await payload.find({
         collection: 'follow-ups',
         overrideAccess: false,
-        user: specialistUser,
+        user: employeeUser,
       })
       expect(result.docs.length).toBeGreaterThanOrEqual(1)
     })
 
-    it('denies follow-up specialist from deleting follow-ups', async () => {
+    it('denies employee from creating or deleting follow-ups', async () => {
       const followUps = await payload.find({
         collection: 'follow-ups',
         overrideAccess: true,
@@ -182,11 +168,23 @@ describe('Milestone 3 — Follow-ups Domain', () => {
       const targetId = followUps.docs[0].id
 
       await expect(
+        payload.create({
+          collection: 'follow-ups',
+          data: {
+            student: testStudent.id,
+            note: 'یادداشت کارمند غیرمجاز',
+          } as unknown as FollowUp,
+          overrideAccess: false,
+          user: employeeUser,
+        }),
+      ).rejects.toThrow()
+
+      await expect(
         payload.delete({
           collection: 'follow-ups',
           id: targetId,
           overrideAccess: false,
-          user: specialistUser,
+          user: employeeUser,
         }),
       ).rejects.toThrow()
     })

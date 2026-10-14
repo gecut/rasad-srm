@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url'
 import dotenv from 'dotenv'
 import type { Payload, PayloadRequest } from 'payload'
 import { getPayload, createLocalReq } from 'payload'
+import { sql, type PostgresAdapter } from '@payloadcms/db-postgres'
+import type { Student } from '../src/payload-types'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -19,7 +21,7 @@ export const SEED_ACCOUNTS = [
   {
     key: 'followup',
     name: 'مریم پیگیر',
-    role: 'follow_up_specialist' as const,
+    role: 'employee' as const,
     phone: '09000000003',
   },
   { key: 'inviter-a', name: 'سارا دعوت', role: 'inviter' as const, phone: '09000000004' },
@@ -68,8 +70,9 @@ interface StudentItem {
   lastName: string
   grade: number | null
   origin: 'import'
-  readinessStatus: 'normal' | 'waitlisted'
-  lifecycleStatus: 'unknown' | 'class_seeker' | 'referred_to_teacher'
+  readinessStatus?: 'normal' | 'waitlisted'
+  lifecycleStatus?: 'unknown' | 'class_seeker' | 'referred_to_teacher'
+  status?: Student['status']
   currentClass: string | null
   fatherMobile: string | null
   motherMobile: string | null
@@ -431,6 +434,18 @@ export async function runUnifiedSeed(
   })
   const systemAdminId = adminUserRes.totalDocs > 0 ? adminUserRes.docs[0].id : 1
 
+  console.log(`   Purging previously imported student records and check-ins...`)
+  try {
+    const adapter = payload.db as unknown as PostgresAdapter
+    if (adapter?.drizzle) {
+      await adapter.drizzle.execute(
+        sql`TRUNCATE TABLE session_checkins, invitation_claims, invitations, follow_ups, students_rels, students CASCADE;`,
+      )
+    }
+  } catch (err) {
+    console.warn('   Note: Truncate skipped or failed:', err)
+  }
+
   let studentsCreated = 0
   let studentsSkipped = 0
   let waitlistedStudents = 0
@@ -442,21 +457,32 @@ export async function runUnifiedSeed(
   for (let i = 0; i < studentsData.length; i++) {
     const st = studentsData[i]
 
-    if (st.readinessStatus === 'waitlisted') waitlistedStudents++
-    if (st.lifecycleStatus === 'class_seeker') classSeekerStudents++
-    if (st.lifecycleStatus === 'referred_to_teacher') referredStudents++
+    // Resolve assigned class
+    let currentClassId: number | null = null
+    if (st.currentClass) {
+      currentClassId = classCodeToIdMap.get(st.currentClass) || null
+    }
+
+    let studentStatus: Student['status'] = st.status || 'unknown'
+    if (currentClassId) {
+      studentStatus = 'referred_to_teacher'
+    } else if (st.readinessStatus === 'waitlisted') {
+      studentStatus = 'waitlisted'
+    } else if (st.lifecycleStatus === 'class_seeker') {
+      studentStatus = 'class_seeker'
+    } else if (st.lifecycleStatus === 'referred_to_teacher') {
+      studentStatus = 'referred_to_teacher'
+    }
+
+    if (studentStatus === 'waitlisted') waitlistedStudents++
+    if (studentStatus === 'class_seeker') classSeekerStudents++
+    if (studentStatus === 'referred_to_teacher') referredStudents++
     if (st.grade === null) unknownGradeStudents++
 
     // Resolve neighborhood
     let neighborhoodId: number | null = null
     if (st.neighborhood) {
       neighborhoodId = neighborhoodMap.get(st.neighborhood.trim()) || null
-    }
-
-    // Resolve assigned class
-    let currentClassId: number | null = null
-    if (st.currentClass) {
-      currentClassId = classCodeToIdMap.get(st.currentClass) || null
     }
 
     // Check existing for deduplication
@@ -497,8 +523,7 @@ export async function runUnifiedSeed(
           lastName: st.lastName,
           grade: st.grade,
           origin: st.origin,
-          readinessStatus: st.readinessStatus,
-          lifecycleStatus: currentClassId ? 'referred_to_teacher' : st.lifecycleStatus,
+          status: studentStatus,
           currentClass: currentClassId,
           fatherMobile: st.fatherMobile,
           motherMobile: st.motherMobile,
@@ -527,7 +552,7 @@ export async function runUnifiedSeed(
             await payload.create({
               collection: 'session-checkins',
               data: {
-                student: studentDbDbId(studentDbId),
+                student: studentDbId,
                 session: sessionId,
                 ceremony: ceremonyId,
                 checkedInBy: systemAdminId,
@@ -551,10 +576,6 @@ export async function runUnifiedSeed(
         `   Processed ${i + 1}/${studentsData.length} | Created: ${studentsCreated} | Skipped: ${studentsSkipped} | Check-ins: ${historicalCheckinsCreated}`,
       )
     }
-  }
-
-  function studentDbDbId(id: number): number {
-    return id
   }
 
   const durationMs = Date.now() - startTime

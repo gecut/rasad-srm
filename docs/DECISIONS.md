@@ -210,3 +210,45 @@ Deploy `apps/panel` on `ghcr.io/gecut/nginx/spa:1.0.0` as a pure static SPA with
    - Consolidate all database migrations into a clean baseline (`20260930_133000_baseline.ts` & `.json`) including `students_rels` junction table and check-in compound indexes.
    - Overhaul historical production seed (`seed.ts`) and dev seed (`fixtures.ts`) to natively populate `ceremony` on check-ins and `attendedCeremonies` on students.
 
+## D040 — Unified Student Lifecycle Status, Class Urban Districts, Admin Ergonomics & Read-Only Staff Enforcement
+
+1. **Unified Single-Axis Student Lifecycle Status:**
+   - Deprecate and remove the separate `lifecycleStatus` and `readinessStatus` fields on `students`.
+   - Introduce a single unified `status` enum with 7 explicit states:
+     - `unknown`: Grades 1-6 students not requesting class membership.
+     - `waitlisted`: Grades 1-3 students requesting class membership (پشت‌خطی).
+     - `class_seeker`: Grades 4-6 students actively requesting class membership (خواهان کلاس).
+     - `referred_to_teacher`: Students introduced to a class and primary teacher.
+     - `absorbed`: Teacher confirmed attendance and active class participation.
+     - `stabilized`: Absorbed students maintaining uninterrupted participation after 6 months.
+     - `removed`: Exited from the cycle with mandatory `removedReason`.
+   - Implement lifecycle automations in `students-lifecycle.hooks.ts`:
+     - Assigning `currentClass` to students in `unknown`, `waitlisted`, or `class_seeker` automatically sets status to `referred_to_teacher` and stamps `referredAt`.
+     - Clearing `currentClass` automatically reverts `referred_to_teacher` to `waitlisted` (grades 1-3) or `class_seeker` (grades 4-6), clearing `referredAt`.
+     - Teacher attendance confirmation transitions to `absorbed` and stamps `absorbedAt`.
+   - Safe database migration (`20261014_130000_student_status_and_class_neighborhood.ts`) maps existing data losslessly via SQL `CASE` statement.
+
+2. **Class Urban Districts & Admin Visual Relations:**
+   - Add `neighborhood` relationship (`hasMany: false`, label "ناحیه شهری") on `classes`.
+   - Rename `neighborhoods` collection label in Payload Admin to "ناحیه شهری / نواحی شهری".
+   - Embed `ClassStudents` custom component in Class detail view to view all enrolled students.
+   - Embed `DistrictClasses` and `DistrictStudents` custom components in Urban District detail view.
+
+3. **Session Filling State Auto-Reconciliation:**
+   - In `sessions.hooks.ts`, when an administrator updates an existing session's status to `filling`, auto-seal the previously filling session to respect the PostgreSQL partial unique index without raising 422/409 errors.
+   - In `AdvanceSession` admin component, add "مشاهده حاضرین سانس" modal with real-time attendee listing and instant name/phone filtering.
+
+4. **Teacher Panel Full Profile Editing with Locked Class:**
+   - Implement student edit modal in `/teacher` allowing teachers to edit first/last name, phone numbers, address, neighborhood, and notes.
+   - Enforce server-side security in `updateTeacherStudentInfo` ensuring `currentClass` cannot be modified or cleared by teachers.
+
+5. **Reception Panel Session & Ceremony Attendees Modal:**
+   - Add compact attendees modal in `/reception` with session/ceremony tabs and real-time search.
+   - Expose quick-access buttons in both the header and telemetry bar.
+
+6. **Role Consolidation and Strict Read-Only Employee:**
+   - Remove `follow_up_specialist` role from system; migrate existing users to `employee`.
+   - Enforce strictly read-only access for `employee` across all collections and panels.
+   - Restrict mutations on `follow-ups`, `students`, `teachers`, `classes`, and `ceremonies` exclusively to `admin`.
+
+

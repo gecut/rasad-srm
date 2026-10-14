@@ -1,20 +1,20 @@
 import type { CollectionConfig } from 'payload'
-import { isEmployeeOrAdmin, isStaff } from '../../access/roles'
+import { isAdmin, isStaff } from '../../access/roles'
 import { validateAndLockSessionBeforeChange } from './sessions.hooks'
 
 export const Sessions: CollectionConfig = {
   slug: 'sessions',
   labels: { singular: 'سانس', plural: 'سانس‌ها' },
   admin: {
-    group: 'رویدادها',
+    group: 'رویدادها و پذیرش',
     useAsTitle: 'title',
     defaultColumns: ['ceremony', 'title', 'startsAt', 'endsAt', 'status'],
   },
   access: {
     read: isStaff,
-    create: isEmployeeOrAdmin,
-    update: isEmployeeOrAdmin,
-    delete: isEmployeeOrAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   hooks: {
     beforeChange: [validateAndLockSessionBeforeChange],

@@ -380,6 +380,14 @@ export async function quickCreateAndCheckInStudent(
         )
       }
 
+      const initialStatus = input.isClassSeeker
+        ? input.grade && input.grade <= 3
+          ? 'waitlisted'
+          : input.grade && input.grade >= 4
+            ? 'class_seeker'
+            : 'unknown'
+        : 'unknown'
+
       const student = await payload.create({
         collection: 'students',
         data: {
@@ -393,9 +401,8 @@ export async function quickCreateAndCheckInStudent(
           referrer: input.referrer?.trim() || undefined,
           notes: input.notes?.trim() || undefined,
           origin: 'reception_walk_in',
-          lifecycleStatus: input.isClassSeeker ? 'class_seeker' : 'unknown',
-          readinessStatus: 'normal',
-        },
+          status: initialStatus,
+        } as any,
         overrideAccess: true,
         req,
       })
@@ -454,14 +461,30 @@ export async function updateReceptionStudent(
       if (input.notes !== undefined) updateData.notes = input.notes?.trim() || null
       if (input.isClassSeeker !== undefined) {
         if (input.isClassSeeker) {
-          updateData.lifecycleStatus = 'class_seeker'
+          let targetGrade = input.grade
+          if (targetGrade === undefined) {
+            const existing = await payload.findByID({
+              collection: 'students',
+              id: input.studentId,
+              depth: 0,
+              overrideAccess: true,
+              req,
+            })
+            targetGrade = existing.grade
+          }
+          updateData.status =
+            targetGrade && targetGrade <= 3
+              ? 'waitlisted'
+              : targetGrade && targetGrade >= 4
+                ? 'class_seeker'
+                : 'unknown'
         }
       }
 
       const updated = await payload.update({
         collection: 'students',
         id: input.studentId,
-        data: updateData,
+        data: updateData as any,
         overrideAccess: true,
         req,
       })
