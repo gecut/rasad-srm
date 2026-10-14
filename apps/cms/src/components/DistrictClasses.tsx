@@ -46,7 +46,17 @@ export function DistrictClasses() {
   }, [id])
 
   useEffect(() => {
-    void loadData()
+    let ignore = false
+    const run = async () => {
+      await Promise.resolve()
+      if (!ignore) {
+        void loadData()
+      }
+    }
+    void run()
+    return () => {
+      ignore = true
+    }
   }, [loadData])
 
   if (!id) return null

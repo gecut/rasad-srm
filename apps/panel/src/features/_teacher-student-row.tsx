@@ -28,7 +28,7 @@ export function TeacherStudentRow({
   onViewDetails: (student: TeacherStudent) => void
   onEdit: (student: TeacherStudent) => void
 }) {
-  const currentStatus = (student as any).status || student.lifecycleStatus
+  const currentStatus = student.status || student.lifecycleStatus
   return (
     <Card className="transition-colors hover:bg-surface-secondary/40 border border-border bg-surface">
       <Card.Content className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 sm:p-4">

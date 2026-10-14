@@ -189,8 +189,8 @@ export function Teacher() {
               student.id === pending.studentId
                 ? {
                     ...student,
-                    status: pending.status as any,
-                    lifecycleStatus: pending.status as any,
+                    status: pending.status,
+                    lifecycleStatus: pending.status,
                   }
                 : student,
             ),
@@ -221,7 +221,7 @@ export function Teacher() {
 
   const selectedClass = roster?.classes.find((item) => String(item.id) === classId)
 
-  const getStatus = (s: TeacherStudent) => (s as any).status || s.lifecycleStatus
+  const getStatus = (s: TeacherStudent) => s.status || s.lifecycleStatus
 
   const pendingCount =
     selectedClass?.students.filter((s) => getStatus(s) === 'referred_to_teacher').length || 0

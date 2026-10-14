@@ -134,35 +134,36 @@ export function AdvanceSession() {
   }, [id])
 
   useEffect(() => {
-    if (!viewingSession) {
-      setAttendees([])
-      setAttendeeSearch('')
-      return
-    }
     let ignore = false
-    setLoadingAttendees(true)
-    fetch(`/api/panel/ceremony/attendees?sessionId=${viewingSession.id}`, {
-      credentials: 'include',
-    })
-      .then((res) => {
+    const run = async () => {
+      await Promise.resolve()
+      if (ignore) return
+      if (!viewingSession) {
+        setAttendees([])
+        setAttendeeSearch('')
+        return
+      }
+      setLoadingAttendees(true)
+      try {
+        const res = await fetch(`/api/panel/ceremony/attendees?sessionId=${viewingSession.id}`, {
+          credentials: 'include',
+        })
         if (!res.ok) throw new Error('دریافت لیست حاضرین انجام نشد.')
-        return res.json()
-      })
-      .then((data: { attendees: Attendee[] }) => {
+        const data = (await res.json()) as { attendees: Attendee[] }
         if (!ignore) {
           setAttendees(data.attendees || [])
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!ignore) {
           setError(err instanceof Error ? err.message : 'خطا در بارگذاری حاضرین.')
         }
-      })
-      .finally(() => {
+      } finally {
         if (!ignore) {
           setLoadingAttendees(false)
         }
-      })
+      }
+    }
+    void run()
     return () => {
       ignore = true
     }
