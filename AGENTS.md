@@ -24,6 +24,50 @@ Then read the relevant specs:
 - architecture/backend → `docs/ARCHITECTURE.md`, `docs/IMPLEMENTATION_RULES.md`
 - planning/migration → `docs/ROADMAP.md`, `docs/MIGRATION_NOTES.md`
 
+## Operating Pipeline & Skill Map
+
+Every task moves through these sequential phases. Trigger skills at branch points; observe completion criteria before transitioning.
+
+### 1. Ingestion & Triage
+- **Incoming issues & backlog requests** → invoke `triage`. Categorize role, assess clarity, resolve blockers, and prepare agent-ready briefs.
+- **Large, multi-session initiatives** → invoke `wayfinder`. Decompose ambiguous scope into a directed graph of decision tickets.
+- *Completion criterion*: Task has an explicit scope, identified owner, and resolved entry prerequisites.
+
+### 2. Alignment, Grilling & Domain Modeling
+- **Ambiguous requirements or unexplored ideas** → invoke `grill-me`. Run a relentless, decision-oriented interview to stress-test intent and close branching paths before designing.
+- **Architecture/design proposals needing docs** → invoke `grill-with-docs`. Interview deeply and immediately record resulting ADRs in `docs/DECISIONS.md` and definitions in domain docs.
+- **Entity, naming, or concept updates** → invoke `domain-modeling`. Maintain ubiquitous language, resolve nomenclature conflicts against `Student` and ceremony concepts, and update glossary.
+- *Completion criterion*: Unambiguous decision record, documented domain terminology, and zero outstanding design dilemmas.
+
+### 3. Architecture & Codebase Design
+- **Module boundaries & interface definition** → invoke `codebase-design`. Structure deep modules with narrow interfaces and deep implementations across `apps/cms`, `apps/panel`, and `packages/contracts`.
+- *Completion criterion*: Defined module boundaries, clear seams, minimal surface exposure, and isolated dependency directions.
+
+### 4. Planning & Workspace Isolation
+- **Multi-step implementation planning** → invoke `writing-plans`. Produce bite-sized, checklist-driven plans (`- [ ]`) containing concrete file paths, signatures, and checkable test steps.
+- **Pre-execution workspace isolation** → invoke `using-git-worktrees`. Verify or create an isolated git worktree / branched workspace before touching files for feature work.
+- *Completion criterion*: Approved implementation plan in `docs/superpowers/plans/` and a verified isolated workspace.
+
+### 5. Execution & Orchestration
+- **Single-session plan execution** → invoke `executing-plans`. Implement tasks step-by-step, logging decisions and maintaining strict adherence to the approved plan.
+- **Multi-task plans with clean boundaries** → invoke `subagent-driven-development`. Delegate independent tasks to fresh subagents with narrow context boundaries and controller supervision.
+- **Independent investigations or tasks** → invoke `dispatching-parallel-agents`. Dispatch concurrent agents for non-overlapping tasks without shared mutation state.
+- *Completion criterion*: All plan checkboxes completed, each task committed cleanly, and branch ready for verification.
+
+### 6. Investigation & Debugging
+- **Unexpected failures, errors, or bugs** → invoke `systematic-debugging`. Follow the evidence-first loop: Reproduce → Gather evidence → Hypothesize → Test hypothesis → Fix root cause → Verify. Random edits and ungrounded trial-and-error fixes are forbidden.
+- *Completion criterion*: Root cause identified with verifiable evidence and confirmed by an automated reproducing check.
+
+### 7. Review, Verification & Quality Gate
+- **Completion assertion** → invoke `verification-before-completion`. Execute concrete verification commands (typecheck, tests, build) and inspect actual stdout and exit codes. Never declare work "done" or "fixed" without fresh execution evidence.
+- **Code quality & compliance audit** → invoke `code-review`. Run parallel, independent reviews along two axes: Standards (conventions, cleanliness, smells) and Spec (exact conformance to requirements).
+- *Completion criterion*: Fresh passing command outputs attached, zero typecheck/lint regressions, and spec conformance confirmed.
+
+### 8. Meta & System Evolution
+- **Agent instructions & skill updates** → invoke `writing-for-agents`. Prune context load, front-load leading words, define checkable completion criteria, and preserve single source of truth.
+- **Authoring new skills** → invoke `writing-skills`. Design skills test-first: baseline behavior without skill, draft `SKILL.md`, test under pressure, and eliminate loopholes.
+- *Completion criterion*: Compact, discoverable markdown following `writing-for-agents` guidelines and tested against baseline scenarios.
+
 ## Core constraints
 
 - Rasad is an internal Student Relationship Management system.
